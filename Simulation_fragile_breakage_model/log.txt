@@ -1,42 +1,502 @@
 Step 0:
-Regions = aa xu (3136, 3137) (2846, 2847)    Number of cycles = 1999
+Regions = bb xu (2348, 2349) (2516, 2517)    
+Number of cycles = 1999
 
 
 Step 1:
-Regions = aa xv (734, 735) (2392, 2393)    Number of cycles = 1998
+Regions = aa xv (3356, 3357) (1172, 1173)    
+Number of cycles = 1998
 
 
 Step 2:
-Regions = aa xv (3114, 3115) (1290, 1291)    Number of cycles = 1997
+Regions = aa xu (3360, 3361) (416, 417)    
+Number of cycles = 1997
 
 
 Step 3:
-Regions = aa xu (196, 197) (1276, 1277)    Number of cycles = 1996
+Regions = aa xv (690, 691) (198, 199)    
+Number of cycles = 1996
 
 
 Step 4:
-Regions = aa xu (3768, 3769) (782, 783)    Number of cycles = 1995
+Regions = aa xu (3912, 3913) (3978, 3979)    
+Number of cycles = 1995
 
 
 Step 5:
-Regions = aa xv (524, 525) (336, 337)    Number of cycles = 1994
+Regions = aa xv (956, 957) (1304, 1305)    
+Number of cycles = 1994
 
 
 Step 6:
-Regions = aa xu (1296, 1297) (2900, 2901)    Number of cycles = 1993
+Regions = bb xu (2548, 2549) (2914, 2915)    
+Number of cycles = 1993
 
 
 Step 7:
-Regions = aa xu (2366, 2367) (750, 751)    Number of cycles = 1992
+Regions = aa xv (1538, 1539) (420, 421)    
+Number of cycles = 1992
 
 
 Step 8:
-Regions = bb xu (2246, 2247) (2166, 2167)    Number of cycles = 1991
+Regions = bb xu (2654, 2655) (932, 933)    
+Number of cycles = 1991
 
 
 Step 9:
-Regions = aa xu (1816, 1817) (3078, 3079)    Number of cycles = 1990
+Regions = aa xu (150, 151) (3122, 3123)    
+Number of cycles = 1990
 
 
+Step 10:
+Regions = aa xu (3662, 3663) (1066, 1067)    
+Number of cycles = 1989
 
-Number aa, bb, ab = 2025 1769 206
+
+Step 11:
+Regions = bb xv (1942, 1943) (2340, 2341)    
+Number of cycles = 1988
+
+
+Step 12:
+Regions = bb xv (742, 743) (2492, 2493)    
+Number of cycles = 1987
+
+
+Step 13:
+Regions = bb xu (1442, 1443) (3836, 3837)    
+Number of cycles = 1986
+
+
+Step 14:
+Regions = bb xv (3476, 3477) (2624, 2625)    
+Number of cycles = 1985
+
+
+Step 15:
+Regions = aa xu (2678, 2679) (2554, 2555)    
+Number of cycles = 1984
+
+
+Step 16:
+Regions = bb xu (3250, 3251) (3584, 3585)    
+Number of cycles = 1983
+
+
+Step 17:
+Regions = bb xv (1710, 1711) (3340, 3341)    
+Number of cycles = 1982
+
+
+Step 18:
+Regions = aa xu (2182, 2183) (2196, 2197)    
+Number of cycles = 1981
+
+
+Step 19:
+Regions = bb xu (3216, 3217) (2012, 2013)    
+Number of cycles = 1980
+
+
+Step 20:
+Regions = aa xv (1326, 1327) (2466, 2467)    
+Number of cycles = 1979
+
+
+Step 21:
+Regions = aa xu (3362, 3363) (942, 943)    
+Number of cycles = 1978
+
+
+Step 22:
+Regions = aa xv (3072, 3073) (2062, 2063)    
+Number of cycles = 1977
+
+
+Step 23:
+Regions = bb xu (718, 719) (1188, 1189)    
+Number of cycles = 1976
+
+
+Step 24:
+Regions = aa xv (158, 159) (1636, 1637)    
+Number of cycles = 1975
+
+
+Step 25:
+Regions = bb xu (190, 191) (2174, 2175)    
+Number of cycles = 1974
+
+
+Step 26:
+Regions = aa xu (2542, 2543) (3446, 3447)    
+Number of cycles = 1973
+
+
+Step 27:
+Regions = aa xu (2680, 2681) (1714, 1715)    
+Number of cycles = 1972
+
+
+Step 28:
+Regions = aa xv (886, 887) (3834, 3835)    
+Number of cycles = 1971
+
+
+Step 29:
+Regions = bb xu (3598, 3599) (1792, 1793)    
+Number of cycles = 1970
+
+
+Step 30:
+Regions = bb xv (634, 635) (3380, 3381)    
+Number of cycles = 1969
+
+
+Step 31:
+Regions = bb xv (1658, 1659) (1386, 1387)    
+Number of cycles = 1968
+
+
+Step 32:
+Regions = bb xu (2066, 2067) (398, 399)    
+Number of cycles = 1967
+
+
+Step 33:
+Regions = bb xu (3886, 3887) (946, 947)    
+Number of cycles = 1966
+
+
+Step 34:
+Regions = aa xv (2906, 2907) (276, 277)    
+Number of cycles = 1965
+
+
+Step 35:
+Regions = aa xu (466, 467) (940, 941)    
+Number of cycles = 1964
+
+
+Step 36:
+Regions = aa xu (3162, 3163) (3512, 3513)    
+Number of cycles = 1963
+
+
+Step 37:
+Regions = aa xv (3846, 3847) (2304, 2305)    
+Number of cycles = 1962
+
+
+Step 38:
+Regions = aa xv (2312, 2313) (2806, 2807)    
+Number of cycles = 1961
+
+
+Step 39:
+Regions = ab xu (1756, 1757) (464, 465)    
+Number of cycles = 1960
+
+
+Step 40:
+Regions = bb xu (1668, 1669) (3410, 3411)    
+Number of cycles = 1959
+
+
+Step 41:
+Regions = aa xu (3820, 3821) (1102, 1103)    
+Number of cycles = 1958
+
+
+Step 42:
+Regions = bb xu (544, 545) (1008, 1009)    
+Number of cycles = 1957
+
+
+Step 43:
+Regions = aa xv (382, 383) (3364, 3365)    
+Number of cycles = 1956
+
+
+Step 44:
+Regions = bb xv (2350, 2351) (3632, 3633)    
+Number of cycles = 1955
+
+
+Step 45:
+Regions = ab xu (2670, 2671) (3816, 3817)    
+Number of cycles = 1954
+
+
+Step 46:
+Regions = bb xu (1610, 1611) (1443, 3837)    
+Number of cycles = 1953
+
+
+Step 47:
+Regions = bb xu (3056, 3057) (352, 353)    
+Number of cycles = 1952
+
+
+Step 48:
+Regions = aa xu (2150, 2151) (3204, 3205)    
+Number of cycles = 1951
+
+
+Step 49:
+Regions = bb xv (1324, 1325) (3056, 352)    
+Number of cycles = 1950
+
+
+Step 50:
+Regions = bb xu (3974, 3975) (2146, 2147)    
+Number of cycles = 1949
+
+
+Step 51:
+Regions = ab xu (1680, 1681) (1394, 1395)    
+Number of cycles = 1948
+
+
+Step 52:
+Regions = bb xv (3278, 3279) (2284, 2285)    
+Number of cycles = 1947
+
+
+Step 53:
+Regions = bb xv (1834, 1835) (2628, 2629)    
+Number of cycles = 1946
+
+
+Step 54:
+Regions = bb xu (3402, 3403) (3566, 3567)    
+Number of cycles = 1945
+
+
+Step 55:
+Regions = bb xv (3426, 3427) (8, 9)    
+Number of cycles = 1944
+
+
+Step 56:
+Regions = aa xu (2556, 2557) (2938, 2939)    
+Number of cycles = 1943
+
+
+Step 57:
+Regions = aa xu (738, 739) (1402, 1403)    
+Number of cycles = 1942
+
+
+Step 58:
+Regions = bb xv (208, 209) (2318, 2319)    
+Number of cycles = 1941
+
+
+Step 59:
+Regions = aa xu (1100, 1101) (3964, 3965)    
+Number of cycles = 1940
+
+
+Step 60:
+Regions = aa xv (1512, 1513) (1786, 1787)    
+Number of cycles = 1939
+
+
+Step 61:
+Regions = aa xv (564, 565) (1330, 1331)    
+Number of cycles = 1938
+
+
+Step 62:
+Regions = aa xu (1626, 1627) (2562, 2563)    
+Number of cycles = 1937
+
+
+Step 63:
+Regions = bb xu (3666, 3667) (2484, 2485)    
+Number of cycles = 1936
+
+
+Step 64:
+Regions = aa xv (3663, 1067) (1232, 1233)    
+Number of cycles = 1935
+
+
+Step 65:
+Regions = aa xv (3062, 3063) (1900, 1901)    
+Number of cycles = 1934
+
+
+Step 66:
+Regions = aa xv (3386, 3387) (2260, 2261)    
+Number of cycles = 1933
+
+
+Step 67:
+Regions = aa xv (3656, 3657) (2514, 2515)    
+Number of cycles = 1932
+
+
+Step 68:
+Regions = bb xu (1170, 1171) (816, 817)    
+Number of cycles = 1931
+
+
+Step 69:
+Regions = aa xu (32, 33) (3224, 3225)    
+Number of cycles = 1930
+
+
+Step 70:
+Regions = bb xu (354, 355) (1352, 1353)    
+Number of cycles = 1929
+
+
+Step 71:
+Regions = aa xv (1294, 1295) (2198, 2199)    
+Number of cycles = 1928
+
+
+Step 72:
+Regions = aa xv (1524, 1525) (1048, 1049)    
+Number of cycles = 1927
+
+
+Step 73:
+Regions = bb xv (456, 457) (1498, 1499)    
+Number of cycles = 1926
+
+
+Step 74:
+Regions = bb xv (2374, 2375) (1300, 1301)    
+Number of cycles = 1925
+
+
+Step 75:
+Regions = aa xu (2454, 2455) (1354, 1355)    
+Number of cycles = 1924
+
+
+Step 76:
+Regions = aa xu (1968, 1969) (2992, 2993)    
+Number of cycles = 1923
+
+
+Step 77:
+Regions = bb xv (1018, 1019) (3918, 3919)    
+Number of cycles = 1922
+
+
+Step 78:
+Regions = aa xu (392, 393) (242, 243)    
+Number of cycles = 1921
+
+
+Step 79:
+Regions = ab xu (604, 605) (3838, 3839)    
+Number of cycles = 1920
+
+
+Step 80:
+Regions = ab xu (1512, 1787) (38, 39)    
+Number of cycles = 1919
+
+
+Step 81:
+Regions = bb xu (1164, 1165) (760, 761)    
+Number of cycles = 1918
+
+
+Step 82:
+Regions = aa xv (2744, 2745) (130, 131)    
+Number of cycles = 1917
+
+
+Step 83:
+Regions = bb xv (3596, 3597) (972, 973)    
+Number of cycles = 1916
+
+
+Step 84:
+Regions = aa xv (3670, 3671) (2404, 2405)    
+Number of cycles = 1915
+
+
+Step 85:
+Regions = aa xu (910, 911) (3946, 3947)    
+Number of cycles = 1914
+
+
+Step 86:
+Regions = ab xu (2542, 3446) (2630, 2631)    
+Number of cycles = 1913
+
+
+Step 87:
+Regions = aa xv (746, 747) (2952, 2953)    
+Number of cycles = 1912
+
+
+Step 88:
+Regions = aa xv (1740, 1741) (1120, 1121)    
+Number of cycles = 1911
+
+
+Step 89:
+Regions = aa xv (1748, 1749) (2672, 2673)    
+Number of cycles = 1910
+
+
+Step 90:
+Regions = aa xu (1776, 1777) (344, 345)    
+Number of cycles = 1909
+
+
+Step 91:
+Regions = aa xv (510, 511) (1692, 1693)    
+Number of cycles = 1908
+
+
+Step 92:
+Regions = bb xu (3560, 3561) (1022, 1023)    
+Number of cycles = 1907
+
+
+Step 93:
+Regions = bb xv (2470, 2471) (232, 233)    
+Number of cycles = 1906
+
+
+Step 94:
+Regions = bb xu (2242, 2243) (3172, 3173)    
+Number of cycles = 1905
+
+
+Step 95:
+Regions = aa xv (3996, 3997) (3821, 1103)    
+Number of cycles = 1904
+
+
+Step 96:
+Regions = bb xv (1942, 2341) (2360, 2361)    
+Number of cycles = 1903
+
+
+Step 97:
+Regions = aa xu (1406, 1407) (298, 299)    
+Number of cycles = 1902
+
+
+Step 98:
+Regions = aa xu (3034, 3035) (1436, 1437)    
+Number of cycles = 1901
+
+
+Step 99:
+Regions = aa xu (868, 869) (3750, 3751)    
+Number of cycles = 1900
+
+
+Number of a-type, b-type edges = 1028 972
+Number of aa, bb, ab DCJs = 2007 1785 208

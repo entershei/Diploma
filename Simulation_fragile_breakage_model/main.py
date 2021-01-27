@@ -196,12 +196,12 @@ def markov_process(n, k, p_aa, p_bb, p_ab, a_type, b_type, edges, f_log, log_len
 
         assert len_a == len(a_type) and len_b == len(b_type)
 
-        if i < 10:
+        if i < 100:
             f_log.write(
                 'Step ' + str(i) + ':\nRegions = ' + dcj_type + ' ' + joining_type + ' (' + str(edge1[0]) + ', ' + str(
                     edge1[1]) + ') ('
                 + str(edge2[0]) + ', ' + str(edge2[1]) + ')    ')
-            f_log.write('Number of cycles = ' + str(cnt_cycles) + '\n')
+            f_log.write('\nNumber of cycles = ' + str(cnt_cycles) + '\n')
 
             # f_log.write('Edges:\n')
             # for e in edges:
@@ -223,7 +223,8 @@ def markov_process(n, k, p_aa, p_bb, p_ab, a_type, b_type, edges, f_log, log_len
 
         compute_cycles_lens(n, i + 1, colors, log_lens)
 
-    f_log.write('\nNumber aa, bb, ab = ' + str(cnt_aa) + ' ' + str(cnt_bb) + ' ' + str(cnt_ab) + '\n')
+    f_log.write('Number of a-type, b-type edges = ' + str(len_a) + ' ' + str(len_b) + '\n')
+    f_log.write('Number of aa, bb, ab DCJs = ' + str(cnt_aa) + ' ' + str(cnt_bb) + ' ' + str(cnt_ab) + '\n')
 
     return cycles
 
