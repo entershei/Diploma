@@ -1,0 +1,42 @@
+Step 0:
+Regions = aa xu (3136, 3137) (2846, 2847)    Number of cycles = 1999
+
+
+Step 1:
+Regions = aa xv (734, 735) (2392, 2393)    Number of cycles = 1998
+
+
+Step 2:
+Regions = aa xv (3114, 3115) (1290, 1291)    Number of cycles = 1997
+
+
+Step 3:
+Regions = aa xu (196, 197) (1276, 1277)    Number of cycles = 1996
+
+
+Step 4:
+Regions = aa xu (3768, 3769) (782, 783)    Number of cycles = 1995
+
+
+Step 5:
+Regions = aa xv (524, 525) (336, 337)    Number of cycles = 1994
+
+
+Step 6:
+Regions = aa xu (1296, 1297) (2900, 2901)    Number of cycles = 1993
+
+
+Step 7:
+Regions = aa xu (2366, 2367) (750, 751)    Number of cycles = 1992
+
+
+Step 8:
+Regions = bb xu (2246, 2247) (2166, 2167)    Number of cycles = 1991
+
+
+Step 9:
+Regions = aa xu (1816, 1817) (3078, 3079)    Number of cycles = 1990
+
+
+
+Number aa, bb, ab = 2025 1769 206
