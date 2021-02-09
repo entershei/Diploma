@@ -262,8 +262,8 @@ def draw_number_of_cycles(cycles, title):
     plt.show()
 
 
-def log_aggregated_results(n, aggregated_cycles_info):
-    with open('log_lens.csv', 'w', newline='') as f_log_lens:
+def log_aggregated_results(n, aggregated_cycles_info, f):
+    with open(f, 'w', newline='') as f_log_lens:
         fieldnames = ['n', 'k', 'all-cycles', '1-cycles', '2-cycles', '3-cycles', '4-cycles', '5-cycles',
                       'max_cycle_len']
         log_lens = csv.DictWriter(f_log_lens, fieldnames=fieldnames)
@@ -279,19 +279,21 @@ def log_aggregated_results(n, aggregated_cycles_info):
 def main():
     # n, k = read_number_of_regions_and_steps()
     # p_aa, p_bb, p_ab = read_probabilities()
-    n, p_aa, p_bb, p_ab = 1000, 0.5, 0.45, 0.05
+    n, p_aa, p_bb = 1000, 0.4, 0.35
+    p_ab = 1 - p_aa - p_bb
     k = n * 2
-    p_split_a_b = [0.5, 0.5]
+    p_a_type_edges = 0.7
+    p_split_a_b = [p_a_type_edges, 1 - p_a_type_edges]
 
     experiments = []
-    for i in range(100):
+    for i in range(10):
         a_type, b_type, edges = split_fragile_edges(n, p_split_a_b)
-        for j in range(50):
+        for j in range(10):
             experiments.append(markov_process(n, k, p_aa, p_bb, p_ab, a_type.copy(), b_type.copy(), edges.copy()))
 
     aggregated_cycles_info = aggregate_cycles_info(experiments)
 
-    log_aggregated_results(n, aggregated_cycles_info)
+    log_aggregated_results(n, aggregated_cycles_info, 'logs/log_lens_100_n1000_paa0_4_pbb0_35_betta0_7.csv')
 
     draw_number_of_cycles(list(map(lambda info: info.num_all_cycles, aggregated_cycles_info)),
                           'Number of cycles depends of number of swaps')
