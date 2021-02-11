@@ -293,7 +293,7 @@ def main():
 
     aggregated_cycles_info = aggregate_cycles_info(experiments)
 
-    log_aggregated_results(n, aggregated_cycles_info, 'logs/log_lens_100_n1000_paa0_5_pbb0_5_betta0_8.csv')
+    log_aggregated_results(n, aggregated_cycles_info, 'logs/log_lens_100_n1000_paa0_5_pbb0_5_beta0_8.csv')
 
     draw_number_of_cycles(list(map(lambda info: info.num_all_cycles, aggregated_cycles_info)),
                           'Number of cycles depends of number of swaps')
