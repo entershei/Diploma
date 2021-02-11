@@ -24,9 +24,9 @@ def draw_error(gammas, errors, title):
 
 
 def main():
-    gammas, errors = read_logs('logs/depends_on_gamma_n1000_paa0_4_pbb0_35_betta0_7.csv')
-    draw_error(gammas, errors, 'Percentage error of number of 1-cycles depends on gamma,' +
-               '\nn = 1000, paa = 0.4, p_bb = 0.35, β = 0.7')
+    gammas, errors = read_logs('logs/error/2cycles/depends_on_gamma_n1000_paa0_5_pbb_0_5_betta0_5.csv')
+    draw_error(gammas, errors, 'Percentage error of number of 2-cycles depends on gamma,' +
+               '\nn = 1000, paa = 0.5, p_bb = 0.5, β = 0.5')
 
 
 if __name__ == '__main__':

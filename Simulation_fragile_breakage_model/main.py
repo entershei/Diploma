@@ -279,10 +279,10 @@ def log_aggregated_results(n, aggregated_cycles_info, f):
 def main():
     # n, k = read_number_of_regions_and_steps()
     # p_aa, p_bb, p_ab = read_probabilities()
-    n, p_aa, p_bb = 1000, 0.4, 0.35
+    n, p_aa, p_bb = 1000, 0.5, 0.5
     p_ab = 1 - p_aa - p_bb
     k = n * 2
-    p_a_type_edges = 0.7
+    p_a_type_edges = 0.8
     p_split_a_b = [p_a_type_edges, 1 - p_a_type_edges]
 
     experiments = []
@@ -293,7 +293,7 @@ def main():
 
     aggregated_cycles_info = aggregate_cycles_info(experiments)
 
-    log_aggregated_results(n, aggregated_cycles_info, 'logs/log_lens_100_n1000_paa0_4_pbb0_35_betta0_7.csv')
+    log_aggregated_results(n, aggregated_cycles_info, 'logs/log_lens_100_n1000_paa0_5_pbb0_5_betta0_8.csv')
 
     draw_number_of_cycles(list(map(lambda info: info.num_all_cycles, aggregated_cycles_info)),
                           'Number of cycles depends of number of swaps')

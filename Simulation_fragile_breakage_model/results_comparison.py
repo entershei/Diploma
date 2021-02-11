@@ -2,8 +2,8 @@ import csv
 import math
 
 
-def read_logs(f):
-    num_c1 = []
+def read_logs(f, n_cycles):
+    num_c_n = []
     with open(f, newline='') as csvfile:
         reader = csv.DictReader(csvfile, delimiter=',', quotechar='|')
         i = 0
@@ -12,26 +12,36 @@ def read_logs(f):
             k = int(row['k'])
             assert i == k
 
-            c1 = float(row['1-cycles'])
-            num_c1.append(c1)
+            c1 = float(row[n_cycles])
+            num_c_n.append(c1)
             i += 1
 
-    return num_c1, n
+    return num_c_n, n
 
 
 def compute_analytical_c1(gamma, p_aa, p_bb, betta):
-    return betta * math.exp(-1 * gamma * (1 + p_aa - p_bb) / betta) +\
+    return betta * math.exp(-1 * gamma * (1 + p_aa - p_bb) / betta) + \
            (1 - betta) * math.exp(-1 * gamma * (1 - p_aa + p_bb) / (1 - betta))
 
 
-# returns 100 * |analytical_c1 - real_c1| / real_c1
+def compute_analytical_c2(gamma, p_aa, p_bb, betta):
+    p1 = p_aa * gamma * math.exp(-2 * gamma * (1 + p_aa - p_bb) / betta)
+    p2 = p_bb * gamma * math.exp(-2 * gamma * (1 + p_bb - p_aa) / (1 - betta))
+    p3 = (1 - p_aa - p_bb) * gamma * math.exp(
+        -1 * gamma * (1 - 2 * betta * p_aa + 2 * betta * p_bb + p_aa - p_bb) / (betta * (1 - betta)))
+
+    return p1 + p2 + p3
+
+
+# returns 100 * |analytical_c_n - real_c_n| / real_c_n
 # betta = t / n, t is number of A-type edges
-def compute_error(gamma, real_c1s, n, p_aa, p_bb, betta):
+def compute_error(gamma, real_c_ns, n, p_aa, p_bb, betta, estimation_func):
     k = int(gamma * n)
+    real_c_n = real_c_ns[k] / n
+    analytical_c_n = estimation_func(gamma, p_aa, p_bb, betta)
+    error = abs(analytical_c_n - real_c_n) / real_c_n
 
-    real_c1 = real_c1s[k] / n
-
-    return 100 * abs(compute_analytical_c1(gamma, p_aa, p_bb, betta) - real_c1) / real_c1
+    return 100 * error
 
 
 def write_error(error_depends_on_gamma, f):
@@ -45,20 +55,27 @@ def write_error(error_depends_on_gamma, f):
                 {'gamma': gamma, 'error': error_depends_on_gamma[gamma]})
 
 
-# |analytical_c1 - real_c1| / real_c1
-def compare_c1_error():
-    real_c1s, n = read_logs('logs/log_lens_100_n1000_paa0_4_pbb0_35_betta0_7.csv')
+# |analytical_c_n - real_c_n| / real_c_n
+def compare_c_n_error(f_in, f_out, p_aa, p_bb, betta, n_cycles, compute_analytical_c_n):
+    real_c_n_s, n = read_logs(f_in, n_cycles)
 
     # gamma = k / n
     error_depends_on_gamma = {}
     gamma = 0.1
     step = 0.1
     while gamma < 2.1:
-        error_depends_on_gamma[gamma] = compute_error(gamma, real_c1s, n, 0.4, 0.35, 0.7)
+        error_depends_on_gamma[gamma] = compute_error(gamma, real_c_n_s, n, p_aa, p_bb, betta, compute_analytical_c_n)
         gamma += step
 
-    write_error(error_depends_on_gamma, 'logs/depends_on_gamma_n1000_paa0_4_pbb0_35_betta0_7.csv')
+    write_error(error_depends_on_gamma, f_out)
 
 
 if __name__ == '__main__':
-    compare_c1_error()
+    # compare_c_n_error('logs/log_lens_5000_n1000_paa0_5_pbb0_45_betta0_5.csv',
+    #                   'logs/error/1cycles/depends_on_gamma_n1000_paa0_5_pbb0_45_betta0_5.csv',
+    #                   0.5, 0.45, 0.5, '1-cycles', compute_analytical_c1)
+    file_end = '_n1000_paa0_4_pbb0_35_betta0_7.csv'
+    compare_c_n_error(f_in='logs/log_lens_100' + file_end,
+                      f_out='logs/error/2cycles/depends_on_gamma' + file_end,
+                      p_aa=0.4, p_bb=0.35, betta=0.7, n_cycles='2-cycles',
+                      compute_analytical_c_n=compute_analytical_c2)
