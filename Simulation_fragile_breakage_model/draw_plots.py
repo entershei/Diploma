@@ -41,7 +41,7 @@ def draw_error(xs, errors, title, save_as):
 def draw_relative_errors(file_end, experiments, parameters_for_plot_name):
     # For 1-cycles
     cycle_types = ['A-cycles', 'B-cycles', '1-cycles']
-    save_path = 'plots/relative_error/' + experiments + file_end + '/1cycles/'
+    save_path = 'plots/relative_error/' + experiments + file_end + '/'
     xs, errors = read_logs('logs/relative_error/' + experiments + '1cycles/' +
                            'depends_on_x_' + file_end + '.csv', ['A-cycles', 'B-cycles', 'all'], [], '',
                            [['all', '1-cycles']])
@@ -53,7 +53,7 @@ def draw_relative_errors(file_end, experiments, parameters_for_plot_name):
 
     # For 2-cycles
     cycle_types = ['AA-cycles', 'AB-cycles', 'BB-cycles', '2-cycles']
-    save_path = 'plots/relative_error/' + experiments + file_end + '/2cycles/'
+    save_path = 'plots/relative_error/' + experiments + file_end + '/'
     xs, errors = read_logs('logs/relative_error/' + experiments + '2cycles/' +
                            'depends_on_x_' + file_end + '.csv',
                            ['AA-cycles', 'AB-cycles', 'BB-cycles', 'all'], [], '',
