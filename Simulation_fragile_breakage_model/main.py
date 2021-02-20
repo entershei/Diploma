@@ -1,7 +1,6 @@
 import csv
-import random
+import time
 
-import matplotlib.pyplot as plt
 import numpy as np
 
 
@@ -30,26 +29,41 @@ def read_probabilities():
     return p_aa, p_bb, p_ab
 
 
-def split_fragile_edges(n, p):
+class EdgeInfo:
+    to = 0
+    edge_type = 'A'
+
+    def __init__(self, to, edge_type):
+        self.to = to
+        self.edge_type = edge_type
+
+
+def split_fragile_edges(n, a_type_edges_proportion):
     a_type = []
     b_type = []
-    edges = [0] * (2 * n)
+    edges = []
+
+    will_be_a_type = np.random.choice(range(0, n), int(a_type_edges_proportion * n), replace=False)
+    is_a_type = [False] * n
+    for e in will_be_a_type:
+        is_a_type[e] = True
 
     for i in range(n):
-        a_or_b = np.random.choice(['a', 'b'], 1, p=p)[0]
         edge = [2 * i, 2 * i + 1]
-        if a_or_b == 'a':
+        if is_a_type[i]:
             a_type.append(edge)
+            edges.append(EdgeInfo(2 * i + 1, 'A'))
+            edges.append(EdgeInfo(2 * i, 'A'))
         else:
             b_type.append(edge)
-        edges[2 * i] = 2 * i + 1
-        edges[2 * i + 1] = 2 * i
+            edges.append(EdgeInfo(2 * i + 1, 'B'))
+            edges.append(EdgeInfo(2 * i, 'B'))
 
     return a_type, b_type, edges
 
 
 def is_in_cycle(x, edges, y):
-    cur = edges[x]
+    cur = edges[x].to
 
     if y == cur:
         return True
@@ -66,7 +80,7 @@ def is_in_cycle(x, edges, y):
         if cur == x:
             break
 
-        cur = edges[cur]
+        cur = edges[cur].to
 
         if y == cur:
             return True
@@ -76,7 +90,7 @@ def is_in_cycle(x, edges, y):
 
 def set_color(x, edges, colors, color):
     colors[x] = color
-    cur = edges[x]
+    cur = edges[x].to
 
     while cur != x:
         colors[cur] = color
@@ -90,48 +104,49 @@ def set_color(x, edges, colors, color):
             break
 
         colors[cur] = color
-        cur = edges[cur]
+        cur = edges[cur].to
 
 
-def update_cycles(edge1, edge2, joining_type, edges, colors, new_color):
+def update_cycles(edge1, edge2, joining_type, edges, colors, last_color):
     x, y = edge1
     u, v = edge2
 
     if joining_type == 'xu':
-        edges[x], edges[u] = u, x
-        edges[y], edges[v] = v, y
+        new_edge1_type, new_edge2_type = np.random.choice([edges[x].edge_type, edges[u].edge_type], 2, replace=False)
+
+        edges[x], edges[u] = EdgeInfo(u, new_edge1_type), EdgeInfo(x, new_edge1_type)
+        edges[y], edges[v] = EdgeInfo(v, new_edge2_type), EdgeInfo(y, new_edge2_type)
+
+        new_edges = [[x, u], [y, v]]
+        if new_edge1_type != new_edge2_type and new_edge1_type == 'B':
+            new_edges.reverse()
     else:
-        edges[x], edges[v] = v, x
-        edges[y], edges[u] = u, y
+        new_edge1_type, new_edge2_type = np.random.choice([edges[x].edge_type, edges[v].edge_type], 2, replace=False)
+
+        edges[x], edges[v] = EdgeInfo(v, new_edge1_type), EdgeInfo(x, new_edge1_type)
+        edges[y], edges[u] = EdgeInfo(u, new_edge2_type), EdgeInfo(y, new_edge2_type)
+
+        new_edges = [[x, v], [y, u]]
+        if new_edge1_type != new_edge2_type and new_edge1_type == 'B':
+            new_edges.reverse()
 
     if colors[x] == colors[u]:
         if is_in_cycle(x, edges, y):
-            return new_color
+            new_color = last_color
         else:
-            set_color(x, edges, colors, new_color)
-            return new_color + 1
+            set_color(x, edges, colors, last_color)
+            new_color = last_color + 1
     else:
         set_color(x, edges, colors, colors[x])
-        return new_color
+        new_color = last_color
 
-
-def update_edges(edge1, edge2, join_type):
-    x, y = edge1
-    u, v = edge2
-
-    if join_type == 'xu':
-        new_edges = [[x, u], [y, v]]
-    else:
-        new_edges = [[x, v], [y, u]]
-
-    random.shuffle(new_edges)
-    return new_edges
+    return new_color, new_edges
 
 
 class CyclesInfo:
     num_all_cycles = 0
-    # cycles with length from 1 to 5
-    num_n_cycles = [0] * 5
+    # cycles with length from 1 to 5 with different types
+    num_n_cycles = {}
     max_len = 0
 
     def __init__(self, num_all_cycles, num_n_cycles, max_len):
@@ -140,25 +155,45 @@ class CyclesInfo:
         self.max_len = max_len
 
 
-# Возвращает массив: количество циклов; [число циклов длины 1-5]; длина максимального цикла].
+# Возвращает количество циклов; [число циклов длины 1: (с хрупким ребром A; с хрупким ребром B),
+# длины 2: (с хрупкими ребрами A, A; с хрупкими ребрами A, B; с хрупкими ребрами B, B),
+# длины 3: (с хрупкими ребрами A, A, A; с хрупкими ребрами A, A, B; с хрупкими ребрами A, B, B;
+#           с хрупкими ребрами B, B, B),
+# длины 4: (с хрупкими ребрами A, A, A, A; с хрупкими ребрами A, A, A, B; с хрупкими ребрами A, A, B, B;
+#           с хрупкими ребрами A, B, B, B; с хрупкими ребрами B, B, B, B),
+# длины 5: (с хрупкими ребрами A, A, A, A, A; с хрупкими ребрами A, A, A, A, B; с хрупкими ребрами A, A, A, B, B;
+#           с хрупкими ребрами A, A, B, B, B; с хрупкими ребрами A, B, B, B, B; с хрупкими ребрами B, B, B, B, B)];
+# длина максимального цикла.
 # Длина цикла измеряется в количестве хрупких ребер в нем.
-def compute_cycles_lens(colors):
+def compute_cycles_info(colors, edges):
     cycles = {}
-    for c in colors:
+    for i, c in enumerate(colors):
         if c in cycles.keys():
-            cycles[c] += 1
+            cycles[c].append(edges[i].edge_type)
         else:
-            cycles[c] = 1
+            cycles[c] = [edges[i].edge_type]
 
-    lens = [0] * 6
+    cycles_info = {}
     max_len = 0
     for c in cycles.keys():
-        cur_len = cycles[c] // 2
+        cur_len = len(cycles[c]) // 2
         if cur_len < 6:
-            lens[cur_len] += 1
+            cycle_type = to_cycle_type(cycles[c])
+            if cycle_type in cycles_info:
+                cycles_info[cycle_type] += 1
+            else:
+                cycles_info[cycle_type] = 1
         max_len = max(max_len, cur_len)
 
-    return CyclesInfo(len(cycles), lens[:6], max_len)
+    return CyclesInfo(len(cycles), cycles_info, max_len)
+
+
+def to_cycle_type(edges_type):
+    edges_type.sort()
+    cycle_type = ""
+    for i in range(0, len(edges_type), 2):
+        cycle_type += edges_type[i]
+    return cycle_type
 
 
 def markov_process(n, k, p_aa, p_bb, p_ab, a_type, b_type, edges):
@@ -175,50 +210,37 @@ def markov_process(n, k, p_aa, p_bb, p_ab, a_type, b_type, edges):
 
     new_color = n
 
-    cnt_aa = 0
-    cnt_bb = 0
-    cnt_ab = 0
-
-    steps_cycles_info.append(compute_cycles_lens(colors))
+    steps_cycles_info.append(compute_cycles_info(colors, edges))
 
     for i in range(k):
         dcj_type = np.random.choice(['aa', 'bb', 'ab'], 1, p=probabilities)[0]
         joining_type = np.random.choice(['xu', 'xv'], 1)[0]
 
         if dcj_type == 'aa':
-            cnt_aa += 1
             edge_ind1, edge_ind2 = np.random.choice(len(a_type), 2, replace=False)
             edge1 = a_type[edge_ind1]
             edge2 = a_type[edge_ind2]
 
-            new_color = update_cycles(edge1, edge2, joining_type, edges, colors, new_color)
-
-            new_edges = update_edges(edge1, edge2, joining_type)
+            new_color, new_edges = update_cycles(edge1, edge2, joining_type, edges, colors, new_color)
             a_type[edge_ind1], a_type[edge_ind2] = new_edges
         elif dcj_type == 'bb':
-            cnt_bb += 1
             edge_ind1, edge_ind2 = np.random.choice(len(b_type), 2, replace=False)
             edge1 = b_type[edge_ind1]
             edge2 = b_type[edge_ind2]
 
-            new_color = update_cycles(edge1, edge2, joining_type, edges, colors, new_color)
-
-            new_edges = update_edges(edge1, edge2, joining_type)
+            new_color, new_edges = update_cycles(edge1, edge2, joining_type, edges, colors, new_color)
             b_type[edge_ind1], b_type[edge_ind2] = new_edges
         else:
-            cnt_ab += 1
             edge_ind1 = np.random.choice(len(a_type), 1)[0]
             edge_ind2 = np.random.choice(len(b_type), 1)[0]
 
             edge1 = a_type[edge_ind1]
             edge2 = b_type[edge_ind2]
 
-            new_color = update_cycles(edge1, edge2, joining_type, edges, colors, new_color)
-
-            new_edges = update_edges(edge1, edge2, joining_type)
+            new_color, new_edges = update_cycles(edge1, edge2, joining_type, edges, colors, new_color)
             a_type[edge_ind1], b_type[edge_ind2] = new_edges
 
-        steps_cycles_info.append(compute_cycles_lens(colors))
+        steps_cycles_info.append(compute_cycles_info(colors, edges))
 
         assert len_a == len(a_type) and len_b == len(b_type)
 
@@ -228,85 +250,84 @@ def markov_process(n, k, p_aa, p_bb, p_ab, a_type, b_type, edges):
 def aggregate_cycles_info(experiments):
     num_experiments = len(experiments)
     num_steps_of_markov_process = len(experiments[0])
-    num_interesting_cycles = 6
 
     aggregated_cycles_info = []
     for i in range(num_steps_of_markov_process):
         average_all_cycles_num = 0
-        average_len_cycles = [0] * num_interesting_cycles
+        average_cnt_cycles = {'A': 0, 'B': 0, 'AA': 0, 'AB': 0, 'BB': 0, 'AAA': 0, 'AAB': 0, 'ABB': 0, 'BBB': 0,
+                              'AAAA': 0, 'AAAB': 0, 'AABB': 0, 'ABBB': 0, 'BBBB': 0,
+                              'AAAAA': 0, 'AAAAB': 0, 'AAABB': 0, 'AABBB': 0, 'ABBBB': 0, 'BBBBB': 0}
+
         average_max_cycles_len = 0
         for j in range(num_experiments):
             average_all_cycles_num += experiments[j][i].num_all_cycles
-            for k in range(num_interesting_cycles):
-                average_len_cycles[k] += experiments[j][i].num_n_cycles[k]
+            for cycles_types in experiments[j][i].num_n_cycles.keys():
+                average_cnt_cycles[cycles_types] += experiments[j][i].num_n_cycles[cycles_types]
+
             average_max_cycles_len += experiments[j][i].max_len
 
         average_all_cycles_num /= num_experiments
-        for k in range(num_interesting_cycles):
-            average_len_cycles[k] /= num_experiments
+        for cycles_types in average_cnt_cycles.keys():
+            average_cnt_cycles[cycles_types] /= num_experiments
         average_max_cycles_len /= num_experiments
 
-        aggregated_cycles_info.append(CyclesInfo(average_all_cycles_num, average_len_cycles, average_max_cycles_len))
+        aggregated_cycles_info.append(CyclesInfo(average_all_cycles_num, average_cnt_cycles, average_max_cycles_len))
 
     return aggregated_cycles_info
 
 
-def draw_number_of_cycles(cycles, title):
-    k = len(cycles)
-    x = list(range(k))
-    plt.plot(x, cycles)
-    plt.title(title)
-    plt.xlabel('Number of swaps')
-    plt.ylabel('Cycles')
-    plt.grid()
-    plt.show()
-
-
 def log_aggregated_results(n, aggregated_cycles_info, f):
     with open(f, 'w', newline='') as f_log_lens:
-        fieldnames = ['n', 'k', 'all-cycles', '1-cycles', '2-cycles', '3-cycles', '4-cycles', '5-cycles',
+        fieldnames = ['n', 'k', 'all-cycles', 'A-cycles', 'B-cycles', 'AA-cycles', 'AB-cycles', 'BB-cycles',
+                      'AAA-cycles', 'AAB-cycles', 'ABB-cycles', 'BBB-cycles',
+                      'AAAA-cycles', 'AAAB-cycles', 'AABB-cycles', 'ABBB-cycles', 'BBBB-cycles',
+                      'AAAAA-cycles', 'AAAAB-cycles', 'AAABB-cycles', 'AABBB-cycles', 'ABBBB-cycles', 'BBBBB-cycles',
                       'max_cycle_len']
-        log_lens = csv.DictWriter(f_log_lens, fieldnames=fieldnames)
-        log_lens.writeheader()
+        log_cycles_info = csv.DictWriter(f_log_lens, fieldnames=fieldnames)
+        log_cycles_info.writeheader()
 
         for step, info in enumerate(aggregated_cycles_info):
-            log_lens.writerow(
-                {'n': n, 'k': step, 'all-cycles': info.num_all_cycles, '1-cycles': info.num_n_cycles[1],
-                 '2-cycles': info.num_n_cycles[2], '3-cycles': info.num_n_cycles[3],
-                 '4-cycles': info.num_n_cycles[4], '5-cycles': info.num_n_cycles[5], 'max_cycle_len': info.max_len})
+            log_cycles_info.writerow({'n': n, 'k': step, 'all-cycles': info.num_all_cycles,
+                                      'A-cycles': info.num_n_cycles['A'], 'B-cycles': info.num_n_cycles['B'],
+                                      'AA-cycles': info.num_n_cycles['AA'], 'AB-cycles': info.num_n_cycles['AB'],
+                                      'BB-cycles': info.num_n_cycles['BB'],
+                                      'AAA-cycles': info.num_n_cycles['AAA'], 'AAB-cycles': info.num_n_cycles['AAB'],
+                                      'ABB-cycles': info.num_n_cycles['ABB'], 'BBB-cycles': info.num_n_cycles['BBB'],
+                                      'AAAA-cycles': info.num_n_cycles['AAAA'],
+                                      'AAAB-cycles': info.num_n_cycles['AAAB'],
+                                      'AABB-cycles': info.num_n_cycles['AABB'],
+                                      'ABBB-cycles': info.num_n_cycles['ABBB'],
+                                      'BBBB-cycles': info.num_n_cycles['BBBB'],
+                                      'AAAAA-cycles': info.num_n_cycles['AAAAA'],
+                                      'AAAAB-cycles': info.num_n_cycles['AAAAB'],
+                                      'AAABB-cycles': info.num_n_cycles['AAABB'],
+                                      'AABBB-cycles': info.num_n_cycles['AABBB'],
+                                      'ABBBB-cycles': info.num_n_cycles['ABBBB'],
+                                      'BBBBB-cycles': info.num_n_cycles['BBBBB'],
+                                      'max_cycle_len': info.max_len})
 
 
 def main():
     # n, k = read_number_of_regions_and_steps()
     # p_aa, p_bb, p_ab = read_probabilities()
-    n, p_aa, p_bb = 1000, 0.5, 0.5
+    start_time = time.time()
+    n, p_aa, p_bb = 1000, 0.5, 0.45
     p_ab = 1 - p_aa - p_bb
     k = n * 2
-    p_a_type_edges = 0.8
-    p_split_a_b = [p_a_type_edges, 1 - p_a_type_edges]
+    a_type_edges_proportion = 0.5
 
     experiments = []
-    for i in range(10):
-        a_type, b_type, edges = split_fragile_edges(n, p_split_a_b)
+    for i in range(20):
+        a_type, b_type, edges = split_fragile_edges(n, a_type_edges_proportion)
         for j in range(10):
             experiments.append(markov_process(n, k, p_aa, p_bb, p_ab, a_type.copy(), b_type.copy(), edges.copy()))
 
     aggregated_cycles_info = aggregate_cycles_info(experiments)
 
-    log_aggregated_results(n, aggregated_cycles_info, 'logs/log_lens_100_n1000_paa0_5_pbb0_5_beta0_8.csv')
-
-    draw_number_of_cycles(list(map(lambda info: info.num_all_cycles, aggregated_cycles_info)),
-                          'Number of cycles depends of number of swaps')
-    draw_number_of_cycles(list(map(lambda info: info.num_n_cycles[1], aggregated_cycles_info)),
-                          'Number of 1-cycles depends of number of swaps')
-    draw_number_of_cycles(list(map(lambda info: info.num_n_cycles[2], aggregated_cycles_info)),
-                          'Number of 2-cycles depends of number of swaps')
-    draw_number_of_cycles(list(map(lambda info: info.num_n_cycles[3], aggregated_cycles_info)),
-                          'Number of 3-cycles depends of number of swaps')
-    draw_number_of_cycles(list(map(lambda info: info.num_n_cycles[4], aggregated_cycles_info)),
-                          'Number of 4-cycles depends of number of swaps')
-    draw_number_of_cycles(list(map(lambda info: info.num_n_cycles[5], aggregated_cycles_info)),
-                          'Number of 5-cycles depends of number of swaps')
+    log_aggregated_results(n, aggregated_cycles_info,
+                           'logs/cycles_info/n1000/20_10_experiments/' + 'paa0_5_pbb0_45_alpha0_5.csv')
+    end_time = time.time()
+    print(end_time - start_time)
 
 
 if __name__ == '__main__':
