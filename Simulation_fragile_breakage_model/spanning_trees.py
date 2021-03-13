@@ -1,3 +1,4 @@
+import csv
 import itertools
 from functools import cmp_to_key
 
@@ -5,6 +6,9 @@ import numpy as np
 
 
 def generate_all_dandelion_codes(code, n):
+    if n < 2:
+        return []
+
     if len(code) == n - 2:
         return [code]
 
@@ -118,14 +122,60 @@ def count_different_trees(spanning_trees):
     return different_trees
 
 
-def main():
-    a_vertices, b_vertices = 2, 2
+def cmp(n1, n2):
+    n1_aa, n1_ab, n1_bb = n1
+    n2_aa, n2_ab, n2_bb = n2
+    if n1_aa != n2_aa:
+        return n1_aa - n2_aa
+    elif n1_ab != n2_ab:
+        return n1_ab - n2_ab
+    return n1_bb < n2_bb
+
+
+def write_log(different_trees, f_name):
+    sorted_tree_types = sorted(list(different_trees.keys()), key=cmp_to_key(cmp))
+    f_name += ".csv"
+    with open(f_name, "w", newline="") as log:
+        fieldnames = ["n_aa", "n_ab", "n_bb", "cnt"]
+        log_lens = csv.DictWriter(log, fieldnames=fieldnames)
+        log_lens.writeheader()
+
+        for trees in sorted_tree_types:
+            n_aa, n_ab, n_bb = trees
+            log_lens.writerow(
+                {
+                    "n_aa": n_aa,
+                    "n_ab": n_ab,
+                    "n_bb": n_bb,
+                    "cnt": different_trees[trees],
+                }
+            )
+
+
+def log_spanning_trees_types(a_vertices, b_vertices):
     spanning_trees = generate_all_spanning_trees(a_vertices, b_vertices)
     different_trees = count_different_trees(spanning_trees)
 
-    for trees in different_trees.keys():
-        n_aa, n_ab, n_bb = trees
-        print('n_aa:', n_aa, ', n_ab:', n_ab, ', n_bb:', n_bb, '    cnt:', different_trees[trees])
+    sorted_tree_types = sorted(list(different_trees.keys()), key=cmp_to_key(cmp))
+    sum_trees = 0
+    for trees in sorted_tree_types:
+        sum_trees += different_trees[trees]
+
+    if a_vertices + b_vertices < 2:
+        assert sum_trees == 0
+    else:
+        assert sum_trees == (a_vertices + b_vertices) ** (a_vertices + b_vertices - 2)
+
+    f_folder = "logs/spanning_trees/"
+    f_name = "a_vertices=" + str(a_vertices) + ", b_vertices=" + str(b_vertices)
+    write_log(different_trees, f_folder + f_name)
+
+
+def main():
+    n = 5
+    for a_vertices in range(n):
+        for b_vertices in range(n):
+            log_spanning_trees_types(a_vertices, b_vertices)
 
 
 if __name__ == "__main__":
