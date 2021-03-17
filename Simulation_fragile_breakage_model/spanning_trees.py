@@ -1,5 +1,6 @@
 import csv
 import itertools
+import time
 from functools import cmp_to_key
 
 import numpy as np
@@ -158,7 +159,7 @@ def write_log(different_trees, f_name):
 
 
 def log_spanning_trees_types(
-    a_vertices, b_vertices, is_special_codes=False, k1=0, k3=0
+        a_vertices, b_vertices, is_special_codes=False, k1=0, k3=0
 ):
     spanning_trees = generate_all_spanning_trees(
         a_vertices, b_vertices, is_special_codes, k1, k3
@@ -171,15 +172,23 @@ def log_spanning_trees_types(
     for trees in sorted_tree_types:
         sum_trees += different_trees[trees]
 
-    if not is_special_codes:
-        if a_vertices + b_vertices < 2:
-            assert len(spanning_trees) == sum_trees == 0
-        else:
+    if a_vertices + b_vertices < 2:
+        assert len(spanning_trees) == sum_trees == 0
+    else:
+        if not is_special_codes:
             assert (
-                len(spanning_trees)
-                == sum_trees
-                == (a_vertices + b_vertices) ** (a_vertices + b_vertices - 2)
+                    len(spanning_trees)
+                    == sum_trees
+                    == (a_vertices + b_vertices) ** (a_vertices + b_vertices - 2)
             )
+        else:
+            assert len(different_trees) == 1
+            assert (
+                    len(spanning_trees)
+                    == sum_trees
+                    == a_vertices ** (k1 + b_vertices - k3 - 1) * b_vertices ** (k3 + a_vertices - k1 - 1)
+            )
+            assert (sorted_tree_types[0] == (k1, a_vertices + b_vertices - 1 - k1 - k3, k3))
 
     f_folder = "logs/spanning_trees/"
     f_name = "a_vertices=" + str(a_vertices) + ", b_vertices=" + str(b_vertices)
@@ -222,9 +231,20 @@ def generate_special_codes(n, m, k1, k3):
     return codes
 
 
+def log_special_spanning_trees():
+    n = 5
+    for a_vertices in range(1, n):
+        for b_vertices in range(1, n):
+            for k1 in range(a_vertices):
+                for k3 in range(b_vertices):
+                    log_spanning_trees_types(a_vertices, b_vertices, True, k1, k3)
+
+
 def main():
+    start_time = time.time()
     # log_different_spanning_trees()
-    log_spanning_trees_types(3, 4, True, 1, 3)
+    log_special_spanning_trees()
+    print(time.time() - start_time)
 
 
 if __name__ == "__main__":

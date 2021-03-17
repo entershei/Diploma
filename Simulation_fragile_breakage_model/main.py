@@ -409,8 +409,7 @@ def main():
         + "_experiments/"
         + "paa0_45_pbb0_45_alpha0_5.csv",
     )
-    end_time = time.time()
-    print(end_time - start_time)
+    print(time.time() - start_time)
 
 
 if __name__ == "__main__":
