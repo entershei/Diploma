@@ -5,16 +5,16 @@ from functools import cmp_to_key
 import numpy as np
 
 
-def generate_all_dandelion_codes(code, n):
-    if n < 2:
+def generate_all_dandelion_codes(code, code_len, vertices):
+    if code_len < 0:
         return []
 
-    if len(code) == n - 2:
+    if len(code) == code_len:
         return [code]
 
     res = []
-    for i in range(n):
-        res += generate_all_dandelion_codes(code + [i], n)
+    for i in vertices:
+        res += generate_all_dandelion_codes(code + [i], code_len, vertices)
     return res
 
 
@@ -75,24 +75,29 @@ def decode_dandelion_code(code):
     return tree
 
 
-def convert_to_ab_graph(edges, vertices):
+def convert_to_ab_graph(edges, a_vertices, b_vertices):
+    vertices = ["A"] * a_vertices + ["B"] * b_vertices
+    for i in range(a_vertices + b_vertices):
+        vertices[i] = str(i) + "_" + vertices[i]
+
     tree = []
     for edge in edges:
         tree.append([vertices[edge[0]], vertices[edge[1]]])
     return tree
 
 
-def generate_all_spanning_trees(a_vertices, b_vertices):
-    codes = generate_all_dandelion_codes([], a_vertices + b_vertices)
-
-    vertices = ["A"] * a_vertices + ["B"] * b_vertices
-    for i in range(a_vertices + b_vertices):
-        vertices[i] = str(i) + "_" + vertices[i]
+def generate_all_spanning_trees(a_vertices, b_vertices, is_special_codes, k1, k3):
+    if is_special_codes:
+        codes = generate_special_codes(a_vertices, b_vertices, k1, k3)
+    else:
+        codes = generate_all_dandelion_codes(
+            [], a_vertices + b_vertices - 2, range(a_vertices + b_vertices)
+        )
 
     spanning_trees = []
     for code in codes:
         spanning_trees.append(
-            convert_to_ab_graph(decode_dandelion_code(code), vertices)
+            convert_to_ab_graph(decode_dandelion_code(code), a_vertices, b_vertices)
         )
 
     return spanning_trees
@@ -152,8 +157,13 @@ def write_log(different_trees, f_name):
             )
 
 
-def log_spanning_trees_types(a_vertices, b_vertices):
-    spanning_trees = generate_all_spanning_trees(a_vertices, b_vertices)
+def log_spanning_trees_types(
+    a_vertices, b_vertices, is_special_codes=False, k1=0, k3=0
+):
+    spanning_trees = generate_all_spanning_trees(
+        a_vertices, b_vertices, is_special_codes, k1, k3
+    )
+
     different_trees = count_different_trees(spanning_trees)
 
     sorted_tree_types = sorted(list(different_trees.keys()), key=cmp_to_key(cmp))
@@ -161,21 +171,60 @@ def log_spanning_trees_types(a_vertices, b_vertices):
     for trees in sorted_tree_types:
         sum_trees += different_trees[trees]
 
-    if a_vertices + b_vertices < 2:
-        assert sum_trees == 0
-    else:
-        assert sum_trees == (a_vertices + b_vertices) ** (a_vertices + b_vertices - 2)
+    if not is_special_codes:
+        if a_vertices + b_vertices < 2:
+            assert len(spanning_trees) == sum_trees == 0
+        else:
+            assert (
+                len(spanning_trees)
+                == sum_trees
+                == (a_vertices + b_vertices) ** (a_vertices + b_vertices - 2)
+            )
 
     f_folder = "logs/spanning_trees/"
     f_name = "a_vertices=" + str(a_vertices) + ", b_vertices=" + str(b_vertices)
+
+    if is_special_codes:
+        f_folder += "special_trees/"
+        f_name += ", k1=" + str(k1) + ", k3=" + str(k3)
+    else:
+        f_folder += "complete_graph/"
+
     write_log(different_trees, f_folder + f_name)
 
 
-def main():
+def log_different_spanning_trees():
     n = 5
     for a_vertices in range(n):
         for b_vertices in range(n):
             log_spanning_trees_types(a_vertices, b_vertices)
+
+
+# [2..k1+1]       : [0; n)
+# [k1+2..n]       : [n; n+m)
+# [n+1..n+k3+1]   : [n, n+m)
+# [n+k3+2..n+m-1] : [0; n)
+def generate_special_codes(n, m, k1, k3):
+    k2 = n - k1 - 1
+    k4 = m - k3 - 1
+    assert k1 >= 0 and k2 >= 0 and k3 >= 0 and k4 >= 0
+    part1 = generate_all_dandelion_codes([], k1, range(n))
+    part2 = generate_all_dandelion_codes([], k2, range(n, n + m))
+    part3 = generate_all_dandelion_codes([], k3, range(n, n + m))
+    part4 = generate_all_dandelion_codes([], k4, range(n))
+
+    codes = []
+    for p1 in part1:
+        for p2 in part2:
+            for p3 in part3:
+                for p4 in part4:
+                    codes.append(p1 + p2 + p3 + p4)
+    return codes
+
+
+def main():
+    # log_different_spanning_trees()
+    log_spanning_trees_types(3, 4, True, 1, 3)
 
 
 if __name__ == "__main__":
