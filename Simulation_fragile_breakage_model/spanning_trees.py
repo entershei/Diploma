@@ -2,6 +2,8 @@ import csv
 import itertools
 import time
 from functools import cmp_to_key
+import math
+
 
 import numpy as np
 
@@ -89,7 +91,7 @@ def convert_to_ab_graph(edges, a_vertices, b_vertices):
 
 def generate_all_spanning_trees(a_vertices, b_vertices, is_special_codes, k1, k3):
     if is_special_codes:
-        codes = generate_special_codes(a_vertices, b_vertices, k1, k3)
+        codes = generate_all_special_codes(a_vertices, b_vertices, k1, k3)
     else:
         codes = generate_all_dandelion_codes(
             [], a_vertices + b_vertices - 2, range(a_vertices + b_vertices)
@@ -158,8 +160,12 @@ def write_log(different_trees, f_name):
             )
 
 
+def c_n_k(n, k):
+    return math.factorial(n) / math.factorial(k) / math.factorial(n - k)
+
+
 def log_spanning_trees_types(
-        a_vertices, b_vertices, is_special_codes=False, k1=0, k3=0
+    a_vertices, b_vertices, is_special_codes=False, k1=0, k3=0
 ):
     spanning_trees = generate_all_spanning_trees(
         a_vertices, b_vertices, is_special_codes, k1, k3
@@ -177,18 +183,25 @@ def log_spanning_trees_types(
     else:
         if not is_special_codes:
             assert (
-                    len(spanning_trees)
-                    == sum_trees
-                    == (a_vertices + b_vertices) ** (a_vertices + b_vertices - 2)
+                len(spanning_trees)
+                == sum_trees
+                == (a_vertices + b_vertices) ** (a_vertices + b_vertices - 2)
             )
         else:
             assert len(different_trees) == 1
             assert (
-                    len(spanning_trees)
-                    == sum_trees
-                    == a_vertices ** (k1 + b_vertices - k3 - 1) * b_vertices ** (k3 + a_vertices - k1 - 1)
+                len(spanning_trees)
+                == sum_trees
+                == c_n_k(a_vertices - 1, k1)
+                * c_n_k(b_vertices - 1, k3)
+                * a_vertices ** (k1 + b_vertices - k3 - 1)
+                * b_vertices ** (k3 + a_vertices - k1 - 1)
             )
-            assert (sorted_tree_types[0] == (k1, a_vertices + b_vertices - 1 - k1 - k3, k3))
+            assert sorted_tree_types[0] == (
+                k1,
+                a_vertices + b_vertices - 1 - k1 - k3,
+                k3,
+            )
 
     f_folder = "logs/spanning_trees/"
     f_name = "a_vertices=" + str(a_vertices) + ", b_vertices=" + str(b_vertices)
@@ -204,16 +217,55 @@ def log_spanning_trees_types(
 
 def log_different_spanning_trees():
     n = 5
-    for a_vertices in range(n):
-        for b_vertices in range(n):
+    for a_vertices in range(1, n):
+        for b_vertices in range(1, n):
             log_spanning_trees_types(a_vertices, b_vertices)
+
+
+def all_possible_shuffles(part1, part2):
+    len_of_part1_elements = 0 if len(part1) == 0 else len(part1[0])
+    len_of_part2_elements = 0 if len(part2) == 0 else len(part2[0])
+
+    all_positions_for_part1_elements = map(
+        list,
+        list(
+            itertools.combinations(
+                range(len_of_part1_elements + len_of_part2_elements),
+                len_of_part1_elements,
+            )
+        ),
+    )
+    all_positions = []
+    for positions_for_par1 in all_positions_for_part1_elements:
+        positions = [2] * (len_of_part1_elements + len_of_part2_elements)
+        for pos in positions_for_par1:
+            positions[pos] = 1
+        all_positions.append(positions)
+
+    shuffles = []
+    for p1 in part1:
+        for p2 in part2:
+            for positions in all_positions:
+                shuffle = []
+                it1 = 0
+                it2 = 0
+                for pos in positions:
+                    if pos == 1:
+                        shuffle.append(p1[it1])
+                        it1 += 1
+                    else:
+                        shuffle.append(p2[it2])
+                        it2 += 1
+                shuffles.append(shuffle)
+    return shuffles
 
 
 # [2..k1+1]       : [0; n)
 # [k1+2..n]       : [n; n+m)
 # [n+1..n+k3+1]   : [n, n+m)
 # [n+k3+2..n+m-1] : [0; n)
-def generate_special_codes(n, m, k1, k3):
+# Then shuffle part1 with part2 and part3 with part4.
+def generate_all_special_codes(n, m, k1, k3):
     k2 = n - k1 - 1
     k4 = m - k3 - 1
     assert k1 >= 0 and k2 >= 0 and k3 >= 0 and k4 >= 0
@@ -223,11 +275,13 @@ def generate_special_codes(n, m, k1, k3):
     part4 = generate_all_dandelion_codes([], k4, range(n))
 
     codes = []
-    for p1 in part1:
-        for p2 in part2:
-            for p3 in part3:
-                for p4 in part4:
-                    codes.append(p1 + p2 + p3 + p4)
+
+    shuffled_part1_2 = all_possible_shuffles(part1, part2)
+    shuffled_part3_4 = all_possible_shuffles(part3, part4)
+
+    for p1 in shuffled_part1_2:
+        for p2 in shuffled_part3_4:
+            codes.append(p1 + p2)
     return codes
 
 
@@ -242,8 +296,10 @@ def log_special_spanning_trees():
 
 def main():
     start_time = time.time()
-    # log_different_spanning_trees()
+
+    log_different_spanning_trees()
     log_special_spanning_trees()
+
     print(time.time() - start_time)
 
 
