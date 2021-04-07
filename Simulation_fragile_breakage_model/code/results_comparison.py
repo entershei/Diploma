@@ -3,6 +3,8 @@ import math
 
 import matplotlib.pyplot as plt
 
+import parameters
+
 
 def read_logs(f, cycles_types):
     num_c_n = []
@@ -219,34 +221,46 @@ def result_comparison(
         p_bb=p_bb,
         alpha=alpha,
         compute_analytical_c_n=compute_analytical_c_n,
-        f_out="logs/analytical_cycles/n1000/c" + str(cycles) + "/" + file_end,
+        f_out="logs/analytical_cycles/n"
+        + str(parameters.NUMBER_OF_FRAGILE_EDGES)
+        + "/c"
+        + str(cycles)
+        + "/"
+        + file_end,
         field_names=field_names + ["all"],
     )
 
 
 def main():
-    experiments = "n1000/50_20_experiments/"
-
-    different_parameters = [
-        ("paa0_2_pbb0_6_alpha0_9.csv", 0.2, 0.6, 0.9),
-        ("paa0_4_pbb0_35_alpha0_7.csv", 0.4, 0.35, 0.7),
-        ("paa0_5_pbb0_5_alpha0_5.csv", 0.5, 0.5, 0.5),
-        ("paa0_5_pbb0_5_alpha0_8.csv", 0.5, 0.5, 0.8),
-        ("paa0_5_pbb0_45_alpha0_5.csv", 0.5, 0.45, 0.5),
-        ("paa0_45_pbb0_45_alpha0_5.csv", 0.45, 0.45, 0.5),
-    ]
-
-    for cur_parameters in different_parameters:
+    for cur_parameters in parameters.PROBABILITIES_WITH_ALPHA:
         file_end, p_aa, p_bb, alpha = cur_parameters
 
         result_comparison(
-            1, file_end, p_aa, p_bb, alpha, experiments, compute_analytical_c1
+            1,
+            file_end,
+            p_aa,
+            p_bb,
+            alpha,
+            parameters.EXPERIMENTS_FIELD_NAME,
+            compute_analytical_c1,
         )
         result_comparison(
-            2, file_end, p_aa, p_bb, alpha, experiments, compute_analytical_c2
+            2,
+            file_end,
+            p_aa,
+            p_bb,
+            alpha,
+            parameters.EXPERIMENTS_FIELD_NAME,
+            compute_analytical_c2,
         )
         result_comparison(
-            3, file_end, p_aa, p_bb, alpha, experiments, compute_analytical_c3
+            3,
+            file_end,
+            p_aa,
+            p_bb,
+            alpha,
+            parameters.EXPERIMENTS_FIELD_NAME,
+            compute_analytical_c3,
         )
 
 

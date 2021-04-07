@@ -3,18 +3,17 @@ import time
 
 import numpy as np
 
+import parameters
+from utils import generate_cycle_types, generate_cycle_names
 
-def read_number_of_fragile_regions_and_steps():
+
+def read_parameters_from_console():
     print("Enter number of fragile regions")
     n = int(input())
 
     print("Enter number of steps")
     k = int(input())
 
-    return n, k
-
-
-def read_probabilities():
     print("Enter probability of rearrangement between A-type fragile regions:")
     p_aa = float(input())
 
@@ -26,7 +25,7 @@ def read_probabilities():
 
     assert p_aa >= 0 and p_bb >= 0 and p_ab >= 0
 
-    return p_aa, p_bb, p_ab
+    return n, k, p_aa, p_bb, p_ab
 
 
 class EdgeInfo:
@@ -161,14 +160,11 @@ class CyclesInfo:
         self.max_len = max_len
 
 
-# Возвращает количество циклов; [число циклов длины 1: (с хрупким ребром A; с хрупким ребром B),
-# длины 2: (с хрупкими ребрами A, A; с хрупкими ребрами A, B; с хрупкими ребрами B, B),
-# длины 3: (с хрупкими ребрами A, A, A; с хрупкими ребрами A, A, B; с хрупкими ребрами A, B, B;
-#           с хрупкими ребрами B, B, B),
-# длины 4: (с хрупкими ребрами A, A, A, A; с хрупкими ребрами A, A, A, B; с хрупкими ребрами A, A, B, B;
-#           с хрупкими ребрами A, B, B, B; с хрупкими ребрами B, B, B, B),
-# длины 5: (с хрупкими ребрами A, A, A, A, A; с хрупкими ребрами A, A, A, A, B; с хрупкими ребрами A, A, A, B, B;
-#           с хрупкими ребрами A, A, B, B, B; с хрупкими ребрами A, B, B, B, B; с хрупкими ребрами B, B, B, B, B)];
+# Возвращает:
+# количество циклов;
+# [число циклов длины 1: (с хрупким ребром A; с хрупким ребром B),
+#  длины 2: (с хрупкими ребрами A, A; с хрупкими ребрами A, B; с хрупкими ребрами B, B),
+#  и так далее до длины 5.];
 # длина максимального цикла.
 # Длина цикла измеряется в количестве хрупких ребер в нем.
 def compute_cycles_info(colors, edges):
@@ -259,35 +255,16 @@ def markov_process(n, k, p_aa, p_bb, p_ab, a_type, b_type, edges):
     return steps_cycles_info
 
 
-def aggregate_cycles_info(experiments):
+def aggregate_cycles_info(experiments, max_cycle_len=5):
     num_experiments = len(experiments)
     num_steps_of_markov_process = len(experiments[0])
 
     aggregated_cycles_info = []
     for i in range(num_steps_of_markov_process):
         average_all_cycles_num = 0
-        average_cnt_cycles = {
-            "A": 0,
-            "B": 0,
-            "AA": 0,
-            "AB": 0,
-            "BB": 0,
-            "AAA": 0,
-            "AAB": 0,
-            "ABB": 0,
-            "BBB": 0,
-            "AAAA": 0,
-            "AAAB": 0,
-            "AABB": 0,
-            "ABBB": 0,
-            "BBBB": 0,
-            "AAAAA": 0,
-            "AAAAB": 0,
-            "AAABB": 0,
-            "AABBB": 0,
-            "ABBBB": 0,
-            "BBBBB": 0,
-        }
+        average_cnt_cycles = {}
+        for cycle_name in generate_cycle_types(1, max_cycle_len):
+            average_cnt_cycles[cycle_name] = 0
 
         average_max_cycles_len = 0
         for j in range(num_experiments):
@@ -313,102 +290,63 @@ def aggregate_cycles_info(experiments):
     return aggregated_cycles_info
 
 
-def log_aggregated_results(n, aggregated_cycles_info, f):
+def log_aggregated_results(n, aggregated_cycles_info, f, max_cycle_len=5):
     with open(f, "w", newline="") as f_log_lens:
-        fieldnames = [
-            "n",
-            "k",
-            "all-cycles",
-            "A-cycles",
-            "B-cycles",
-            "AA-cycles",
-            "AB-cycles",
-            "BB-cycles",
-            "AAA-cycles",
-            "AAB-cycles",
-            "ABB-cycles",
-            "BBB-cycles",
-            "AAAA-cycles",
-            "AAAB-cycles",
-            "AABB-cycles",
-            "ABBB-cycles",
-            "BBBB-cycles",
-            "AAAAA-cycles",
-            "AAAAB-cycles",
-            "AAABB-cycles",
-            "AABBB-cycles",
-            "ABBBB-cycles",
-            "BBBBB-cycles",
-            "max_cycle_len",
-        ]
+        cycles_names = generate_cycle_names(1, max_cycle_len)
+        fieldnames = ["n", "k", "all-cycles"] + cycles_names + ["max_cycle_len"]
+
         log_cycles_info = csv.DictWriter(f_log_lens, fieldnames=fieldnames)
         log_cycles_info.writeheader()
 
         for step, info in enumerate(aggregated_cycles_info):
-            log_cycles_info.writerow(
-                {
-                    "n": n,
-                    "k": step,
-                    "all-cycles": info.num_all_cycles,
-                    "A-cycles": info.num_n_cycles["A"],
-                    "B-cycles": info.num_n_cycles["B"],
-                    "AA-cycles": info.num_n_cycles["AA"],
-                    "AB-cycles": info.num_n_cycles["AB"],
-                    "BB-cycles": info.num_n_cycles["BB"],
-                    "AAA-cycles": info.num_n_cycles["AAA"],
-                    "AAB-cycles": info.num_n_cycles["AAB"],
-                    "ABB-cycles": info.num_n_cycles["ABB"],
-                    "BBB-cycles": info.num_n_cycles["BBB"],
-                    "AAAA-cycles": info.num_n_cycles["AAAA"],
-                    "AAAB-cycles": info.num_n_cycles["AAAB"],
-                    "AABB-cycles": info.num_n_cycles["AABB"],
-                    "ABBB-cycles": info.num_n_cycles["ABBB"],
-                    "BBBB-cycles": info.num_n_cycles["BBBB"],
-                    "AAAAA-cycles": info.num_n_cycles["AAAAA"],
-                    "AAAAB-cycles": info.num_n_cycles["AAAAB"],
-                    "AAABB-cycles": info.num_n_cycles["AAABB"],
-                    "AABBB-cycles": info.num_n_cycles["AABBB"],
-                    "ABBBB-cycles": info.num_n_cycles["ABBBB"],
-                    "BBBBB-cycles": info.num_n_cycles["BBBBB"],
-                    "max_cycle_len": info.max_len,
-                }
-            )
+            cur_result = {
+                "n": n,
+                "k": step,
+                "all-cycles": info.num_all_cycles,
+                "max_cycle_len": info.max_len,
+            }
+            for cycle_name in cycles_names:
+                cur_result[cycle_name] = info.num_n_cycles[cycle_name]
+            log_cycles_info.writerow(cur_result)
 
 
 def main():
-    # n, k = read_number_of_regions_and_steps()
-    # p_aa, p_bb, p_ab = read_probabilities()
-    start_time = time.time()
-    n, p_aa, p_bb = 1000, 0.45, 0.45
-    a_type_edges_proportion = 0.5
+    # n, k, p_aa, p_bb, p_ab = read_parameters_from_console()
 
-    p_ab = 1 - p_aa - p_bb
+    start_time = time.time()
+
+    n = parameters.NUMBER_OF_FRAGILE_EDGES
     k = n * 2
 
-    experiments = []
-    different_fragile_edges_splits = 50
-    markov_process_experiments = 20
-    for i in range(different_fragile_edges_splits):
-        a_type, b_type, edges = split_fragile_edges(n, a_type_edges_proportion)
-        for j in range(markov_process_experiments):
-            experiments.append(
-                markov_process(
-                    n, k, p_aa, p_bb, p_ab, a_type.copy(), b_type.copy(), edges.copy()
+    for parameter in parameters.PROBABILITIES_WITH_ALPHA:
+        file_ending, p_aa, p_bb, a_type_edges_proportion = parameter
+        p_ab = 1 - p_aa - p_bb
+
+        experiments = []
+        for i in range(parameters.DIFFERENT_FRAGILE_EDGES_SPLITS):
+            a_type, b_type, edges = split_fragile_edges(n, a_type_edges_proportion)
+            for j in range(parameters.MARKOV_PROCESS_EXPERIMENTS_ON_ONE_SPLIT):
+                experiments.append(
+                    markov_process(
+                        n,
+                        k,
+                        p_aa,
+                        p_bb,
+                        p_ab,
+                        a_type.copy(),
+                        b_type.copy(),
+                        edges.copy(),
+                    )
                 )
-            )
 
-    aggregated_cycles_info = aggregate_cycles_info(experiments)
+        aggregated_cycles_info = aggregate_cycles_info(experiments)
 
-    log_aggregated_results(
-        n,
-        aggregated_cycles_info,
-        "logs/cycles_info/n1000/"
-        + str(different_fragile_edges_splits)
-        + "_"
-        + str(markov_process_experiments)
-        + "_experiments/"
-        + "paa0_45_pbb0_45_alpha0_5.csv",
-    )
+        log_aggregated_results(
+            n,
+            aggregated_cycles_info,
+            "logs/cycles_info/" + parameters.EXPERIMENTS_FIELD_NAME + file_ending,
+        )
+
     print(time.time() - start_time)
 
 
