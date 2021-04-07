@@ -4,7 +4,7 @@ import time
 import numpy as np
 
 import parameters
-from utils import generate_cycle_types, generate_cycle_names
+from utils import generate_cycle_types
 
 
 def read_parameters_from_console():
@@ -263,8 +263,8 @@ def aggregate_cycles_info(experiments, max_cycle_len=5):
     for i in range(num_steps_of_markov_process):
         average_all_cycles_num = 0
         average_cnt_cycles = {}
-        for cycle_name in generate_cycle_types(1, max_cycle_len):
-            average_cnt_cycles[cycle_name] = 0
+        for cycle_type in generate_cycle_types(1, max_cycle_len):
+            average_cnt_cycles[cycle_type] = 0
 
         average_max_cycles_len = 0
         for j in range(num_experiments):
@@ -292,8 +292,8 @@ def aggregate_cycles_info(experiments, max_cycle_len=5):
 
 def log_aggregated_results(n, aggregated_cycles_info, f, max_cycle_len=5):
     with open(f, "w", newline="") as f_log_lens:
-        cycles_names = generate_cycle_names(1, max_cycle_len)
-        fieldnames = ["n", "k", "all-cycles"] + cycles_names + ["max_cycle_len"]
+        cycle_types = generate_cycle_types(1, max_cycle_len)
+        fieldnames = ["n", "k", "all"] + cycle_types + ["max_cycle_len"]
 
         log_cycles_info = csv.DictWriter(f_log_lens, fieldnames=fieldnames)
         log_cycles_info.writeheader()
@@ -302,11 +302,11 @@ def log_aggregated_results(n, aggregated_cycles_info, f, max_cycle_len=5):
             cur_result = {
                 "n": n,
                 "k": step,
-                "all-cycles": info.num_all_cycles,
+                "all": info.num_all_cycles,
                 "max_cycle_len": info.max_len,
             }
-            for cycle_name in cycles_names:
-                cur_result[cycle_name] = info.num_n_cycles[cycle_name]
+            for cycle_type in cycle_types:
+                cur_result[cycle_type] = info.num_n_cycles[cycle_type]
             log_cycles_info.writerow(cur_result)
 
 
