@@ -4,6 +4,7 @@ import math
 import matplotlib.pyplot as plt
 
 import parameters
+from utils import generate_cycle_types
 
 
 def read_logs(f, cycles_types):
@@ -29,7 +30,7 @@ def compute_analytical_c1(x, p_aa, p_bb, alpha):
     beta = 1 - alpha
     a_cycles = alpha * math.exp(-1 * x * (1 + p_aa - p_bb) / alpha)
     b_cycles = beta * math.exp(-1 * x * (1 + p_bb - p_aa) / beta)
-    return {"A-cycles": a_cycles, "B-cycles": b_cycles, "all": a_cycles + b_cycles}
+    return {"A": a_cycles, "B": b_cycles, "all": a_cycles + b_cycles}
 
 
 def compute_analytical_c2(x, p_aa, p_bb, alpha):
@@ -49,9 +50,9 @@ def compute_analytical_c2(x, p_aa, p_bb, alpha):
     )
 
     return {
-        "AA-cycles": aa_cycles,
-        "AB-cycles": ab_cycles,
-        "BB-cycles": bb_cycles,
+        "AA": aa_cycles,
+        "AB": ab_cycles,
+        "BB": bb_cycles,
         "all": aa_cycles + ab_cycles + bb_cycles,
     }
 
@@ -84,10 +85,10 @@ def compute_analytical_c3(x, p_aa, p_bb, alpha):
     )
 
     return {
-        "AAA-cycles": aaa_cycles,
-        "AAB-cycles": aab_cycles,
-        "ABB-cycles": abb_cycles,
-        "BBB-cycles": bbb_cycles,
+        "AAA": aaa_cycles,
+        "AAB": aab_cycles,
+        "ABB": abb_cycles,
+        "BBB": bbb_cycles,
         "all": aaa_cycles + aab_cycles + abb_cycles + bbb_cycles,
     }
 
@@ -188,19 +189,10 @@ def compute_analytical_cycles(
     write_analytical_cycles(analytical_cycles_depends_on_x, f_out, field_names)
 
 
-def generate_field_names(n):
-    cycle_types = []
-    for i in range(n + 1):
-        cycle_types.append("A" * (n - i) + "B" * i)
-    return cycle_types
-
-
 def result_comparison(
     cycles, file_end, p_aa, p_bb, alpha, experiments, compute_analytical_c_n
 ):
-    field_names = generate_field_names(cycles)
-    for i in range(len(field_names)):
-        field_names[i] += "-cycles"
+    cycle_types = generate_cycle_types(cycles, cycles)
 
     compare_n_cycles(
         f_in="logs/cycles_info/" + experiments + file_end,
@@ -212,7 +204,7 @@ def result_comparison(
         p_aa=p_aa,
         p_bb=p_bb,
         alpha=alpha,
-        cycles_types=field_names,
+        cycles_types=cycle_types,
         compute_analytical_c_n=compute_analytical_c_n,
     )
 
@@ -227,7 +219,7 @@ def result_comparison(
         + str(cycles)
         + "/"
         + file_end,
-        field_names=field_names + ["all"],
+        field_names=cycle_types + ["all"],
     )
 
 

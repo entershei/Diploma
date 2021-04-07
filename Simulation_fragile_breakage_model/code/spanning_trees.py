@@ -226,14 +226,16 @@ def all_possible_shuffles(part1, part2):
     len_of_part1_elements = 0 if len(part1) == 0 else len(part1[0])
     len_of_part2_elements = 0 if len(part2) == 0 else len(part2[0])
 
-    all_positions_for_part1_elements = map(
-        list,
-        list(
-            itertools.combinations(
-                range(len_of_part1_elements + len_of_part2_elements),
-                len_of_part1_elements,
-            )
-        ),
+    all_positions_for_part1_elements = list(
+        map(
+            list,
+            list(
+                itertools.combinations(
+                    range(len_of_part1_elements + len_of_part2_elements),
+                    len_of_part1_elements,
+                )
+            ),
+        )
     )
     all_positions = []
     for positions_for_par1 in all_positions_for_part1_elements:
