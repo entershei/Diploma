@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import parameters
-from utils import generate_cycle_types
+from utils import generate_cycle_types, create_new_directories_in_plots
 
 
 def read_logs(f, cycle_types, to_sum, name_for_sum, to_rename):
@@ -215,6 +215,8 @@ def draw_average_with_analytical_cycles(folder_name, experiments, max_cycle_len)
 
 
 def main():
+    create_new_directories_in_plots()
+
     for cur_parameters in parameters.PROBABILITIES_WITH_ALPHA:
         file_end, p_aa, p_bb, alpha = cur_parameters
         folder_name = file_end[:-4]

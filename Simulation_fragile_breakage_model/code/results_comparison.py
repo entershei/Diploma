@@ -4,7 +4,7 @@ import math
 import matplotlib.pyplot as plt
 
 import parameters
-from utils import generate_cycle_types
+from utils import generate_cycle_types, create_new_directories_in_relative_error_logs
 
 
 def read_logs(f, cycles_types):
@@ -224,6 +224,8 @@ def result_comparison(
 
 
 def main():
+    create_new_directories_in_relative_error_logs()
+
     for cur_parameters in parameters.PROBABILITIES_WITH_ALPHA:
         file_end, p_aa, p_bb, alpha = cur_parameters
 
