@@ -4,7 +4,7 @@ import time
 import numpy as np
 
 import parameters
-from utils import generate_cycle_types, create_new_directories
+from utils import generate_cycle_types, create_new_directory_in_cycles_info
 
 
 def read_parameters_from_console():
@@ -317,7 +317,7 @@ def main():
 
     n = parameters.NUMBER_OF_FRAGILE_EDGES
     k = n * 2
-    create_new_directories()
+    create_new_directory_in_cycles_info()
 
     for parameter in parameters.PROBABILITIES_WITH_ALPHA:
         file_ending, p_aa, p_bb, a_type_edges_proportion = parameter
