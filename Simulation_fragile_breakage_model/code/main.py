@@ -1,10 +1,15 @@
 import csv
 import time
+import os.path
 
 import numpy as np
 
 import parameters
-from utils import generate_cycle_types, create_new_directory_in_cycles_info
+from utils import (
+    generate_cycle_types,
+    create_new_directory_in_cycles_info,
+    create_new_directory_for_logging_experiments,
+)
 
 
 def read_parameters_from_console():
@@ -255,59 +260,31 @@ def markov_process(n, k, p_aa, p_bb, p_ab, a_type, b_type, edges):
     return steps_cycles_info
 
 
-def aggregate_cycles_info(experiments, max_cycle_len=5):
-    num_experiments = len(experiments)
-    num_steps_of_markov_process = len(experiments[0])
+def log_experiments(experiments, file, max_cycle_len=5):
+    file_exists = os.path.isfile(file)
 
-    aggregated_cycles_info = []
-    for i in range(num_steps_of_markov_process):
-        average_all_cycles_num = 0
-        average_cnt_cycles = {}
-        for cycle_type in generate_cycle_types(1, max_cycle_len):
-            average_cnt_cycles[cycle_type] = 0
-
-        average_max_cycles_len = 0
-        for j in range(num_experiments):
-            average_all_cycles_num += experiments[j][i].num_all_cycles
-            for cycles_types in experiments[j][i].num_n_cycles.keys():
-                average_cnt_cycles[cycles_types] += experiments[j][i].num_n_cycles[
-                    cycles_types
-                ]
-
-            average_max_cycles_len += experiments[j][i].max_len
-
-        average_all_cycles_num /= num_experiments
-        for cycles_types in average_cnt_cycles.keys():
-            average_cnt_cycles[cycles_types] /= num_experiments
-        average_max_cycles_len /= num_experiments
-
-        aggregated_cycles_info.append(
-            CyclesInfo(
-                average_all_cycles_num, average_cnt_cycles, average_max_cycles_len
-            )
-        )
-
-    return aggregated_cycles_info
-
-
-def log_aggregated_results(n, aggregated_cycles_info, f, max_cycle_len=5):
-    with open(f, "w", newline="") as f_log_lens:
+    with open(file, "a", newline="") as f_log:
         cycle_types = generate_cycle_types(1, max_cycle_len)
-        fieldnames = ["n", "k", "all"] + cycle_types + ["max_cycle_len"]
+        fieldnames = ["k", "all"] + cycle_types + ["max_cycle_len"]
 
-        log_cycles_info = csv.DictWriter(f_log_lens, fieldnames=fieldnames)
-        log_cycles_info.writeheader()
+        log_cycles = csv.DictWriter(f_log, fieldnames=fieldnames)
+        if not file_exists:
+            log_cycles.writeheader()
 
-        for step, info in enumerate(aggregated_cycles_info):
-            cur_result = {
-                "n": n,
-                "k": step,
-                "all": info.num_all_cycles,
-                "max_cycle_len": info.max_len,
-            }
-            for cycle_type in cycle_types:
-                cur_result[cycle_type] = info.num_n_cycles[cycle_type]
-            log_cycles_info.writerow(cur_result)
+        for experiment in experiments:
+            for step, info in enumerate(experiment):
+                cur_result = {
+                    "k": step,
+                    "all": info.num_all_cycles,
+                    "max_cycle_len": info.max_len,
+                }
+                for cycle_type in cycle_types:
+                    if cycle_type in info.num_n_cycles:
+                        cur_result[cycle_type] = info.num_n_cycles[cycle_type]
+                    else:
+                        cur_result[cycle_type] = 0
+                log_cycles.writerow(cur_result)
+        f_log.close()
 
 
 def main():
@@ -316,37 +293,41 @@ def main():
     start_time = time.time()
 
     n = parameters.NUMBER_OF_FRAGILE_EDGES
-    k = n * 2
-    create_new_directory_in_cycles_info()
+    k = n
+    experiments_log_path = create_new_directory_for_logging_experiments()
 
     for parameter in parameters.PROBABILITIES_WITH_ALPHA:
-        file_ending, p_aa, p_bb, a_type_edges_proportion = parameter
+        string_parameters, p_aa, p_bb, a_type_edges_proportion = parameter
+        file = string_parameters + ".csv"
         p_ab = 1 - p_aa - p_bb
 
+        start_i = 0
+        if string_parameters == "paa0,2_pbb0,6_alpha0,9":
+            start_i = parameters.DIFFERENT_FRAGILE_EDGES_SPLITS
+        elif string_parameters == "paa0,4_pbb0,35_alpha0,7":
+            start_i = 8699
+
         experiments = []
-        for i in range(parameters.DIFFERENT_FRAGILE_EDGES_SPLITS):
+        print("parameters:", string_parameters)
+        for i in range(start_i, parameters.DIFFERENT_FRAGILE_EDGES_SPLITS):
             a_type, b_type, edges = split_fragile_edges(n, a_type_edges_proportion)
-            for j in range(parameters.MARKOV_PROCESS_EXPERIMENTS_ON_ONE_SPLIT):
-                experiments.append(
-                    markov_process(
-                        n,
-                        k,
-                        p_aa,
-                        p_bb,
-                        p_ab,
-                        a_type.copy(),
-                        b_type.copy(),
-                        edges.copy(),
-                    )
+            experiments.append(
+                markov_process(
+                    n,
+                    k,
+                    p_aa,
+                    p_bb,
+                    p_ab,
+                    a_type.copy(),
+                    b_type.copy(),
+                    edges.copy(),
                 )
+            )
 
-        aggregated_cycles_info = aggregate_cycles_info(experiments)
-
-        log_aggregated_results(
-            n,
-            aggregated_cycles_info,
-            "logs/cycles_info/" + parameters.EXPERIMENTS_FIELD_NAME + file_ending,
-        )
+            if len(experiments) == 100:
+                print("i:", i, ", time: ", time.time() - start_time, " s.")
+                log_experiments(experiments, experiments_log_path + file)
+                experiments = []
 
     print(time.time() - start_time)
 
