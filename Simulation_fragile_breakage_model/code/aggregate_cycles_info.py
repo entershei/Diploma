@@ -152,7 +152,7 @@ def aggregate_cycles_info(f_summed, f_out, num_experiments, max_cycle_len=5):
     log_aggregated_results(
         parameters.NUMBER_OF_FRAGILE_EDGES,
         aggregated_cycles_info,
-        f_out + "_" + str(num_experiments) + "_experiments.cvs",
+        f_out + "_" + str(num_experiments) + "_experiments.csv",
     )
 
 

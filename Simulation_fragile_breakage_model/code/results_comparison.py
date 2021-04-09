@@ -4,7 +4,12 @@ import math
 import matplotlib.pyplot as plt
 
 import parameters
-from utils import generate_cycle_types, create_new_directories_in_relative_error_logs
+from utils import (
+    generate_cycle_types,
+    create_new_directories_in_relative_error_logs,
+    get_parameters_as_string,
+    create_new_directory_in_cycles_info
+)
 
 
 def read_logs(f, cycles_types):
@@ -145,7 +150,7 @@ def compare_n_cycles(
     error_depends_on_x = {}
     x = 0.05
     step = 0.05
-    while x < 2.05:
+    while x < 1.05:
         error_depends_on_x[x] = compute_relative_errors(
             x, real_c_n_s, cycles_types, n, p_aa, p_bb, alpha, compute_analytical_c_n
         )
@@ -227,7 +232,12 @@ def main():
     create_new_directories_in_relative_error_logs()
 
     for cur_parameters in parameters.PROBABILITIES_WITH_ALPHA:
-        file_end, p_aa, p_bb, alpha = cur_parameters
+        file, p_aa, p_bb, alpha = cur_parameters
+        file_end = file + ".csv"
+        if file == "paa0,2_pbb0,6_alpha0,9":
+            file_end = "paa0,2_pbb0,6_alpha0,9_8560_experiments.csv"
+
+        cycles_info_path = get_parameters_as_string()
 
         result_comparison(
             1,
@@ -235,7 +245,7 @@ def main():
             p_aa,
             p_bb,
             alpha,
-            parameters.EXPERIMENTS_FIELD_NAME,
+            cycles_info_path,
             compute_analytical_c1,
         )
         result_comparison(
@@ -244,7 +254,7 @@ def main():
             p_aa,
             p_bb,
             alpha,
-            parameters.EXPERIMENTS_FIELD_NAME,
+            cycles_info_path,
             compute_analytical_c2,
         )
         result_comparison(
@@ -253,7 +263,7 @@ def main():
             p_aa,
             p_bb,
             alpha,
-            parameters.EXPERIMENTS_FIELD_NAME,
+            cycles_info_path,
             compute_analytical_c3,
         )
 

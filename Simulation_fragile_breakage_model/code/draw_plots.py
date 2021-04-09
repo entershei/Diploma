@@ -4,7 +4,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import parameters
-from utils import generate_cycle_types, create_new_directories_in_plots
+from utils import (
+    generate_cycle_types,
+    create_new_directories_in_plots,
+    get_parameters_as_string,
+)
 
 
 def read_logs(f, cycle_types, to_sum, name_for_sum, to_rename):
@@ -42,7 +46,7 @@ def draw_error(xs, errors, title, save_as):
 
 
 def draw_relative_errors(
-    folder_name, experiments, parameters_for_plot_name, max_cycle_len
+    folder_name, experiments, parameters_for_plot_name, number_of_experiments, max_cycle_len
 ):
     for c_len in range(1, max_cycle_len + 1):
         cycle_len = str(c_len)
@@ -55,6 +59,7 @@ def draw_relative_errors(
             + "cycles/"
             + "depends_on_x_"
             + folder_name
+            + number_of_experiments
             + ".csv",
             cycle_names + ["all"],
             [],
@@ -70,7 +75,7 @@ def draw_relative_errors(
                 + cycle_type
                 + " depends on x,\n"
                 + parameters_for_plot_name,
-                save_path + cycle_type + ".png",
+                save_path + cycle_type + number_of_experiments + ".png",
             )
 
 
@@ -109,6 +114,7 @@ def number_of_cycles(cycle_len, arr):
 
 
 def read_cycles_info_logs(f):
+    steps = 0
     num_all_cycles = []
     cycle_types = generate_cycle_types(1, 5)
     different_cycles = {}
@@ -123,18 +129,21 @@ def read_cycles_info_logs(f):
             for cycle_type in cycle_types:
                 different_cycles[cycle_type].append(float(row[cycle_type]))
 
+            steps += 1
+
     return {
         "num_all_cycles": num_all_cycles,
         "different_cycles": different_cycles,
         "1": number_of_cycles(1, different_cycles),
         "2": number_of_cycles(2, different_cycles),
         "3": number_of_cycles(3, different_cycles),
+        "steps": steps,
     }
 
 
-def draw_average_cycles(folder_name, experiments, max_cycle_len):
+def draw_average_cycles(folder_name, experiments, number_of_experiments, max_cycle_len):
     parameters_string = experiments + folder_name
-    f = "logs/cycles_info/" + parameters_string + ".csv"
+    f = "logs/cycles_info/" + parameters_string + number_of_experiments + ".csv"
     save_path = "plots/aggregated_cycles/" + parameters_string + "/"
 
     cycles_info = read_cycles_info_logs(f)
@@ -142,7 +151,7 @@ def draw_average_cycles(folder_name, experiments, max_cycle_len):
     draw_number_of_cycles(
         cycles_info["num_all_cycles"],
         "Average number of cycles depends of number of swaps",
-        save_path + "all_cycles.png",
+        save_path + "all_cycles" + number_of_experiments + ".png",
     )
 
     for cycle_len in range(1, max_cycle_len + 1):
@@ -150,7 +159,7 @@ def draw_average_cycles(folder_name, experiments, max_cycle_len):
         draw_number_of_cycles(
             cycles_info[cycle],
             "Average number of " + cycle + "-cycles depends of number of swaps",
-            save_path + cycle + "_cycles.png",
+            save_path + cycle + "_cycles" + number_of_experiments + ".png",
         )
 
     cycle_types = generate_cycle_types(1, 3)
@@ -158,7 +167,7 @@ def draw_average_cycles(folder_name, experiments, max_cycle_len):
         draw_number_of_cycles(
             cycles_info["different_cycles"][cycle_type],
             "Average number of " + cycle_type + "-cycles depends of number of swaps",
-            save_path + str(len(cycle_type)) + "_" + cycle_type + "_cycles.png",
+            save_path + str(len(cycle_type)) + "_" + cycle_type + "_cycles" + number_of_experiments + ".png",
         )
 
 
@@ -169,12 +178,12 @@ def interesting_cycles_info(n, xs, cycles_info):
     return interesting_info
 
 
-def draw_average_with_analytical_cycles(folder_name, experiments, max_cycle_len):
+def draw_average_with_analytical_cycles(folder_name, experiments, number_of_experiments, max_cycle_len):
     n = parameters.NUMBER_OF_FRAGILE_EDGES
     real_parameters = experiments + folder_name
     save_path = "plots/to_compare_number_of_cycles/" + real_parameters + "/"
 
-    f_real = "logs/cycles_info/" + real_parameters + ".csv"
+    f_real = "logs/cycles_info/" + real_parameters + number_of_experiments + ".csv"
 
     cycles_info = read_cycles_info_logs(f_real)
 
@@ -194,12 +203,20 @@ def draw_average_with_analytical_cycles(folder_name, experiments, max_cycle_len)
             cycle_len,
             [],
         )
+
+        max_x = cycles_info["steps"] / n
+        for i in range(len(xs)):
+            if xs[i] > max_x:
+                xs = xs[:i]
+                analytical_cycles = analytical_cycles[:i]
+                break
+
         draw_two_number_of_cycles(
             xs,
             interesting_cycles_info(n, xs, cycles_info[cycle_len]),
             list(map(lambda cycle: cycle[cycle_len], analytical_cycles)),
             "Normalized number of " + cycle_len + "-cycles depends of x",
-            save_path + cycle_len + "_cycles.png",
+            save_path + cycle_len + "_cycles" + number_of_experiments + ".png",
         )
 
         for cycle_type in cycle_types:
@@ -210,7 +227,7 @@ def draw_average_with_analytical_cycles(folder_name, experiments, max_cycle_len)
                 ),
                 list(map(lambda cycle: cycle[cycle_type], analytical_cycles)),
                 "Normalized number of " + cycle_type + "-cycles depends of x",
-                save_path + cycle_len + "_" + cycle_type + "_cycles.png",
+                save_path + cycle_len + "_" + cycle_type + "_cycles" + number_of_experiments + ".png",
             )
 
 
@@ -218,8 +235,7 @@ def main():
     create_new_directories_in_plots()
 
     for cur_parameters in parameters.PROBABILITIES_WITH_ALPHA:
-        file_end, p_aa, p_bb, alpha = cur_parameters
-        folder_name = file_end[:-4]
+        folder_name, p_aa, p_bb, alpha = cur_parameters
         parameters_for_plot_name = (
             "n = "
             + str(parameters.NUMBER_OF_FRAGILE_EDGES)
@@ -230,18 +246,17 @@ def main():
             + ", α = "
             + str(alpha)
         )
-
+        experiments = "_8560_experiments"
         draw_relative_errors(
             folder_name,
-            parameters.EXPERIMENTS_FIELD_NAME,
+            get_parameters_as_string(),
             parameters_for_plot_name,
+            experiments,
             max_cycle_len=3,
         )
-        draw_average_cycles(
-            folder_name, parameters.EXPERIMENTS_FIELD_NAME, max_cycle_len=3
-        )
+        draw_average_cycles(folder_name, get_parameters_as_string(), experiments, max_cycle_len=3)
         draw_average_with_analytical_cycles(
-            folder_name, parameters.EXPERIMENTS_FIELD_NAME, max_cycle_len=3
+            folder_name, get_parameters_as_string(), experiments, max_cycle_len=3
         )
 
 
