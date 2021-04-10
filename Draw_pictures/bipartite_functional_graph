@@ -1,0 +1,39 @@
+digraph "Bipartite functional graph" {
+	graph [splines=compound]
+	edge [arrowsize=0.6]
+	node [fixedsize=true shape=circle width=0.4]
+	subgraph cluster_A {
+		graph [color=lightgrey label="A-вершины" style=filled]
+		node [color=white style=filled]
+		1 [pos="0,3!"]
+		2 [pos="0,2.4!"]
+		3 [pos="0,1.8!"]
+		4 [pos="0,1.2!"]
+		5 [pos="0,0.6!"]
+		6 [pos="0,0!"]
+	}
+	subgraph cluster_B {
+		graph [label="B-вершины"]
+		node [style=filled]
+		7 [pos="2,3.6!"]
+		8 [pos="2,3!"]
+		9 [pos="2,2.4!"]
+		10 [pos="2,1.8!"]
+		11 [pos="2,1.2!"]
+		12 [pos="2,0.6!"]
+		13 [pos="2,0!"]
+		14 [pos="2,-0.6!"]
+	}
+	2 -> 8 [color=red3 headport=nw style=dashed tailport=ne]
+	3 -> 9
+	4 -> 4 [color=red3 style=dashed]
+	5 -> 11 [color=red3 style=dashed]
+	6 -> 5 [color=red3]
+	7 -> 1
+	8 -> 2 [color=red3 headport=se tailport=sw]
+	9 -> 10
+	10 -> 12
+	11 -> 6 [color=red3]
+	12 -> 13 [color=red3 headport=nw style=dashed tailport=sw]
+	13 -> 12 [color=red3 headport=se tailport=ne]
+}
