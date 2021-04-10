@@ -8,7 +8,6 @@ from utils import (
     generate_cycle_types,
     create_new_directories_for_result_comparison,
     get_parameters_as_string,
-    create_new_directory_in_cycles_info,
 )
 
 
@@ -123,9 +122,12 @@ def compute_relative_errors(
             )
         else:
             relative_errors[cycle_type] = 0
-    relative_errors["all"] = (
-        100 * abs(analytical_c_n["all"] - all_real_c_n) / all_real_c_n
-    )
+    if all_real_c_n != 0:
+        relative_errors["all"] = (
+            100 * abs(analytical_c_n["all"] - all_real_c_n) / all_real_c_n
+        )
+    else:
+        relative_errors["all"] = 0
 
     return relative_errors
 
@@ -148,9 +150,9 @@ def compare_n_cycles(
 
     # x = k / n
     error_depends_on_x = {}
-    x = 0.05
-    step = 0.05
-    while x < 1.05:
+    x = 0.0
+    step = 1 / n
+    while x < 1 + step:
         error_depends_on_x[x] = compute_relative_errors(
             x, real_c_n_s, cycles_types, n, p_aa, p_bb, alpha, compute_analytical_c_n
         )
@@ -180,13 +182,13 @@ def write_analytical_cycles(analytical_cycles_depends_on_x, f, field_names):
 
 
 def compute_analytical_cycles(
-    p_aa, p_bb, alpha, compute_analytical_c_n, f_out, field_names
+    n, p_aa, p_bb, alpha, compute_analytical_c_n, f_out, field_names
 ):
     # x = k / n
     analytical_cycles_depends_on_x = {}
-    x = 0.05
-    step = 0.05
-    while x < 2.05:
+    x = 0.0
+    step = 1 / n
+    while x < 1 + step:
         analytical_cycles_depends_on_x[x] = compute_analytical_c_n(x, p_aa, p_bb, alpha)
         x += step
 
@@ -215,6 +217,7 @@ def result_comparison(
     )
 
     compute_analytical_cycles(
+        n=parameters.NUMBER_OF_FRAGILE_EDGES,
         p_aa=p_aa,
         p_bb=p_bb,
         alpha=alpha,

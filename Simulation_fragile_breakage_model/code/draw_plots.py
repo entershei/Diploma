@@ -145,8 +145,10 @@ def read_cycles_info_logs(f):
     }
 
 
-def draw_average_cycles(folder_name, experiments, number_of_experiments, max_cycle_len):
-    parameters_string = experiments + folder_name
+def draw_average_cycles(
+    folder_name, experiments_string, number_of_experiments, max_cycle_len
+):
+    parameters_string = experiments_string + folder_name
     f = "logs/cycles_info/" + parameters_string + number_of_experiments + ".csv"
     save_path = "plots/aggregated_cycles/" + parameters_string + "/"
 
@@ -189,10 +191,10 @@ def interesting_cycles_info(n, xs, cycles_info):
 
 
 def draw_average_with_analytical_cycles(
-    folder_name, experiments, number_of_experiments, max_cycle_len
+    folder_name, experiments_string, number_of_experiments, max_cycle_len
 ):
     n = parameters.NUMBER_OF_FRAGILE_EDGES
-    real_parameters = experiments + folder_name
+    real_parameters = experiments_string + folder_name
     save_path = "plots/to_compare_number_of_cycles/" + real_parameters + "/"
 
     f_real = "logs/cycles_info/" + real_parameters + number_of_experiments + ".csv"
