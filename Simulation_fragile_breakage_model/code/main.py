@@ -329,7 +329,13 @@ def main():
                 experiments = []
 
         if len(experiments) > 0:
-            print("i:", parameters.DIFFERENT_FRAGILE_EDGES_SPLITS, ", time: ", (time.time() - start_time) / 60, "m.")
+            print(
+                "i:",
+                parameters.DIFFERENT_FRAGILE_EDGES_SPLITS,
+                ", time: ",
+                (time.time() - start_time) / 60,
+                "m.",
+            )
             log_experiments(experiments, experiments_log_path + file)
 
     print((time.time() - start_time) / 60 / 60, ".h")
