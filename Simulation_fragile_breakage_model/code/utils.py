@@ -11,30 +11,33 @@ def generate_cycle_types(min_len, max_len):
     return cycles
 
 
+def number_of_fragile_edges():
+    return "n" + str(parameters.NUMBER_OF_FRAGILE_EDGES) + "/"
+
+
 def get_parameters_as_string():
-    return (
-        "n"
-        + str(parameters.NUMBER_OF_FRAGILE_EDGES)
-        + "/different_number_of_experiments/"
-    )
+    return number_of_fragile_edges() + "different_number_of_experiments/"
 
 
 def create_new_directory_in_cycles_info():
-    path = "logs/cycles_info/n" + str(parameters.NUMBER_OF_FRAGILE_EDGES) + "/different_number_of_experiments/"
+    path = "logs/cycles_info/" + get_parameters_as_string()
     Path(path).mkdir(parents=True, exist_ok=True)
     return path
 
 
 def create_new_directory_for_logging_experiments():
-    path = "logs/experiments/n" + str(parameters.NUMBER_OF_FRAGILE_EDGES) + "/"
+    path = "logs/experiments/" + number_of_fragile_edges()
     Path(path).mkdir(parents=True, exist_ok=True)
     return path
 
 
-def create_new_directories_in_relative_error_logs():
+def create_new_directories_for_result_comparison():
     for i in range(1, 4):
         Path(
             "logs/relative_error/" + get_parameters_as_string() + str(i) + "cycles"
+        ).mkdir(parents=True, exist_ok=True)
+        Path(
+            "logs/analytical_cycles/" + number_of_fragile_edges() + "c" + str(i)
         ).mkdir(parents=True, exist_ok=True)
 
 

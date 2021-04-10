@@ -46,7 +46,11 @@ def draw_error(xs, errors, title, save_as):
 
 
 def draw_relative_errors(
-    folder_name, experiments, parameters_for_plot_name, number_of_experiments, max_cycle_len
+    folder_name,
+    experiments,
+    parameters_for_plot_name,
+    number_of_experiments,
+    max_cycle_len,
 ):
     for c_len in range(1, max_cycle_len + 1):
         cycle_len = str(c_len)
@@ -167,7 +171,13 @@ def draw_average_cycles(folder_name, experiments, number_of_experiments, max_cyc
         draw_number_of_cycles(
             cycles_info["different_cycles"][cycle_type],
             "Average number of " + cycle_type + "-cycles depends of number of swaps",
-            save_path + str(len(cycle_type)) + "_" + cycle_type + "_cycles" + number_of_experiments + ".png",
+            save_path
+            + str(len(cycle_type))
+            + "_"
+            + cycle_type
+            + "_cycles"
+            + number_of_experiments
+            + ".png",
         )
 
 
@@ -178,7 +188,9 @@ def interesting_cycles_info(n, xs, cycles_info):
     return interesting_info
 
 
-def draw_average_with_analytical_cycles(folder_name, experiments, number_of_experiments, max_cycle_len):
+def draw_average_with_analytical_cycles(
+    folder_name, experiments, number_of_experiments, max_cycle_len
+):
     n = parameters.NUMBER_OF_FRAGILE_EDGES
     real_parameters = experiments + folder_name
     save_path = "plots/to_compare_number_of_cycles/" + real_parameters + "/"
@@ -227,7 +239,13 @@ def draw_average_with_analytical_cycles(folder_name, experiments, number_of_expe
                 ),
                 list(map(lambda cycle: cycle[cycle_type], analytical_cycles)),
                 "Normalized number of " + cycle_type + "-cycles depends of x",
-                save_path + cycle_len + "_" + cycle_type + "_cycles" + number_of_experiments + ".png",
+                save_path
+                + cycle_len
+                + "_"
+                + cycle_type
+                + "_cycles"
+                + number_of_experiments
+                + ".png",
             )
 
 
@@ -246,17 +264,24 @@ def main():
             + ", α = "
             + str(alpha)
         )
-        experiments = "_8560_experiments"
         draw_relative_errors(
             folder_name,
             get_parameters_as_string(),
             parameters_for_plot_name,
-            experiments,
+            parameters.EXPERIMENTS,
             max_cycle_len=3,
         )
-        draw_average_cycles(folder_name, get_parameters_as_string(), experiments, max_cycle_len=3)
+        draw_average_cycles(
+            folder_name,
+            get_parameters_as_string(),
+            parameters.EXPERIMENTS,
+            max_cycle_len=3,
+        )
         draw_average_with_analytical_cycles(
-            folder_name, get_parameters_as_string(), experiments, max_cycle_len=3
+            folder_name,
+            get_parameters_as_string(),
+            parameters.EXPERIMENTS,
+            max_cycle_len=3,
         )
 
 

@@ -10,3 +10,5 @@ PROBABILITIES_WITH_ALPHA = [
     ("paa0,5_pbb0,45_alpha0,5", 0.5, 0.45, 0.5),
     ("paa0,45_pbb0,45_alpha0,5", 0.45, 0.45, 0.5),
 ]
+
+EXPERIMENTS = "_10000_experiments"

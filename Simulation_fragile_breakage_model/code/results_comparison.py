@@ -6,9 +6,9 @@ import matplotlib.pyplot as plt
 import parameters
 from utils import (
     generate_cycle_types,
-    create_new_directories_in_relative_error_logs,
+    create_new_directories_for_result_comparison,
     get_parameters_as_string,
-    create_new_directory_in_cycles_info
+    create_new_directory_in_cycles_info,
 )
 
 
@@ -188,15 +188,16 @@ def compute_analytical_cycles(
     step = 0.05
     while x < 2.05:
         analytical_cycles_depends_on_x[x] = compute_analytical_c_n(x, p_aa, p_bb, alpha)
-
         x += step
 
     write_analytical_cycles(analytical_cycles_depends_on_x, f_out, field_names)
 
 
 def result_comparison(
-    cycles, file_end, p_aa, p_bb, alpha, experiments, compute_analytical_c_n
+    cycles, file, p_aa, p_bb, alpha, experiments, compute_analytical_c_n
 ):
+    file_end = file + parameters.EXPERIMENTS + ".csv"
+
     cycle_types = generate_cycle_types(cycles, cycles)
 
     compare_n_cycles(
@@ -223,49 +224,35 @@ def result_comparison(
         + "/c"
         + str(cycles)
         + "/"
-        + file_end,
+        + file
+        + ".csv",
         field_names=cycle_types + ["all"],
     )
 
 
 def main():
-    create_new_directories_in_relative_error_logs()
+    create_new_directories_for_result_comparison()
 
     for cur_parameters in parameters.PROBABILITIES_WITH_ALPHA:
         file, p_aa, p_bb, alpha = cur_parameters
-        file_end = file + ".csv"
-        if file == "paa0,2_pbb0,6_alpha0,9":
-            file_end = "paa0,2_pbb0,6_alpha0,9_8560_experiments.csv"
 
         cycles_info_path = get_parameters_as_string()
 
-        result_comparison(
-            1,
-            file_end,
-            p_aa,
-            p_bb,
-            alpha,
-            cycles_info_path,
+        to_compute_analytical_c = [
             compute_analytical_c1,
-        )
-        result_comparison(
-            2,
-            file_end,
-            p_aa,
-            p_bb,
-            alpha,
-            cycles_info_path,
             compute_analytical_c2,
-        )
-        result_comparison(
-            3,
-            file_end,
-            p_aa,
-            p_bb,
-            alpha,
-            cycles_info_path,
             compute_analytical_c3,
-        )
+        ]
+        for i in range(3):
+            result_comparison(
+                i + 1,
+                file,
+                p_aa,
+                p_bb,
+                alpha,
+                cycles_info_path,
+                to_compute_analytical_c[i],
+            )
 
 
 if __name__ == "__main__":
