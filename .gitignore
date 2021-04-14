@@ -1,0 +1,4 @@
+*.zip
+**/.idea/*
+.git.bfg-report/*
+**/__pycache__/*
