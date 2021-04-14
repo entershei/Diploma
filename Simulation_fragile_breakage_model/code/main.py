@@ -7,7 +7,6 @@ import numpy as np
 import parameters
 from utils import (
     generate_cycle_types,
-    create_new_directory_in_cycles_info,
     create_new_directory_for_logging_experiments,
 )
 
@@ -303,9 +302,9 @@ def main():
 
         start_i = 0
         if string_parameters == "paa0,2_pbb0,6_alpha0,9":
-            start_i = parameters.DIFFERENT_FRAGILE_EDGES_SPLITS
+            start_i = 8560
         elif string_parameters == "paa0,4_pbb0,35_alpha0,7":
-            start_i = 8699
+            start_i = 4400
 
         experiments = []
         print("parameters:", string_parameters)
@@ -325,11 +324,15 @@ def main():
             )
 
             if len(experiments) == 100:
-                print("i:", i, ", time: ", time.time() - start_time, " s.")
+                print("i:", i, ", time: ", (time.time() - start_time) / 60, " m.")
                 log_experiments(experiments, experiments_log_path + file)
                 experiments = []
 
-    print(time.time() - start_time)
+        if len(experiments) > 0:
+            print("i:", parameters.DIFFERENT_FRAGILE_EDGES_SPLITS, ", time: ", (time.time() - start_time) / 60, "m.")
+            log_experiments(experiments, experiments_log_path + file)
+
+    print((time.time() - start_time) / 60 / 60, ".h")
 
 
 if __name__ == "__main__":
