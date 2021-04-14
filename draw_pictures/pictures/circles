@@ -1,0 +1,21 @@
+digraph Circles {
+	graph [splines=compound]
+	edge [arrowsize=0.6]
+	node [fixedsize=true shape=circle width=0.4]
+	subgraph cluster_1 {
+		2
+		8 [color=lightgrey style=filled]
+	}
+	subgraph cluster_2 {
+		4
+	}
+	subgraph cluster_3 {
+		5
+		6
+		11 [color=lightgrey style=filled]
+	}
+	subgraph cluster_4 {
+		12 [color=lightgrey style=filled]
+		13 [color=lightgrey style=filled]
+	}
+}
