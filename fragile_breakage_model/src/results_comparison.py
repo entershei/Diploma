@@ -35,7 +35,12 @@ def compute_analytical_cycles_m(m, x, p_aa, p_bb, alpha):
     beta = 1 - alpha
 
     def cycles_depends_on_cnt_a(l):
+        eps_zero = 1e-9
+        if p_ab < eps_zero or alpha < eps_zero or beta < eps_zero:
+            return 0
+
         r = m - l
+
         return (
             (x * p_ab / (alpha * beta)) ** (m - 1)
             * alpha ** l
@@ -76,8 +81,6 @@ def compute_analytical_cycles_m(m, x, p_aa, p_bb, alpha):
 
     res = all_a + all_b
     for l in range(1, m):
-        # if m > 100 and l > 98:
-            # print(l, cycles_depends_on_cnt_a(l), res)
         res += cycles_depends_on_cnt_a(l)
 
     return res
@@ -235,13 +238,18 @@ def write_analytical_cycles(analytical_cycles_depends_on_x, f, field_names):
 
 
 def compute_analytical_cycles(
-    n, p_aa, p_bb, alpha, compute_analytical_c_n, f_out, field_names
+    n, m, p_aa, p_bb, alpha, compute_analytical_c_n, f_out, field_names
 ):
     # x = k / n
     analytical_cycles_depends_on_x = {}
     x = 0.0
     step = 1 / n
+    eps = 1e-9
     while x < 1 + step:
+        cnt1 = compute_analytical_c_n(x, p_aa, p_bb, alpha)['all']
+        cnt2 = compute_analytical_cycles_m(m, x, p_aa, p_bb, alpha)
+        print(m, cnt1, cnt2, x, p_aa, p_bb, alpha)
+        assert abs(cnt1 - cnt2) < eps
         analytical_cycles_depends_on_x[x] = compute_analytical_c_n(x, p_aa, p_bb, alpha)
         x += step
 
@@ -255,22 +263,23 @@ def result_comparison(
 
     cycle_types = generate_cycle_types(cycles, cycles)
 
-    compare_n_cycles(
-        f_in="logs/cycles_info/" + experiments + file_end,
-        f_out="logs/relative_error/"
-        + experiments
-        + str(cycles)
-        + "cycles/depends_on_x_"
-        + file_end,
-        p_aa=p_aa,
-        p_bb=p_bb,
-        alpha=alpha,
-        cycles_types=cycle_types,
-        compute_analytical_c_n=compute_analytical_c_n,
-    )
+    # compare_n_cycles(
+    #     f_in="logs/cycles_info/" + experiments + file_end,
+    #     f_out="logs/relative_error/"
+    #     + experiments
+    #     + str(cycles)
+    #     + "cycles/depends_on_x_"
+    #     + file_end,
+    #     p_aa=p_aa,
+    #     p_bb=p_bb,
+    #     alpha=alpha,
+    #     cycles_types=cycle_types,
+    #     compute_analytical_c_n=compute_analytical_c_n,
+    # )
 
     compute_analytical_cycles(
         n=parameters.NUMBER_OF_FRAGILE_EDGES,
+        m=cycles,
         p_aa=p_aa,
         p_bb=p_bb,
         alpha=alpha,
