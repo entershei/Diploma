@@ -19,8 +19,12 @@ def get_parameters_as_string():
     return number_of_fragile_edges() + "different_number_of_experiments/"
 
 
+def get_cycles_info_dir():
+    return "logs/cycles_info/" + get_parameters_as_string()
+
+
 def create_new_directory_in_cycles_info():
-    path = "logs/cycles_info/" + get_parameters_as_string()
+    path = get_cycles_info_dir()
     Path(path).mkdir(parents=True, exist_ok=True)
     return path
 

@@ -30,6 +30,59 @@ def read_logs(f, cycles_types):
     return num_c_n, n
 
 
+def compute_analytical_cycles_m(m, x, p_aa, p_bb, alpha):
+    p_ab = 1 - p_aa - p_bb
+    beta = 1 - alpha
+
+    def cycles_depends_on_cnt_a(l):
+        r = m - l
+        return (
+            (x * p_ab / (alpha * beta)) ** (m - 1)
+            * alpha ** l
+            * beta ** r
+            * l ** (r - 1)
+            / math.factorial(l)
+            * r ** (l - 1)
+            / math.factorial(r)
+            * (1 + 2 * beta * l * p_aa / (alpha * r * p_ab)) ** (l - 1)
+            * (1 + 2 * alpha * r * p_bb / (beta * l * p_ab)) ** (r - 1)
+            * math.exp(
+                -x
+                * (
+                    2 * beta * l * p_aa
+                    + alpha * r * p_ab
+                    + beta * l * p_ab
+                    + 2 * alpha * r * p_bb
+                )
+                / (alpha * beta)
+            )
+        )
+
+    all_a = (
+        (2 * x * p_aa) ** (m - 1)
+        * m ** (m - 2)
+        / alpha ** (m - 2)
+        / math.factorial(m)
+        * math.exp(-x * m * (2 * p_aa + p_ab) / alpha)
+    )
+
+    all_b = (
+        (2 * x * p_bb) ** (m - 1)
+        * m ** (m - 2)
+        / beta ** (m - 2)
+        / math.factorial(m)
+        * math.exp(-x * m * (2 * p_bb + p_ab) / beta)
+    )
+
+    res = all_a + all_b
+    for l in range(1, m):
+        # if m > 100 and l > 98:
+            # print(l, cycles_depends_on_cnt_a(l), res)
+        res += cycles_depends_on_cnt_a(l)
+
+    return res
+
+
 def compute_analytical_c1(x, p_aa, p_bb, alpha):
     beta = 1 - alpha
     a_cycles = alpha * math.exp(-1 * x * (1 + p_aa - p_bb) / alpha)
