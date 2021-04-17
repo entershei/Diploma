@@ -8,7 +8,6 @@ from utils import (
     generate_cycle_type,
     generate_cycle_types,
     create_new_directories_for_result_comparison,
-    get_parameters_as_string,
     get_cycles_info_dir,
     get_relative_error_dir,
     get_analytical_cycles_dir,
@@ -227,12 +226,13 @@ def result_comparison(cycle_len, file, p_aa, p_bb, alpha):
 
 
 def main():
-    create_new_directories_for_result_comparison()
+    max_interesting_cycles_len = 5
+    create_new_directories_for_result_comparison(max_interesting_cycles_len)
 
     for cur_parameters in parameters.PROBABILITIES_WITH_ALPHA:
         file, p_aa, p_bb, alpha = cur_parameters
 
-        for i in range(3):
+        for i in range(max_interesting_cycles_len):
             result_comparison(
                 i + 1,
                 file,

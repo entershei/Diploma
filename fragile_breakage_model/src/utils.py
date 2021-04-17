@@ -58,27 +58,42 @@ def get_analytical_cycles_dir(cycle_len):
     )
 
 
-def create_new_directories_for_result_comparison():
-    for i in range(1, 4):
+def create_new_directories_for_result_comparison(interesting_cycles_len):
+    for i in range(1, interesting_cycles_len + 1):
         Path(get_relative_error_dir(i)).mkdir(parents=True, exist_ok=True)
         Path(get_analytical_cycles_dir(i)).mkdir(parents=True, exist_ok=True)
+
+
+def get_plots_aggregated_cycles_dir(folder_name):
+    return (
+        "fragile_breakage_model/plots/aggregated_cycles/"
+        + get_parameters_as_string()
+        + folder_name
+        + "/"
+    )
+
+
+def get_plots_relative_error(folder_name):
+    return (
+        "fragile_breakage_model/plots/relative_error/"
+        + get_parameters_as_string()
+        + folder_name
+        + "/"
+    )
+
+
+def get_plots_compare_cycles(folder_name):
+    return (
+        "fragile_breakage_model/plots/to_compare_number_of_cycles/"
+        + get_parameters_as_string()
+        + folder_name
+        + "/"
+    )
 
 
 def create_new_directories_in_plots():
     for parameter in parameters.PROBABILITIES_WITH_ALPHA:
         folder = list(parameter)[0]
-        Path(
-            "fragile_breakage_model/plots/aggregated_cycles/"
-            + get_parameters_as_string()
-            + folder
-        ).mkdir(parents=True, exist_ok=True)
-        Path(
-            "fragile_breakage_model/plots/relative_error/"
-            + get_parameters_as_string()
-            + folder
-        ).mkdir(parents=True, exist_ok=True)
-        Path(
-            "fragile_breakage_model/plots/to_compare_number_of_cycles/"
-            + get_parameters_as_string()
-            + folder
-        ).mkdir(parents=True, exist_ok=True)
+        Path(get_plots_aggregated_cycles_dir(folder)).mkdir(parents=True, exist_ok=True)
+        Path(get_plots_relative_error(folder)).mkdir(parents=True, exist_ok=True)
+        Path(get_plots_compare_cycles(folder)).mkdir(parents=True, exist_ok=True)
