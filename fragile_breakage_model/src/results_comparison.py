@@ -1,12 +1,14 @@
 import csv
 import math
 
-import matplotlib.pyplot as plt
-
 import parameters
+from aggregate_cycles_info import read_experiments_cycles_info
 from utils import (
     generate_cycle_type,
     generate_cycle_types,
+)
+from dcj import CyclesInfo
+from generate_directories_names import (
     create_new_directories_for_result_comparison,
     get_cycles_info_dir,
     get_relative_error_dir,
@@ -14,26 +16,8 @@ from utils import (
 )
 
 
-def read_logs(f, cycles_types):
-    num_c_n = []
-    with open(f, newline="") as csvfile:
-        reader = csv.DictReader(csvfile, delimiter=",", quotechar="|")
-        i = 0
-        for row in reader:
-            n = int(row["n"])
-            k = int(row["k"])
-            assert i == k
-
-            c_n = {}
-            for cycle_type in cycles_types:
-                c_n[cycle_type] = float(row[cycle_type])
-            num_c_n.append(c_n)
-            i += 1
-
-    return num_c_n, n
-
-
-# Возвращает число циклов длины m, посчитанных через аналитическую формулу.
+# Возвращает нормированное число циклов длины m, посчитанных через аналитическую формулу, указывает число циклов по
+# типам (например, AAAB-циклы) и их общее количество.
 def compute_analytical_cycles_m(m, x, p_aa, p_bb, alpha):
     p_ab = 1 - p_aa - p_bb
     beta = 1 - alpha
@@ -47,12 +31,12 @@ def compute_analytical_cycles_m(m, x, p_aa, p_bb, alpha):
 
         return (
             (x * p_ab / (alpha * beta)) ** (m - 1)
-            * alpha ** l
-            * beta ** r
-            * l ** (r - 1)
-            / math.factorial(l)
-            * r ** (l - 1)
+            * (alpha * r) ** (l - 1)
             / math.factorial(r)
+            * (beta * l) ** (r - 1)
+            / math.factorial(l)
+            * alpha
+            * beta
             * (1 + 2 * beta * l * p_aa / (alpha * r * p_ab)) ** (l - 1)
             * (1 + 2 * alpha * r * p_bb / (beta * l * p_ab)) ** (r - 1)
             * math.exp(
@@ -70,16 +54,16 @@ def compute_analytical_cycles_m(m, x, p_aa, p_bb, alpha):
     all_a = (
         (2 * x * p_aa) ** (m - 1)
         * m ** (m - 2)
-        / alpha ** (m - 2)
         / math.factorial(m)
+        / alpha ** (m - 2)
         * math.exp(-x * m * (2 * p_aa + p_ab) / alpha)
     )
 
     all_b = (
         (2 * x * p_bb) ** (m - 1)
         * m ** (m - 2)
-        / beta ** (m - 2)
         / math.factorial(m)
+        / beta ** (m - 2)
         * math.exp(-x * m * (2 * p_bb + p_ab) / beta)
     )
 
@@ -91,155 +75,153 @@ def compute_analytical_cycles_m(m, x, p_aa, p_bb, alpha):
         cycles[generate_cycle_type(m, l)] = cur_cycles
         sum_all += cur_cycles
 
-    cycles["all"] = sum_all
-
-    return cycles
+    return {"types": cycles, "all": sum_all}
 
 
-# returns 100 * |analytical_c_n - real_c_n| / real_c_n
-# alpha = t / n, t is number of A-type edges
-def compute_relative_errors(
-    cycle_len, x, real_c_ns, cycles_types, n, p_aa, p_bb, alpha
+def compute_analytical_cycles(
+    n,
+    p_aa,
+    p_bb,
+    alpha,
+    f_out,
+    max_cycle_len_with_types,
+    max_interesting_cycles_len,
 ):
-    k = int(x * n)
+    def write_analytical_cycles():
+        with open(f_out, "w", newline="") as log:
+            field_names.append("x")
+            log_cycles = csv.DictWriter(log, fieldnames=field_names)
+            log_cycles.writeheader()
+            for cur_x in analytical_cycles_depends_on_x.keys():
+                row = {"x": cur_x}
+                for c_type in analytical_cycles_depends_on_x[cur_x].cycle_types.keys():
+                    row[c_type] = analytical_cycles_depends_on_x[cur_x].cycle_types[
+                        c_type
+                    ]
+                for c_len in analytical_cycles_depends_on_x[cur_x].cycles_m.keys():
+                    row[c_len] = analytical_cycles_depends_on_x[cur_x].cycles_m[c_len]
 
-    relative_errors = {}
-    real_c_n = {}
-    all_real_c_n = 0
-    for cycle_type in cycles_types:
-        real_c_n[cycle_type] = real_c_ns[k][cycle_type] / n
-        all_real_c_n += real_c_n[cycle_type]
+                log_cycles.writerow(row)
 
-    analytical_c_n = compute_analytical_cycles_m(cycle_len, x, p_aa, p_bb, alpha)
-
-    for cycle_type in cycles_types:
-        if real_c_n[cycle_type] != 0:
-            relative_errors[cycle_type] = (
-                100
-                * abs(analytical_c_n[cycle_type] - real_c_n[cycle_type])
-                / real_c_n[cycle_type]
-            )
-        else:
-            relative_errors[cycle_type] = 0
-    if all_real_c_n != 0:
-        relative_errors["all"] = (
-            100 * abs(analytical_c_n["all"] - all_real_c_n) / all_real_c_n
-        )
-    else:
-        relative_errors["all"] = 0
-
-    return relative_errors
-
-
-def write_relative_error(error_depends_on_x, f, field_names):
-    with open(f, "w", newline="") as log:
-        fieldnames = ["x"] + field_names
-        log_lens = csv.DictWriter(log, fieldnames=fieldnames)
-        log_lens.writeheader()
-
-        for x in error_depends_on_x.keys():
-            error_depends_on_x[x]["x"] = x
-            log_lens.writerow(error_depends_on_x[x])
-
-
-def compare_m_cycles(cycle_len, f_in, f_out, p_aa, p_bb, alpha, cycles_types):
-    real_c_n_s, n = read_logs(f_in, cycles_types)
-
-    # x = k / n
-    error_depends_on_x = {}
-    x = 0.0
-    step = 1 / n
-    while x < 1 + step:
-        error_depends_on_x[x] = compute_relative_errors(
-            cycle_len,
-            x,
-            real_c_n_s,
-            cycles_types,
-            n,
-            p_aa,
-            p_bb,
-            alpha,
-        )
-        x += step
-
-    write_relative_error(error_depends_on_x, f_out, cycles_types + ["all"])
-
-
-def draw_average(real_e, ess_e, xs):
-    plt.plot(xs, real_e)
-    plt.plot(xs, ess_e)
-    plt.xlabel("Number of swaps")
-    plt.ylabel("E")
-    plt.grid()
-    plt.show()
-
-
-def write_analytical_cycles(analytical_cycles_depends_on_x, f, field_names):
-    with open(f, "w", newline="") as log:
-        fieldnames = field_names + ["x"]
-        log_lens = csv.DictWriter(log, fieldnames=fieldnames)
-        log_lens.writeheader()
-
-        for x in analytical_cycles_depends_on_x.keys():
-            analytical_cycles_depends_on_x[x]["x"] = x
-            log_lens.writerow(analytical_cycles_depends_on_x[x])
-
-
-def compute_analytical_cycles(n, cycle_len, p_aa, p_bb, alpha, f_out, field_names):
     # x = k / n
     analytical_cycles_depends_on_x = {}
     x = 0.0
     step = 1 / n
-    while x < 1 + step:
-        analytical_cycles_depends_on_x[x] = compute_analytical_cycles_m(
-            cycle_len, x, p_aa, p_bb, alpha
-        )
+    field_names = []
+    while x < parameters.NUMBER_OF_STEPS / parameters.NUMBER_OF_FRAGILE_EDGES + step:
+        cycle_types = {}
+        cycles_m = {}
+        for cycle_len in range(1, max_interesting_cycles_len + 1):
+            cur_analytical_cycles = compute_analytical_cycles_m(
+                cycle_len, x, p_aa, p_bb, alpha
+            )
+            if cycle_len <= max_cycle_len_with_types:
+                for cycle_type in cur_analytical_cycles["types"].keys():
+                    cycle_types[cycle_type] = cur_analytical_cycles["types"][cycle_type]
+                    if cycle_type not in field_names:
+                        field_names.append(cycle_type)
+
+            cycles_m[str(cycle_len)] = cur_analytical_cycles["all"]
+            if str(cycle_len) not in field_names:
+                field_names.append(str(cycle_len))
+
+        analytical_cycles_depends_on_x[x] = CyclesInfo(cycle_types, cycles_m)
         x += step
 
-    write_analytical_cycles(analytical_cycles_depends_on_x, f_out, field_names)
+    write_analytical_cycles()
+    return analytical_cycles_depends_on_x
 
 
-def result_comparison(cycle_len, file, p_aa, p_bb, alpha):
-    file_end = file + parameters.EXPERIMENTS + ".csv"
-
-    cycle_types = generate_cycle_types(cycle_len, cycle_len)
-
-    compare_m_cycles(
-        cycle_len=cycle_len,
-        f_in=get_cycles_info_dir() + file_end,
-        f_out=get_relative_error_dir(cycle_len) + "depends_on_x_" + file_end,
-        p_aa=p_aa,
-        p_bb=p_bb,
-        alpha=alpha,
-        cycles_types=cycle_types,
+# returns 100 * |analytical_cycles_info - empirical_cycles_info| / empirical_cycles_info
+def compute_relative_error_between_two_results(
+    empirical_cycles_info, analytical_cycles_info
+):
+    return (
+        100
+        * abs(empirical_cycles_info - analytical_cycles_info)
+        / empirical_cycles_info
+        if empirical_cycles_info != 0
+        else 0
     )
 
-    compute_analytical_cycles(
-        n=parameters.NUMBER_OF_FRAGILE_EDGES,
-        cycle_len=cycle_len,
-        p_aa=p_aa,
-        p_bb=p_bb,
-        alpha=alpha,
-        f_out=get_analytical_cycles_dir(cycle_len) + file + ".csv",
-        field_names=cycle_types + ["all"],
-    )
+
+def write_relative_error(error_depends_on_x, f):
+    with open(f, "w", newline="") as log:
+        log_lens = csv.DictWriter(log, fieldnames=error_depends_on_x[0].keys())
+        log_lens.writeheader()
+
+        for error in error_depends_on_x:
+            log_lens.writerow(error)
+
+
+def relative_error(
+    empirical_cycles_info,
+    analytical_cycles_info,
+    max_cycle_len_with_types,
+    max_interesting_cycles_len,
+    f_out,
+):
+    n = parameters.NUMBER_OF_FRAGILE_EDGES
+    cycle_types = [[]]
+    for i in range(1, max_cycle_len_with_types + 1):
+        cycle_types.append(generate_cycle_types(i, i))
+
+    # x = k / n
+    error_depends_on_x = []
+    x = 0.0
+    step = 1 / n
+    while x < 1 + step:
+        k = int(x * n)
+
+        errors = {"x": x}
+        for cycle_len in range(1, max_interesting_cycles_len + 1):
+            if cycle_len <= max_cycle_len_with_types:
+                for cycle_type in cycle_types[cycle_len]:
+                    errors[cycle_type] = compute_relative_error_between_two_results(
+                        empirical_cycles_info[k].cycle_types[cycle_type] / n,
+                        analytical_cycles_info[x].cycle_types[cycle_type],
+                    )
+
+            errors[str(cycle_len)] = compute_relative_error_between_two_results(
+                empirical_cycles_info[k].cycles_m[str(cycle_len)] / n,
+                analytical_cycles_info[x].cycles_m[str(cycle_len)],
+            )
+
+        error_depends_on_x.append(errors)
+        x += step
+
+    write_relative_error(error_depends_on_x, f_out)
 
 
 def main():
-    max_interesting_cycles_len = 5
-    create_new_directories_for_result_comparison(max_interesting_cycles_len)
+    max_interesting_cycles_len = 10
+    max_cycle_len_with_types = 5
+
+    create_new_directories_for_result_comparison()
 
     for cur_parameters in parameters.PROBABILITIES_WITH_ALPHA:
         file, p_aa, p_bb, alpha = cur_parameters
 
-        for i in range(max_interesting_cycles_len):
-            result_comparison(
-                i + 1,
-                file,
-                p_aa,
-                p_bb,
-                alpha,
-            )
+        empirical_cycles_info = read_experiments_cycles_info(
+            get_cycles_info_dir() + file + ".csv", 5, max_interesting_cycles_len, False
+        )[0]
+        analytical_cycles_info = compute_analytical_cycles(
+            n=parameters.NUMBER_OF_FRAGILE_EDGES,
+            p_aa=p_aa,
+            p_bb=p_bb,
+            alpha=alpha,
+            f_out=get_analytical_cycles_dir() + file + ".csv",
+            max_cycle_len_with_types=max_cycle_len_with_types,
+            max_interesting_cycles_len=max_interesting_cycles_len,
+        )
+
+        relative_error(
+            empirical_cycles_info=empirical_cycles_info,
+            analytical_cycles_info=analytical_cycles_info,
+            max_cycle_len_with_types=max_cycle_len_with_types,
+            max_interesting_cycles_len=max_interesting_cycles_len,
+            f_out=get_relative_error_dir() + file + ".csv",
+        )
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
-from pathlib import Path
+import csv
 
-import parameters
+import os.path
 
 
 def generate_cycle_type(cycle_len, cnt_a):
@@ -15,85 +15,95 @@ def generate_cycle_types(min_len, max_len):
     return cycles
 
 
-def number_of_fragile_edges():
-    return "n" + str(parameters.NUMBER_OF_FRAGILE_EDGES) + "/"
+class CyclesInfo:
+    # Number of cycles with different types
+    cycle_types = {}
+    # Number of cycles with length is key. Cycle len is a number of fragile edges in it.
+    cycles_m = {}
+
+    def __init__(self, cycle_types, cycles_m):
+        self.cycle_types = cycle_types
+        self.cycles_m = cycles_m
 
 
-def get_parameters_as_string():
-    return number_of_fragile_edges() + "different_number_of_experiments/"
+def parse_logs_row(row, possible_cycle_types, max_interesting_cycles_len, is_int):
+    cycle_types = {}
+    cycles_m = {}
+    for cycle_type in possible_cycle_types:
+        if is_int:
+            cycle_types[cycle_type] = int(row[cycle_type])
+        else:
+            cycle_types[cycle_type] = float(row[cycle_type])
+
+    for cycle_len in range(1, max_interesting_cycles_len + 1):
+        if is_int:
+            cycles_m[str(cycle_len)] = int(row[str(cycle_len)])
+        else:
+            cycles_m[str(cycle_len)] = float(row[str(cycle_len)])
+
+    return CyclesInfo(cycle_types, cycles_m)
 
 
-def get_cycles_info_dir():
-    return "fragile_breakage_model/logs/cycles_info/" + get_parameters_as_string()
+def read_experiments_cycles_info(
+    f_in, max_cycle_len_with_types, max_interesting_cycles_len, is_int
+):
+    possible_cycle_types = generate_cycle_types(1, max_cycle_len_with_types)
+    experiments = []
+
+    with open(f_in, "r", newline="") as csvfile:
+        reader = csv.DictReader(csvfile, delimiter=",", quotechar="|")
+        experiment = []
+        for row in reader:
+            k = int(row["k"])
+            cycle_info = parse_logs_row(
+                row, possible_cycle_types, max_interesting_cycles_len, is_int
+            )
+
+            if k == 0 and len(experiment) > 0:
+                experiments.append(experiment)
+                experiment = [cycle_info]
+            else:
+                experiment.append(cycle_info)
+
+        experiments.append(experiment)
+
+        csvfile.close()
+
+    return experiments
 
 
-def create_new_directory_in_cycles_info():
-    path = get_cycles_info_dir()
-    Path(path).mkdir(parents=True, exist_ok=True)
-    return path
+def log_experiments(
+    experiments, file, open_mode, max_cycle_len_with_types, max_interesting_cycles_len
+):
+    print("start log")
 
+    with open(file, open_mode, newline="") as f_log:
+        cycle_types = generate_cycle_types(1, max_cycle_len_with_types)
+        cycle_lens = list(
+            map(lambda l: str(l), range(1, max_interesting_cycles_len + 1))
+        )
 
-def create_new_directory_for_logging_experiments():
-    path = "fragile_breakage_model/logs/experiments/" + number_of_fragile_edges()
-    Path(path).mkdir(parents=True, exist_ok=True)
-    return path
+        fieldnames = ["k"] + cycle_types + cycle_lens
 
+        log_cycles = csv.DictWriter(f_log, fieldnames=fieldnames)
+        if open_mode == "a" and not os.path.isfile(file):
+            log_cycles.writeheader()
+        elif open_mode == "w":
+            log_cycles.writeheader()
 
-def get_relative_error_dir(cycle_len):
-    return (
-        "fragile_breakage_model/logs/relative_error/"
-        + get_parameters_as_string()
-        + str(cycle_len)
-        + "cycles/"
-    )
+        for step, info in enumerate(experiments):
+            cur_result = {"k": step}
+            for cycle_type in cycle_types:
+                if cycle_type in info.cycle_types:
+                    cur_result[cycle_type] = info.cycle_types[cycle_type]
+                else:
+                    cur_result[cycle_type] = 0
 
-
-def get_analytical_cycles_dir(cycle_len):
-    return (
-        "fragile_breakage_model/logs/analytical_cycles/"
-        + number_of_fragile_edges()
-        + "c"
-        + str(cycle_len)
-        + "/"
-    )
-
-
-def create_new_directories_for_result_comparison(interesting_cycles_len):
-    for i in range(1, interesting_cycles_len + 1):
-        Path(get_relative_error_dir(i)).mkdir(parents=True, exist_ok=True)
-        Path(get_analytical_cycles_dir(i)).mkdir(parents=True, exist_ok=True)
-
-
-def get_plots_aggregated_cycles_dir(folder_name):
-    return (
-        "fragile_breakage_model/plots/aggregated_cycles/"
-        + get_parameters_as_string()
-        + folder_name
-        + "/"
-    )
-
-
-def get_plots_relative_error(folder_name):
-    return (
-        "fragile_breakage_model/plots/relative_error/"
-        + get_parameters_as_string()
-        + folder_name
-        + "/"
-    )
-
-
-def get_plots_compare_cycles(folder_name):
-    return (
-        "fragile_breakage_model/plots/to_compare_number_of_cycles/"
-        + get_parameters_as_string()
-        + folder_name
-        + "/"
-    )
-
-
-def create_new_directories_in_plots():
-    for parameter in parameters.PROBABILITIES_WITH_ALPHA:
-        folder = list(parameter)[0]
-        Path(get_plots_aggregated_cycles_dir(folder)).mkdir(parents=True, exist_ok=True)
-        Path(get_plots_relative_error(folder)).mkdir(parents=True, exist_ok=True)
-        Path(get_plots_compare_cycles(folder)).mkdir(parents=True, exist_ok=True)
+            for c_len in cycle_lens:
+                if c_len in info.cycles_m:
+                    cur_result[c_len] = info.cycles_m[c_len]
+                else:
+                    cur_result[c_len] = 0
+            log_cycles.writerow(cur_result)
+        f_log.close()
+    print("finish log")
