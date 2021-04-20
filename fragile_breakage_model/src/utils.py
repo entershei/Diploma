@@ -27,10 +27,16 @@ class CyclesInfo:
     cycle_types = {}
     # Number of cycles with length is key. Cycle len is a number of fragile edges in it.
     cycles_m = {}
+    a_in_non_trivial_cycles = 0
+    b_in_non_trivial_cycles = 0
 
-    def __init__(self, cycle_types, cycles_m):
+    def __init__(
+        self, cycle_types, cycles_m, a_in_non_trivial_cycles, b_in_non_trivial_cycles
+    ):
         self.cycle_types = cycle_types
         self.cycles_m = cycles_m
+        self.a_in_non_trivial_cycles = a_in_non_trivial_cycles
+        self.b_in_non_trivial_cycles = b_in_non_trivial_cycles
 
 
 def parse_logs_row(row, possible_cycle_types, max_interesting_cycles_len, is_int):
@@ -48,7 +54,14 @@ def parse_logs_row(row, possible_cycle_types, max_interesting_cycles_len, is_int
         else:
             cycles_m[str(cycle_len)] = float(row[str(cycle_len)])
 
-    return CyclesInfo(cycle_types, cycles_m)
+    if is_int:
+        a_in_non_trivial_cycles = int(row["a_in_non_trivial_cycles"])
+        b_in_non_trivial_cycles = int(row["b_in_non_trivial_cycles"])
+    else:
+        a_in_non_trivial_cycles = float(row["a_in_non_trivial_cycles"])
+        b_in_non_trivial_cycles = float(row["b_in_non_trivial_cycles"])
+
+    return CyclesInfo(cycle_types, cycles_m, a_in_non_trivial_cycles, b_in_non_trivial_cycles)
 
 
 def read_experiments_cycles_info(
@@ -89,7 +102,12 @@ def log_experiments(
         cycle_types = generate_cycle_types(1, max_cycle_len_with_types)
         cycle_lens = list(map(lambda l: str(l), range(1, max_interesting_cycles_len)))
 
-        fieldnames = ["k"] + cycle_types + cycle_lens
+        fieldnames = (
+            ["k"]
+            + ["a_in_non_trivial_cycles", "b_in_non_trivial_cycles"]
+            + cycle_types
+            + cycle_lens
+        )
 
         log_cycles = csv.DictWriter(f_log, fieldnames=fieldnames)
         if open_mode == "a" and not file_exists:
@@ -98,7 +116,11 @@ def log_experiments(
             log_cycles.writeheader()
 
         for step, info in enumerate(experiments):
-            cur_result = {"k": step}
+            cur_result = {
+                "k": step,
+                "a_in_non_trivial_cycles": info.a_in_non_trivial_cycles,
+                "b_in_non_trivial_cycles": info.b_in_non_trivial_cycles,
+            }
             for cycle_type in cycle_types:
                 if cycle_type in info.cycle_types:
                     cur_result[cycle_type] = info.cycle_types[cycle_type]
@@ -110,6 +132,7 @@ def log_experiments(
                     cur_result[c_len] = info.cycles_m[c_len]
                 else:
                     cur_result[c_len] = 0
+
             log_cycles.writerow(cur_result)
         f_log.close()
     print("finish log")

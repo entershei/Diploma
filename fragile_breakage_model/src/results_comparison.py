@@ -78,6 +78,7 @@ def compute_analytical_cycles_m(m, x, p_aa, p_bb, alpha):
     return {"types": cycles, "all": sum_all}
 
 
+# Returns a_in_non_trivial_cycles, b_in_non_trivial_cycles only for for cycle_len = [1; max_interesting_cycles_len).
 def compute_analytical_cycles(
     n,
     p_aa,
@@ -90,10 +91,21 @@ def compute_analytical_cycles(
     def write_analytical_cycles():
         with open(f_out, "w", newline="") as log:
             field_names.append("x")
+            field_names.append("a_in_non_trivial_cycles")
+            field_names.append("b_in_non_trivial_cycles")
+
             log_cycles = csv.DictWriter(log, fieldnames=field_names)
             log_cycles.writeheader()
             for cur_x in analytical_cycles_depends_on_x.keys():
-                row = {"x": cur_x}
+                row = {
+                    "x": cur_x,
+                    "a_in_non_trivial_cycles": analytical_cycles_depends_on_x[
+                        cur_x
+                    ].a_in_non_trivial_cycles,
+                    "b_in_non_trivial_cycles": analytical_cycles_depends_on_x[
+                        cur_x
+                    ].b_in_non_trivial_cycles,
+                }
                 for c_type in analytical_cycles_depends_on_x[cur_x].cycle_types.keys():
                     row[c_type] = analytical_cycles_depends_on_x[cur_x].cycle_types[
                         c_type
@@ -111,6 +123,8 @@ def compute_analytical_cycles(
     while x < parameters.NUMBER_OF_STEPS / parameters.NUMBER_OF_FRAGILE_EDGES + step:
         cycle_types = {}
         cycles_m = {}
+        a_in_non_trivial_cycles = 0
+        b_in_non_trivial_cycles = 0
         for cycle_len in range(1, max_interesting_cycles_len):
             cur_analytical_cycles = compute_analytical_cycles_m(
                 cycle_len, x, p_aa, p_bb, alpha
@@ -125,7 +139,17 @@ def compute_analytical_cycles(
             if str(cycle_len) not in field_names:
                 field_names.append(str(cycle_len))
 
-        analytical_cycles_depends_on_x[x] = CyclesInfo(cycle_types, cycles_m)
+            for cycle_type in cur_analytical_cycles["types"].keys():
+                a_in_non_trivial_cycles = cur_analytical_cycles["types"][
+                    cycle_type
+                ] * cycle_type.count("A")
+                b_in_non_trivial_cycles = cur_analytical_cycles["types"][
+                    cycle_type
+                ] * cycle_type.count("B")
+
+        analytical_cycles_depends_on_x[x] = CyclesInfo(
+            cycle_types, cycles_m, a_in_non_trivial_cycles, b_in_non_trivial_cycles
+        )
         x += step
 
     write_analytical_cycles()

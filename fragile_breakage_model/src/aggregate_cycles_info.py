@@ -17,6 +17,8 @@ def sum_cycles_info(experiments, max_cycle_len_with_types, max_possible_cycles_l
     for i in range(num_steps_of_markov_process):
         sum_cnt_cycle_types = {}
         sum_cnt_cycles_m = {}
+        sum_a_in_non_trivial_cycles = 0
+        sum_b_in_non_trivial_cycles = 0
 
         for cycle_type in cycle_types:
             sum_cnt_cycle_types[cycle_type] = 0
@@ -33,8 +35,17 @@ def sum_cycles_info(experiments, max_cycle_len_with_types, max_possible_cycles_l
             for c_len in range(1, max_possible_cycles_len):
                 if str(c_len) in experiment[i].cycles_m:
                     sum_cnt_cycles_m[str(c_len)] += experiment[i].cycles_m[str(c_len)]
+            sum_a_in_non_trivial_cycles += experiment[i].a_in_non_trivial_cycles
+            sum_b_in_non_trivial_cycles += experiment[i].b_in_non_trivial_cycles
 
-        summed_cycles_info.append(CyclesInfo(sum_cnt_cycle_types, sum_cnt_cycles_m))
+        summed_cycles_info.append(
+            CyclesInfo(
+                sum_cnt_cycle_types,
+                sum_cnt_cycles_m,
+                sum_a_in_non_trivial_cycles,
+                sum_b_in_non_trivial_cycles,
+            )
+        )
 
     print("finish sum")
     return summed_cycles_info
@@ -63,7 +74,14 @@ def aggregate_cycles_info(
         for cycle_len in info.cycles_m:
             cycles_m[cycle_len] = info.cycles_m[cycle_len] / num_experiments
 
-        aggregated_cycles_info.append(CyclesInfo(cycle_types, cycles_m))
+        aggregated_cycles_info.append(
+            CyclesInfo(
+                cycle_types,
+                cycles_m,
+                info.a_in_non_trivial_cycles / num_experiments,
+                info.b_in_non_trivial_cycles / num_experiments,
+            )
+        )
 
     log_experiments(
         aggregated_cycles_info,
@@ -79,7 +97,7 @@ def main():
     max_cycle_len_with_types = 6
     max_interesting_cycles_len = parameters.MAX_POSSIBLE_CYCLES_LEN
 
-    for parameter in parameters.PROBABILITIES_WITH_ALPHA:
+    for parameter in parameters.PROBABILITIES_WITH_ALPHA[5:]:
         string_parameters, p_aa, p_bb, a_type_edges_proportion = parameter
         file = string_parameters + ".csv"
 

@@ -41,6 +41,7 @@ class EdgeInfo:
         self.edge_type = edge_type
 
 
+# Split only edges for Q genome.
 def split_fragile_edges(n, a_type_edges_proportion):
     a_type = []
     b_type = []
@@ -162,7 +163,11 @@ def compute_cycles_info(colors, edges, max_cycle_len_with_types):
 
     cycle_types = {}
     cycles_m = {}
+    a_in_non_trivial_cycles = 0
+    b_in_non_trivial_cycles = 0
+
     for c in cycles.keys():
+        # Since we count each edge twice, we should divide it by 2.
         cur_len = len(cycles[c]) // 2
         if cur_len < max_cycle_len_with_types:
             cycle_type = to_cycle_type(cycles[c])
@@ -171,13 +176,17 @@ def compute_cycles_info(colors, edges, max_cycle_len_with_types):
             else:
                 cycle_types[cycle_type] = 1
 
-        cur_len = str(cur_len)
-        if cur_len in cycles_m:
-            cycles_m[cur_len] += 1
+        if str(cur_len) in cycles_m:
+            cycles_m[str(cur_len)] += 1
         else:
-            cycles_m[cur_len] = 1
+            cycles_m[str(cur_len)] = 1
 
-    return CyclesInfo(cycle_types, cycles_m)
+        if cur_len > 1:
+            cnt_a, cnt_b = count_a_b(cycles[c])
+            a_in_non_trivial_cycles += cnt_a
+            b_in_non_trivial_cycles += cnt_b
+
+    return CyclesInfo(cycle_types, cycles_m, a_in_non_trivial_cycles, b_in_non_trivial_cycles)
 
 
 def to_cycle_type(edges_type):
@@ -186,6 +195,17 @@ def to_cycle_type(edges_type):
     for i in range(0, len(edges_type), 2):
         cycle_type += edges_type[i]
     return cycle_type
+
+
+def count_a_b(edges_type):
+    cnt_a = 0
+    cnt_b = 0
+    for t in edges_type:
+        if t == "A":
+            cnt_a += 1
+        else:
+            cnt_b += 1
+    return cnt_a // 2, cnt_b // 2
 
 
 def markov_process(
