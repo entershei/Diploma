@@ -3,7 +3,12 @@ import csv
 import matplotlib.pyplot as plt
 
 import parameters
-from utils import generate_cycle_types, read_experiments_cycles_info, parse_logs_row
+from utils import (
+    generate_cycle_types,
+    read_experiments_cycles_info,
+    parse_logs_row,
+    generate_cycle_types_for_len,
+)
 from generate_directories_names import (
     create_new_directories_in_plots,
     get_plots_aggregated_cycles_dir,
@@ -73,11 +78,11 @@ def draw_relative_errors(
 
     save_path = get_plots_relative_error(folder_name)
 
-    for c_len in range(1, max_interesting_cycles_len + 1):
+    for c_len in range(1, max_interesting_cycles_len):
         cycle_len = str(c_len)
 
-        if c_len <= max_cycle_len_with_types:
-            for cycle_type in generate_cycle_types(c_len, c_len):
+        if c_len < max_cycle_len_with_types:
+            for cycle_type in generate_cycle_types_for_len(c_len):
                 draw(
                     relative_errors.keys(),
                     list(
@@ -121,9 +126,9 @@ def draw_average_cycles(
 ):
     save_path = get_plots_aggregated_cycles_dir(folder_name)
 
-    for cycle_len in range(1, max_interesting_cycles_len + 1):
-        if cycle_len <= max_cycle_len_with_types:
-            for cycle_type in generate_cycle_types(cycle_len, cycle_len):
+    for cycle_len in range(1, max_interesting_cycles_len):
+        if cycle_len < max_cycle_len_with_types:
+            for cycle_type in generate_cycle_types_for_len(cycle_len):
                 draw_number_of_cycles(
                     list(
                         map(
@@ -169,9 +174,9 @@ def draw_empirical_with_analytical_cycles(
         )
     )
 
-    for c_len in range(1, max_interesting_cycles_len + 1):
-        if c_len <= max_cycle_len_with_types:
-            for cycle_type in generate_cycle_types(c_len, c_len):
+    for c_len in range(1, max_interesting_cycles_len):
+        if c_len < max_cycle_len_with_types:
+            for cycle_type in generate_cycle_types_for_len(c_len):
                 draw_two_plots(
                     xs,
                     list(
@@ -223,13 +228,15 @@ def draw_empirical_with_analytical_cycles(
 
 
 def main():
-    max_interesting_cycles_len = 10
-    max_cycle_len_with_types = 5
+    max_interesting_cycles_len = 11
+    max_cycle_len_with_types = 6
 
     create_new_directories_in_plots()
 
-    for cur_parameters in parameters.PROBABILITIES_WITH_ALPHA:
+    for cur_parameters in parameters.PROBABILITIES_WITH_ALPHA[:5]:
         folder_name, p_aa, p_bb, alpha = cur_parameters
+        print(folder_name)
+
         parameters_for_plot_name = (
             "n = "
             + str(parameters.NUMBER_OF_FRAGILE_EDGES)

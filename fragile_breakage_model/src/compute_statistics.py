@@ -40,10 +40,10 @@ def compute_d_with_different_parameters(max_m):
     # check_d_b(get_parameters_as_string() + "paa0,5_pbb0,45_alpha0,5_10000_experiments.csv")
 
 
-def compare_min_d(parameters_str, p_aa, p_bb, a_type_edges_proportion, max_m):
+def compare_d_and_b(parameters_str, p_aa, p_bb, a_type_edges_proportion, max_m):
     aggregated_info = read_experiments_cycles_info(
         get_cycles_info_dir() + parameters_str + ".csv",
-        5,
+        6,
         parameters.MAX_POSSIBLE_CYCLES_LEN,
         False,
     )[0]
@@ -109,13 +109,13 @@ def check_monotone_d_divide_b():
         )
 
 
-def compare_different_min_d():
+def compare_empirical_and_analytical():
     parameter = parameters.PROBABILITIES_WITH_ALPHA[1]
     string_parameters, p_aa, p_bb, a_type_edges_proportion = parameter
-    compare_min_d(string_parameters, p_aa, p_bb, a_type_edges_proportion, 111)
+    compare_d_and_b(string_parameters, p_aa, p_bb, a_type_edges_proportion, 111)
 
 
 if __name__ == "__main__":
     # compute_d_with_different_parameters()
-    # compare_different_min_d()
-    check_monotone_d_divide_b()
+    compare_empirical_and_analytical()
+    # check_monotone_d_divide_b()

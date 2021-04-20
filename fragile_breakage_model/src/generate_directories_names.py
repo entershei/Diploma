@@ -39,12 +39,12 @@ def create_new_directory_for_logging_experiments():
     return path
 
 
-def get_relative_error_dir():
-    return (
-        "fragile_breakage_model/logs/relative_error/"
-        + get_parameters_as_string()
-        + "depends_on_x_"
-    )
+def get_relative_error_dir(add_depends_on_x=True):
+    path = "fragile_breakage_model/logs/relative_error/" + get_parameters_as_string()
+    if add_depends_on_x:
+        return path + "depends_on_x_"
+    else:
+        return path
 
 
 def get_analytical_cycles_dir():
@@ -52,7 +52,7 @@ def get_analytical_cycles_dir():
 
 
 def create_new_directories_for_result_comparison():
-    Path(get_relative_error_dir()).mkdir(parents=True, exist_ok=True)
+    Path(get_relative_error_dir(False)).mkdir(parents=True, exist_ok=True)
     Path(get_analytical_cycles_dir()).mkdir(parents=True, exist_ok=True)
 
 

@@ -164,7 +164,7 @@ def compute_cycles_info(colors, edges, max_cycle_len_with_types):
     cycles_m = {}
     for c in cycles.keys():
         cur_len = len(cycles[c]) // 2
-        if cur_len <= max_cycle_len_with_types:
+        if cur_len < max_cycle_len_with_types:
             cycle_type = to_cycle_type(cycles[c])
             if cycle_type in cycle_types:
                 cycle_types[cycle_type] += 1
@@ -259,16 +259,17 @@ def main():
     n = parameters.NUMBER_OF_FRAGILE_EDGES
     k = parameters.NUMBER_OF_STEPS
     experiments_log_path = create_new_directory_for_logging_experiments()
-    max_cycle_len_with_types = 5
+    max_cycle_len_with_types = 6
     max_interesting_cycles_len = parameters.MAX_POSSIBLE_CYCLES_LEN
 
-    for parameter in parameters.PROBABILITIES_WITH_ALPHA:
+    for parameter in parameters.PROBABILITIES_WITH_ALPHA[5:]:
         string_parameters, p_aa, p_bb, a_type_edges_proportion = parameter
         file = string_parameters + ".csv"
         p_ab = 1 - p_aa - p_bb
 
         experiments = []
         print("parameters:", string_parameters)
+
         for i in range(parameters.NUMBER_OF_EXPERIMENTS):
             a_type, b_type, edges = split_fragile_edges(n, a_type_edges_proportion)
             experiments.append(
@@ -286,17 +287,18 @@ def main():
             )
 
             if len(experiments) == parameters.EXPERIMENTS_IN_ONE_BUNCH:
+                # Записываем сумму результатов экспериментов
                 print("i:", i, ", time: ", (time.time() - start_time) / 60, " m.")
                 log_experiments(
                     sum_cycles_info(
                         experiments,
                         max_cycle_len_with_types,
-                        parameters.MAX_POSSIBLE_CYCLES_LEN,
+                        max_interesting_cycles_len,
                     ),
                     experiments_log_path + file,
+                    open_mode="a",
                     max_cycle_len_with_types=max_cycle_len_with_types,
                     max_interesting_cycles_len=max_interesting_cycles_len,
-                    open_mode="a",
                 )
                 experiments = []
 

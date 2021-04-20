@@ -11,24 +11,28 @@ def sum_cycles_info(experiments, max_cycle_len_with_types, max_possible_cycles_l
     print("start sum")
     num_steps_of_markov_process = len(experiments[0])
 
+    cycle_types = generate_cycle_types(1, max_cycle_len_with_types)
+
     summed_cycles_info = []
     for i in range(num_steps_of_markov_process):
         sum_cnt_cycle_types = {}
         sum_cnt_cycles_m = {}
 
-        for cycle_type in generate_cycle_types(1, max_cycle_len_with_types):
+        for cycle_type in cycle_types:
             sum_cnt_cycle_types[cycle_type] = 0
 
         for c_len in range(1, max_possible_cycles_len):
             sum_cnt_cycles_m[str(c_len)] = 0
 
         for experiment in experiments:
-            for cycles_types in experiment[i].cycle_types.keys():
-                sum_cnt_cycle_types[cycles_types] += experiment[i].cycle_types[
-                    cycles_types
-                ]
-            for c_len in experiment[i].cycles_m.keys():
-                sum_cnt_cycles_m[c_len] += experiment[i].cycles_m[c_len]
+            for cycle_type in cycle_types:
+                if cycle_type in experiment[i].cycle_types:
+                    sum_cnt_cycle_types[cycle_type] += experiment[i].cycle_types[
+                        cycle_type
+                    ]
+            for c_len in range(1, max_possible_cycles_len):
+                if str(c_len) in experiment[i].cycles_m:
+                    sum_cnt_cycles_m[str(c_len)] += experiment[i].cycles_m[str(c_len)]
 
         summed_cycles_info.append(CyclesInfo(sum_cnt_cycle_types, sum_cnt_cycles_m))
 
@@ -47,7 +51,7 @@ def aggregate_cycles_info(
 
     num_experiments = len(experiments) * parameters.EXPERIMENTS_IN_ONE_BUNCH
     summed_cycles_info = sum_cycles_info(
-        experiments, max_cycle_len_with_types, parameters.MAX_POSSIBLE_CYCLES_LEN
+        experiments, max_cycle_len_with_types, max_interesting_cycles_len
     )
     aggregated_cycles_info = []
 
@@ -72,6 +76,7 @@ def aggregate_cycles_info(
 
 def main():
     cycles_info_log_path = create_new_directory_in_cycles_info()
+    max_cycle_len_with_types = 6
     max_interesting_cycles_len = parameters.MAX_POSSIBLE_CYCLES_LEN
 
     for parameter in parameters.PROBABILITIES_WITH_ALPHA:
@@ -83,7 +88,7 @@ def main():
         aggregate_cycles_info(
             f_in=get_experiments_dir() + file,
             f_out=cycles_info_log_path + string_parameters,
-            max_cycle_len_with_types=5,
+            max_cycle_len_with_types=max_cycle_len_with_types,
             max_interesting_cycles_len=max_interesting_cycles_len,
         )
 

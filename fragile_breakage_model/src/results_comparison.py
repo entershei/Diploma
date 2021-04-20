@@ -5,7 +5,7 @@ import parameters
 from aggregate_cycles_info import read_experiments_cycles_info
 from utils import (
     generate_cycle_type,
-    generate_cycle_types,
+    generate_cycle_types_for_len,
 )
 from dcj import CyclesInfo
 from generate_directories_names import (
@@ -111,11 +111,11 @@ def compute_analytical_cycles(
     while x < parameters.NUMBER_OF_STEPS / parameters.NUMBER_OF_FRAGILE_EDGES + step:
         cycle_types = {}
         cycles_m = {}
-        for cycle_len in range(1, max_interesting_cycles_len + 1):
+        for cycle_len in range(1, max_interesting_cycles_len):
             cur_analytical_cycles = compute_analytical_cycles_m(
                 cycle_len, x, p_aa, p_bb, alpha
             )
-            if cycle_len <= max_cycle_len_with_types:
+            if cycle_len < max_cycle_len_with_types:
                 for cycle_type in cur_analytical_cycles["types"].keys():
                     cycle_types[cycle_type] = cur_analytical_cycles["types"][cycle_type]
                     if cycle_type not in field_names:
@@ -163,8 +163,8 @@ def relative_error(
 ):
     n = parameters.NUMBER_OF_FRAGILE_EDGES
     cycle_types = [[]]
-    for i in range(1, max_cycle_len_with_types + 1):
-        cycle_types.append(generate_cycle_types(i, i))
+    for i in range(1, max_cycle_len_with_types):
+        cycle_types.append(generate_cycle_types_for_len(i))
 
     # x = k / n
     error_depends_on_x = []
@@ -174,8 +174,8 @@ def relative_error(
         k = int(x * n)
 
         errors = {"x": x}
-        for cycle_len in range(1, max_interesting_cycles_len + 1):
-            if cycle_len <= max_cycle_len_with_types:
+        for cycle_len in range(1, max_interesting_cycles_len):
+            if cycle_len < max_cycle_len_with_types:
                 for cycle_type in cycle_types[cycle_len]:
                     errors[cycle_type] = compute_relative_error_between_two_results(
                         empirical_cycles_info[k].cycle_types[cycle_type] / n,
@@ -194,16 +194,19 @@ def relative_error(
 
 
 def main():
-    max_interesting_cycles_len = 10
-    max_cycle_len_with_types = 5
+    max_interesting_cycles_len = 11
+    max_cycle_len_with_types = 6
 
     create_new_directories_for_result_comparison()
 
-    for cur_parameters in parameters.PROBABILITIES_WITH_ALPHA:
+    for cur_parameters in parameters.PROBABILITIES_WITH_ALPHA[:5]:
         file, p_aa, p_bb, alpha = cur_parameters
 
         empirical_cycles_info = read_experiments_cycles_info(
-            get_cycles_info_dir() + file + ".csv", 5, max_interesting_cycles_len, False
+            get_cycles_info_dir() + file + ".csv",
+            max_cycle_len_with_types,
+            max_interesting_cycles_len,
+            False,
         )[0]
         analytical_cycles_info = compute_analytical_cycles(
             n=parameters.NUMBER_OF_FRAGILE_EDGES,
