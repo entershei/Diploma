@@ -4,10 +4,10 @@ import math
 import parameters
 from aggregate_cycles_info import read_experiments_cycles_info
 from utils import (
+    CyclesInfo,
     generate_cycle_type,
     generate_cycle_types_for_len,
 )
-from dcj import CyclesInfo
 from generate_directories_names import (
     create_new_directories_for_result_comparison,
     get_cycles_info_dir,

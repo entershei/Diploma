@@ -1,7 +1,7 @@
 # Diploma
 
-[dcj.py](fragile_breakage_model/src/dcj.py) записывает результаты Марковского процесса в logs/experiments_100, суммируя
-данные по 100 экспериментам.
+[simulation.py](fragile_breakage_model/src/simulation.py) записывает результаты Марковского процесса в
+logs/experiments_100, суммируя данные по 100 экспериментам.
 
 Данные, записанные о каждом эксперименте отдельно,
 [выложены](https://drive.google.com/drive/folders/1uALp2yIs_-3Dpz0_tv1styecyQEbf8A4?usp=sharing) на Гугл диск из-за
