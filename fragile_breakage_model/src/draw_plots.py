@@ -233,7 +233,7 @@ def main():
 
     create_new_directories_in_plots()
 
-    for cur_parameters in parameters.PROBABILITIES_WITH_ALPHA[:5]:
+    for cur_parameters in parameters.PROBABILITIES_WITH_ALPHA:
         folder_name, p_aa, p_bb, alpha = cur_parameters
         print(folder_name)
 

@@ -210,6 +210,18 @@ def relative_error(
                 empirical_cycles_info[k].cycles_m[str(cycle_len)] / n,
                 analytical_cycles_info[x].cycles_m[str(cycle_len)],
             )
+            errors[
+                "a_in_non_trivial_cycles"
+            ] = compute_relative_error_between_two_results(
+                empirical_cycles_info[k].a_in_non_trivial_cycles / n,
+                analytical_cycles_info[x].a_in_non_trivial_cycles,
+            )
+            errors[
+                "b_in_non_trivial_cycles"
+            ] = compute_relative_error_between_two_results(
+                empirical_cycles_info[k].b_in_non_trivial_cycles / n,
+                analytical_cycles_info[x].b_in_non_trivial_cycles,
+            )
 
         error_depends_on_x.append(errors)
         x += step
@@ -223,7 +235,7 @@ def main():
 
     create_new_directories_for_result_comparison()
 
-    for cur_parameters in parameters.PROBABILITIES_WITH_ALPHA[:5]:
+    for cur_parameters in parameters.PROBABILITIES_WITH_ALPHA:
         file, p_aa, p_bb, alpha = cur_parameters
 
         empirical_cycles_info = read_experiments_cycles_info(
