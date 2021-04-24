@@ -1,0 +1,9 @@
+graph DCJ_to_spanning_tree {
+	node [fixedsize=true ordering=out shape=circle width=0.3]
+	0 [color=blue]
+	1 [color=blue]
+	2 [color=chartreuse2]
+	0 -- 1 [style=invis]
+	1 -- 2
+	2 -- 0
+}
