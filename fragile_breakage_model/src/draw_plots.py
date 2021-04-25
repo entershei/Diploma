@@ -36,7 +36,7 @@ def draw_number_of_cycles(cycles, title, save_as):
 
 
 def draw_two_plots(xs, ys1, ys2, x_label, y_label, title, legend, save_as):
-    plt.plot(xs, ys1, color="green", label=legend[0])
+    plt.plot(xs, ys1, color="red", label=legend[0])
     plt.plot(xs, ys2, color="blue", label=legend[1])
     plt.legend(legend)
     plt.title(title)
