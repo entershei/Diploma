@@ -23,10 +23,7 @@ def compute_analytically_b_n(x, p_aa, p_bb, alpha):
     return 1 - compute_analytical_cycles_m(1, x, p_aa, p_bb, alpha)["all"]
 
 
-#                 "real_true_dist": k,
-#                 "analytical_true_dist": analytical_true_dist,
-#                 "real_min_dist": empirical_min_d,
-def draw_dists(to_draw, save_as):
+def draw_dists(to_draw, parameters_for_plot_name, save_as):
     xs = list(map(lambda v: v["real_true_dist"], to_draw))
     empirical_true_distances = xs
     empirical_min_distances = list(map(lambda v: v["real_min_dist"], to_draw))
@@ -42,13 +39,26 @@ def draw_dists(to_draw, save_as):
     plt.plot(xs, analytical_true_distances, color="red", label=legend[1])
     plt.plot(xs, empirical_min_distances, color="black", label=legend[2])
 
-    plt.title("Evolutionary distance")
+    plt.title("Evolutionary distance\n" + parameters_for_plot_name)
     plt.xlabel("Real number of rearrangements")
     plt.ylabel("Estimated number of rearrangements")
     plt.legend(legend)
     plt.grid()
     plt.savefig(save_as)
     plt.close()
+
+
+def build_parameters_for_plot_name(p_aa, p_bb, alpha):
+    return (
+        "n = "
+        + str(parameters.NUMBER_OF_FRAGILE_EDGES)
+        + ", paa = "
+        + str(p_aa)
+        + ", p_bb = "
+        + str(p_bb)
+        + ", α = "
+        + str(alpha)
+    )
 
 
 def find_true_evolution_dist(parameters_str, p_aa, p_bb, alpha, max_m):
@@ -109,9 +119,10 @@ def find_true_evolution_dist(parameters_str, p_aa, p_bb, alpha, max_m):
                 "real_min_dist": empirical_d,
             }
         )
-
+    parameters_for_plot_name = build_parameters_for_plot_name(p_aa, p_bb, alpha)
     draw_dists(
         to_draw,
+        parameters_for_plot_name,
         "fragile_breakage_model/plots/true_evolution_distance/" + parameters_str,
     )
 
@@ -126,23 +137,24 @@ def compute_d_divide_b(x, p_aa, p_bb, alpha, max_m):
 
 def check_monotone_d_divide_b():
     for parameter in parameters.PROBABILITIES_WITH_ALPHA:
-        s, p_aa, p_bb, a_type_edges_proportion = parameter
+        s, p_aa, p_bb, alpha = parameter
         print(s)
 
         max_m = 85
         d_b_s = []
-
+        xs = []
         for k in range(1, parameters.NUMBER_OF_FRAGILE_EDGES):
             x = k / parameters.NUMBER_OF_FRAGILE_EDGES
-            d_b = compute_d_divide_b(x, p_aa, p_bb, a_type_edges_proportion, max_m)
+            xs.append(x)
+            d_b = compute_d_divide_b(x, p_aa, p_bb, alpha, max_m)
             d_b_s.append(d_b)
 
         draw(
-            range(1, parameters.NUMBER_OF_FRAGILE_EDGES),
+            xs,
             d_b_s,
             "x",
             "d/b",
-            "d/b depends on x for" + s,
+            "d/b depends on x\n" + build_parameters_for_plot_name(p_aa, p_bb, alpha),
             "fragile_breakage_model/plots/d_b/" + s,
         )
 
@@ -154,6 +166,5 @@ def compare_empirical_and_analytical():
 
 
 if __name__ == "__main__":
-    compare_empirical_and_analytical()
-    # check_monotone_d_divide_b()
-    # check_monotone_d_divide_b()
+    # compare_empirical_and_analytical()
+    check_monotone_d_divide_b()
