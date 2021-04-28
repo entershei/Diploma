@@ -61,7 +61,9 @@ def parse_logs_row(row, possible_cycle_types, max_interesting_cycles_len, is_int
         a_in_non_trivial_cycles = float(row["a_in_non_trivial_cycles"])
         b_in_non_trivial_cycles = float(row["b_in_non_trivial_cycles"])
 
-    return CyclesInfo(cycle_types, cycles_m, a_in_non_trivial_cycles, b_in_non_trivial_cycles)
+    return CyclesInfo(
+        cycle_types, cycles_m, a_in_non_trivial_cycles, b_in_non_trivial_cycles
+    )
 
 
 def read_experiments_cycles_info(
@@ -136,3 +138,24 @@ def log_experiments(
             log_cycles.writerow(cur_result)
         f_log.close()
     print("finish log")
+
+
+def log_dictionaries(dictionaries, f):
+    with open(f, "w", newline="") as f_log:
+        log = csv.DictWriter(f_log, fieldnames=dictionaries[0].keys())
+        log.writeheader()
+
+        for dictionary in dictionaries:
+            log.writerow(dictionary)
+
+
+def read_logs(f):
+    logs = []
+
+    with open(f, "r", newline="") as csvfile:
+        reader = csv.DictReader(csvfile, delimiter=",", quotechar="|")
+        for row in reader:
+            logs.append(row)
+
+        csvfile.close()
+    return logs

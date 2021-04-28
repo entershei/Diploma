@@ -7,6 +7,7 @@ from utils import (
     CyclesInfo,
     generate_cycle_type,
     generate_cycle_types_for_len,
+    log_dictionaries,
 )
 from generate_directories_names import (
     create_new_directories_for_result_comparison,
@@ -169,15 +170,6 @@ def compute_relative_error_between_two_results(
     )
 
 
-def write_relative_error(error_depends_on_x, f):
-    with open(f, "w", newline="") as log:
-        log_lens = csv.DictWriter(log, fieldnames=error_depends_on_x[0].keys())
-        log_lens.writeheader()
-
-        for error in error_depends_on_x:
-            log_lens.writerow(error)
-
-
 def relative_error(
     empirical_cycles_info,
     analytical_cycles_info,
@@ -226,7 +218,7 @@ def relative_error(
         error_depends_on_x.append(errors)
         x += step
 
-    write_relative_error(error_depends_on_x, f_out)
+    log_dictionaries(error_depends_on_x, f_out)
 
 
 def main():
