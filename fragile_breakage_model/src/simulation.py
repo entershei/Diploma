@@ -284,10 +284,15 @@ def main():
     max_cycle_len_with_types = 6
     max_interesting_cycles_len = parameters.MAX_POSSIBLE_CYCLES_LEN
 
-    for parameter in parameters.PROBABILITIES_WITH_ALPHA:
+    for parameter in parameters.PROBABILITIES_WITH_ALPHA[:2]:
         string_parameters, p_aa, p_bb, a_type_edges_proportion = parameter
         file = string_parameters + ".csv"
         p_ab = 1 - p_aa - p_bb
+
+        if string_parameters == "paa0,333_pbb0,333_alpha0,5":
+            k = n
+        else:
+            k = parameters.NUMBER_OF_STEPS
 
         experiments = []
         print("parameters:", string_parameters)
