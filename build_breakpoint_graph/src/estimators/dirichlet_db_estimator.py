@@ -3,7 +3,7 @@ import numpy as np
 from collections import defaultdict
 from scipy import optimize
 
-from src.estimators.abstract_db_estimator import AbstractDBEstimator
+from abstract_db_estimator import AbstractDBEstimator
 
 cache = defaultdict(lambda: defaultdict(lambda: {}))
 

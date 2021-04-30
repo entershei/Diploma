@@ -1,6 +1,6 @@
 import math
 
-from src.estimators.abstract_db_estimator import AbstractDBEstimator
+from abstract_db_estimator import AbstractDBEstimator
 
 
 class UniformDBEstimator(AbstractDBEstimator):

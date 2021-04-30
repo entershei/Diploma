@@ -1,8 +1,7 @@
-from src.graphs.cyclic_genome_graph import CyclicGenomeGraph
-from src.graphs.linear_genome_graph import LinearGenomeGraph
-from src.estimators.flat_dirichlet_estimator import FlatDirichletDBEstimator
-from src.estimators.uniform_db_estimator import UniformDBEstimator
-from src.estimators.dirichlet_db_estimator import DirichletDBEstimator
+from graphs.linear_genome_graph import LinearGenomeGraph
+from estimators.flat_dirichlet_estimator import FlatDirichletDBEstimator
+from estimators.uniform_db_estimator import UniformDBEstimator
+from estimators.dirichlet_db_estimator import DirichletDBEstimator
 
 g = LinearGenomeGraph(1000, 10, "gamma", [1])
 

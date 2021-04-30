@@ -1,4 +1,4 @@
-from src.graphs.linear_genome_graph import LinearGenomeGraph
+from graphs.linear_genome_graph import LinearGenomeGraph
 
 g = LinearGenomeGraph(5, 1)
 

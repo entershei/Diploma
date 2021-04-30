@@ -1,6 +1,6 @@
 from scipy.special import hyp2f1
 
-from src.estimators.abstract_db_estimator import AbstractDBEstimator
+from abstract_db_estimator import AbstractDBEstimator
 
 
 class FlatDirichletDBEstimator(AbstractDBEstimator):
