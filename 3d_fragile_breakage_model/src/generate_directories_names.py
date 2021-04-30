@@ -15,7 +15,7 @@ def get_parameters_as_string():
 
 
 def get_cycles_info_dir():
-    return "fragile_breakage_model/logs/cycles_info/" + get_parameters_as_string()
+    return "3d_fragile_breakage_model/logs/cycles_info/" + get_parameters_as_string()
 
 
 def create_new_directory_in_cycles_info():
@@ -26,7 +26,7 @@ def create_new_directory_in_cycles_info():
 
 def get_experiments_dir():
     return (
-        "fragile_breakage_model/logs/experiments_"
+        "3d_fragile_breakage_model/logs/experiments_"
         + str(parameters.EXPERIMENTS_IN_ONE_BUNCH)
         + "/"
         + number_of_fragile_edges()
@@ -48,7 +48,9 @@ def get_relative_error_dir(add_depends_on_x=True):
 
 
 def get_analytical_cycles_dir():
-    return "fragile_breakage_model/logs/analytical_cycles/" + number_of_fragile_edges()
+    return (
+        "3d_fragile_breakage_model/logs/analytical_cycles/" + number_of_fragile_edges()
+    )
 
 
 def create_new_directories_for_result_comparison():
@@ -58,7 +60,7 @@ def create_new_directories_for_result_comparison():
 
 def get_plots_aggregated_cycles_dir(folder_name):
     return (
-        "fragile_breakage_model/plots/aggregated_cycles/"
+        "3d_fragile_breakage_model/plots/aggregated_cycles/"
         + get_parameters_as_string()
         + folder_name
         + "/"
@@ -76,7 +78,7 @@ def get_plots_relative_error(folder_name):
 
 def get_plots_compare_cycles(folder_name):
     return (
-        "fragile_breakage_model/plots/to_compare_number_of_cycles/"
+        "3d_fragile_breakage_model/plots/to_compare_number_of_cycles/"
         + get_parameters_as_string()
         + folder_name
         + "/"

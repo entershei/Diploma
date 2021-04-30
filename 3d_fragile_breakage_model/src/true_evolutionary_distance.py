@@ -186,21 +186,21 @@ def compute_true_evolutionary_distance(fixed_parameters, find_parameters, fbm):
         if fixed_parameters:
             log_dictionaries(
                 dist_info_fixed_parameters,
-                "fragile_breakage_model/logs/true_evolution_distance_fixed/"
+                "3d_fragile_breakage_model/logs/true_evolution_distance_fixed/"
                 + file
                 + ".csv",
             )
         if find_parameters:
             log_dictionaries(
                 dist_info_found_parameters,
-                "fragile_breakage_model/logs/true_evolution_distance_found_parameters/"
+                "3d_fragile_breakage_model/logs/true_evolution_distance_found_parameters/"
                 + file
                 + ".csv",
             )
         if fbm:
             log_dictionaries(
                 dist_info_fbm,
-                "fragile_breakage_model/logs/true_evolution_distance_fbm/"
+                "3d_fragile_breakage_model/logs/true_evolution_distance_fbm/"
                 + file
                 + ".csv",
             )
@@ -271,7 +271,7 @@ def draw_true_dist_for_parameters(f_name):
         print(plot_title)
 
         dist_info = read_logs(
-            "fragile_breakage_model/logs/" + f_name + "/" + folder_name + ".csv"
+            "3d_fragile_breakage_model/logs/" + f_name + "/" + folder_name + ".csv"
         )
 
         draw_dists(
@@ -279,7 +279,7 @@ def draw_true_dist_for_parameters(f_name):
             None,
             None,
             plot_title,
-            "fragile_breakage_model/plots/" + f_name + "/" + folder_name,
+            "3d_fragile_breakage_model/plots/" + f_name + "/" + folder_name,
         )
 
 
@@ -292,13 +292,16 @@ def draw_true_dist_with_additional_plot(
         print(plot_title)
 
         dist_info_fixed = read_logs(
-            "fragile_breakage_model/logs/true_evolution_distance_fixed/"
+            "3d_fragile_breakage_model/logs/true_evolution_distance_fixed/"
             + parameters_str
             + ".csv"
         )
 
         dist_info_found = read_logs(
-            "fragile_breakage_model/logs/" + additional_folder + parameters_str + ".csv"
+            "3d_fragile_breakage_model/logs/"
+            + additional_folder
+            + parameters_str
+            + ".csv"
         )
 
         draw_dists(
@@ -306,7 +309,7 @@ def draw_true_dist_with_additional_plot(
             dist_info_found,
             additional_label,
             plot_title,
-            "fragile_breakage_model/plots/" + folder_to_save + parameters_str,
+            "3d_fragile_breakage_model/plots/" + folder_to_save + parameters_str,
         )
 
 

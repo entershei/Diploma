@@ -47,7 +47,7 @@ def draw_d_divide_b():
             "x",
             "d/b",
             "d/b depends on x\n" + build_parameters_for_plot_title(p_aa, p_bb, alpha),
-            "fragile_breakage_model/plots/d_b/" + s,
+            "3d_fragile_breakage_model/plots/d_b/" + s,
         )
 
 
