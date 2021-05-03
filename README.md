@@ -18,5 +18,5 @@
 [github.com/ctlab/true-dist-infer](https://github.com/ctlab/true-dist-infer) для построения графа точек разрыва
 (breakpoint graph) из реальных данных в inferCARs формате.
 
-Данные о разбиении генома на [A/B compartments](3d_fragile_breakage_model/data/a_b_compartments.xlsx) взяты из статьи
-[A Compendium of Chromatin Contact Maps Reveals Spatially Active Regions in the Human Genome / A. D. Schmitt [et al.] // Cell Reports. — 2016. — Volume 17, Issue 8, p. 2042-2059](https://doi.org/10.1016/j.celrep.2016.10.061).
+Данные о разбиении генома человека на [A/B compartments](3d_fragile_breakage_model/data/a_b_compartments.xlsx) взяты из
+статьи [A Compendium of Chromatin Contact Maps Reveals Spatially Active Regions in the Human Genome / A. D. Schmitt [et al.] // Cell Reports. — 2016. — Volume 17, Issue 8, p. 2042-2059](https://doi.org/10.1016/j.celrep.2016.10.061).
