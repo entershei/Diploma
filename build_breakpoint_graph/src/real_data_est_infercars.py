@@ -1,9 +1,12 @@
 import argparse
 
-from graphs.real_data_graph import RealDataGraph
+from build_breakpoint_graph.src.graphs.real_data_graph import RealDataGraph
 
-from utils.parsers import parse_to_df
-from real_data_est_common import get_dist_param, print_graph_stats
+from build_breakpoint_graph.src.utils.parsers import parse_to_df
+from build_breakpoint_graph.src.real_data_est_common import (
+    get_dist_param,
+    print_graph_stats,
+)
 
 parser = argparse.ArgumentParser(
     description='Construct a breakpoint graph with real data provided in infercars format. '

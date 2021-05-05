@@ -1,6 +1,8 @@
 from scipy.special import hyp2f1
 
-from abstract_db_estimator import AbstractDBEstimator
+from build_breakpoint_graph.src.estimators.abstract_db_estimator import (
+    AbstractDBEstimator,
+)
 
 
 class FlatDirichletDBEstimator(AbstractDBEstimator):

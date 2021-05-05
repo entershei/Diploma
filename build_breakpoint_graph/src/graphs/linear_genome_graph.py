@@ -2,8 +2,10 @@ import random
 import networkx as nx
 import numpy as np
 
-from src.graphs.common_utils import get_probabilities_by_distribution
-from src.graphs.abstract_graph import AbstractGraph
+from build_breakpoint_graph.src.graphs.common_utils import (
+    get_probabilities_by_distribution,
+)
+from build_breakpoint_graph.src.graphs.abstract_graph import AbstractGraph
 
 
 class LinearGenomeGraph(AbstractGraph):

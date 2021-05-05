@@ -1,7 +1,7 @@
 import argparse
 
-from graphs.real_data_graph import RealDataGraph
-from real_data_est_common import print_graph_stats
+from build_breakpoint_graph.src.graphs.real_data_graph import RealDataGraph
+from build_breakpoint_graph.src.real_data_est_common import print_graph_stats
 
 parser = argparse.ArgumentParser(
     description='Construct a breakpoint graph with real data provided in grimm format. '

@@ -1,4 +1,4 @@
-from graphs.linear_genome_graph import LinearGenomeGraph
+from build_breakpoint_graph.src.graphs.linear_genome_graph import LinearGenomeGraph
 
 g = LinearGenomeGraph(5, 1)
 

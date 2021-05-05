@@ -1,7 +1,13 @@
-from graphs.linear_genome_graph import LinearGenomeGraph
-from estimators.flat_dirichlet_estimator import FlatDirichletDBEstimator
-from estimators.uniform_db_estimator import UniformDBEstimator
-from estimators.dirichlet_db_estimator import DirichletDBEstimator
+from build_breakpoint_graph.src.graphs.linear_genome_graph import LinearGenomeGraph
+from build_breakpoint_graph.src.estimators.flat_dirichlet_estimator import (
+    FlatDirichletDBEstimator,
+)
+from build_breakpoint_graph.src.estimators.uniform_db_estimator import (
+    UniformDBEstimator,
+)
+from build_breakpoint_graph.src.estimators.dirichlet_db_estimator import (
+    DirichletDBEstimator,
+)
 
 g = LinearGenomeGraph(1000, 10, "gamma", [1])
 

@@ -2,8 +2,10 @@ import networkx as nx
 import random
 import numpy as np
 from operator import itemgetter
-from common_utils import get_probabilities_by_distribution
-from abstract_graph import AbstractGraph
+from build_breakpoint_graph.src.graphs.abstract_graph import AbstractGraph
+from build_breakpoint_graph.src.graphs.common_utils import (
+    get_probabilities_by_distribution,
+)
 
 
 class CyclicGenomeGraph(AbstractGraph):

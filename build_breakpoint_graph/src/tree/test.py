@@ -1,6 +1,3 @@
-from src.tree.fit_to_tree import count_tree_errors
-
-import numpy as np
 from ete3 import Tree
 
 

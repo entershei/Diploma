@@ -1,9 +1,9 @@
 import scipy.stats
 
-from utils.block_stats import dist_between_blocks
-from estimators.flat_dirichlet_estimator import FlatDirichletDBEstimator
-from estimators.uniform_db_estimator import UniformDBEstimator
-from estimators.dirichlet_db_estimator import DirichletDBEstimator, CorrectedDirichletDBEstimator
+from build_breakpoint_graph.src.utils.block_stats import dist_between_blocks
+from build_breakpoint_graph.src.estimators.flat_dirichlet_estimator import FlatDirichletDBEstimator
+from build_breakpoint_graph.src.estimators.uniform_db_estimator import UniformDBEstimator
+from build_breakpoint_graph.src.estimators.dirichlet_db_estimator import DirichletDBEstimator, CorrectedDirichletDBEstimator
 
 
 def get_dist_param(df, sp1, sp2):

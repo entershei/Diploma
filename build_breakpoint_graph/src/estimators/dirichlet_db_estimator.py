@@ -3,7 +3,9 @@ import numpy as np
 from collections import defaultdict
 from scipy import optimize
 
-from abstract_db_estimator import AbstractDBEstimator
+from build_breakpoint_graph.src.estimators.abstract_db_estimator import (
+    AbstractDBEstimator,
+)
 
 cache = defaultdict(lambda: defaultdict(lambda: {}))
 

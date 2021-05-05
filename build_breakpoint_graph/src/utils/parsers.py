@@ -2,7 +2,7 @@ import re
 import numpy as np
 import pandas as pd
 
-p = "([A-Za-z0-9]+)\.([A-Za-z0-9_]+):(\d+)-(\d+) ([+|-]).*"
+p = "([A-Za-z0-9_]+)\.([A-Za-z0-9]+):(\d+)-(\d+) ([+|-]).*"
 pattern = re.compile(p)
 columns = ["block", "species", "chr", "chr_beg", "chr_end", "orientation"]
 

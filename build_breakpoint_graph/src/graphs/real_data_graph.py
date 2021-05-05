@@ -1,5 +1,5 @@
-from src.graphs.abstract_graph import AbstractGraph
-from src.utils.parsers import parse_grimm_file
+from build_breakpoint_graph.src.graphs.abstract_graph import AbstractGraph
+from build_breakpoint_graph.src.utils.parsers import parse_grimm_file
 
 uniq_predicate = lambda ls: lambda b: ls.count(b) == 1
 sp_blocks_from_df = lambda df, sp: df.loc[df['species'] == sp]['block'].tolist()

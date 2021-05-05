@@ -1,6 +1,8 @@
 import math
 
-from abstract_db_estimator import AbstractDBEstimator
+from build_breakpoint_graph.src.estimators.abstract_db_estimator import (
+    AbstractDBEstimator,
+)
 
 
 class UniformDBEstimator(AbstractDBEstimator):

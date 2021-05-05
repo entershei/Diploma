@@ -1,7 +1,4 @@
-from src.tree.fit_to_tree import fit_to_tree_graphviz
-
-import numpy as np
-from ete3 import Tree
+from build_breakpoint_graph.src.tree.fit_to_tree import fit_to_tree_graphviz
 
 
 tree_file = '/Users/alexey/PycharmProjects/true-dist-infer/src/tree/hg38.100way.tree'
