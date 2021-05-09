@@ -61,6 +61,8 @@ def sum_cycles_info(experiments, max_cycle_len_with_types, max_possible_cycles_l
     return summed_cycles_info
 
 
+# If a_in_non_trivial_cycles_part and b_in_non_trivial_cycles_part were not calculated for experiments, there will be
+# negative values.
 def aggregate_cycles_info(
     f_in, f_out, max_cycle_len_with_types, max_interesting_cycles_len
 ):
@@ -105,12 +107,15 @@ def aggregate_cycles_info(
 
 
 def main():
-    cycles_info_log_path = create_new_directory_in_cycles_info()
     max_cycle_len_with_types = 6
     max_interesting_cycles_len = parameters.MAX_POSSIBLE_CYCLES_LEN
 
-    for parameter in parameters.PROBABILITIES_WITH_ALPHA:
-        string_parameters, p_aa, p_bb, a_type_edges_proportion = parameter
+    for parameter in parameters.PROBABILITIES_WITH_ALPHA[4:]:
+        cycles_info_log_path = create_new_directory_in_cycles_info(
+            parameter["number_of_experiments"]
+        )
+
+        string_parameters = parameter["parameters_str"]
         file = string_parameters + ".csv"
 
         print(string_parameters)

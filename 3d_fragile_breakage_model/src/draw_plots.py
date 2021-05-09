@@ -57,10 +57,13 @@ def draw_plots(xs, plots, x_label, y_label, title, save_as):
 def draw_relative_errors(
     folder_name,
     parameters_for_plot_title,
+    number_of_experiments,
     max_cycle_len_with_types,
     max_interesting_cycles_len,
 ):
-    f_in_relative_error = get_relative_error_dir() + folder_name + ".csv"
+    f_in_relative_error = (
+        get_relative_error_dir(number_of_experiments) + folder_name + ".csv"
+    )
     relative_errors = read_experiments_cycles_info(
         f_in_relative_error,
         max_cycle_len_with_types,
@@ -72,7 +75,7 @@ def draw_relative_errors(
     ks = range(len(relative_errors))
     xs = list(map(lambda k: k / n, ks))
 
-    save_path = get_plots_relative_error(folder_name)
+    save_path = get_plots_relative_error(number_of_experiments, folder_name)
 
     for c_len in range(1, max_interesting_cycles_len):
         cycle_len = str(c_len)
@@ -162,11 +165,12 @@ def draw_empirical_with_analytical_cycles(
     parameters_for_plot_title,
     empirical_cycles_info,
     analytical_cycles_info,
+    number_of_experiments,
     max_cycle_len_with_types,
     max_interesting_cycles_len,
 ):
     n = parameters.NUMBER_OF_FRAGILE_EDGES
-    save_path = get_plots_compare_cycles(folder_name)
+    save_path = get_plots_compare_cycles(number_of_experiments, folder_name)
     xs = list(map(lambda k: k / n, range(len(empirical_cycles_info))))
 
     for c_len in range(1, max_interesting_cycles_len):
@@ -216,12 +220,21 @@ def main():
     create_new_directories_in_plots()
 
     for cur_parameters in parameters.PROBABILITIES_WITH_ALPHA:
-        folder_name, p_aa, p_bb, alpha = cur_parameters
+        folder_name, p_aa, p_bb, alpha = (
+            cur_parameters["parameters_str"],
+            cur_parameters["p_aa"],
+            cur_parameters["p_bb"],
+            cur_parameters["alpha"],
+        )
         print(folder_name)
 
         parameters_for_plot_title = build_parameters_for_plot_title(p_aa, p_bb, alpha)
 
-        f_in_empirical = get_cycles_info_dir() + folder_name + ".csv"
+        f_in_empirical = (
+            get_cycles_info_dir(cur_parameters["number_of_experiments"])
+            + folder_name
+            + ".csv"
+        )
         empirical_cycles_info = read_experiments_cycles_info(
             f_in_empirical,
             max_cycle_len_with_types,
@@ -240,6 +253,7 @@ def main():
         draw_relative_errors(
             folder_name,
             parameters_for_plot_title,
+            cur_parameters["number_of_experiments"],
             max_cycle_len_with_types=max_cycle_len_with_types,
             max_interesting_cycles_len=max_interesting_cycles_len,
         )
@@ -248,6 +262,7 @@ def main():
             parameters_for_plot_title,
             empirical_cycles_info,
             analytical_cycles_info,
+            cur_parameters["number_of_experiments"],
             max_cycle_len_with_types=max_cycle_len_with_types,
             max_interesting_cycles_len=max_interesting_cycles_len,
         )
@@ -257,14 +272,19 @@ def cycles_together(parameters_index):
     max_cycle_len_with_types = 1
     max_interesting_cycles_len = 7
 
-    folder_name, p_aa, p_bb, alpha = parameters.PROBABILITIES_WITH_ALPHA[
-        parameters_index
-    ]
+    cur_parameters = parameters.PROBABILITIES_WITH_ALPHA[parameters_index]
+    folder_name, p_aa, p_bb, alpha = (
+        cur_parameters["parameters_str"],
+        cur_parameters["p_aa"],
+        cur_parameters["p_bb"],
+        cur_parameters["alpha"],
+    )
+    number_of_experiments = cur_parameters["number_of_experiments"]
     print(folder_name)
 
     parameters_for_plot_title = build_parameters_for_plot_title(p_aa, p_bb, alpha)
 
-    f_in_empirical = get_cycles_info_dir() + folder_name + ".csv"
+    f_in_empirical = get_cycles_info_dir(number_of_experiments) + folder_name + ".csv"
     empirical_cycles_info = read_experiments_cycles_info(
         f_in_empirical,
         max_cycle_len_with_types,
@@ -281,7 +301,7 @@ def cycles_together(parameters_index):
     )[0]
 
     n = parameters.NUMBER_OF_FRAGILE_EDGES
-    save_path = get_plots_compare_cycles(folder_name)
+    save_path = get_plots_compare_cycles(number_of_experiments, folder_name)
     max_steps = 1501
     xs = list(map(lambda k: k / n, range(len(empirical_cycles_info))))[:max_steps]
     empirical_cycles_info = empirical_cycles_info[:max_steps]
@@ -354,8 +374,8 @@ def cycles_together(parameters_index):
                 "linestyle": "dashed",
             },
         ],
-        "x",
-        "Cycles",
+        "x = steps/n",
+        "Cycles/n",
         title="Normalized number of "
         + "cycles depends of x\n"
         + parameters_for_plot_title,
@@ -364,5 +384,5 @@ def cycles_together(parameters_index):
 
 
 if __name__ == "__main__":
-    main()
+    # main()
     cycles_together(4)

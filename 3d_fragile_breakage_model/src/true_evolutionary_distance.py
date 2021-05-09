@@ -135,13 +135,18 @@ def compute_true_evolutionary_distance(fixed_parameters, find_parameters, fbm):
 
     start_time = time.time()
 
-    for parameter in parameters.PROBABILITIES_WITH_ALPHA[5:6]:
-        file, p_aa, p_bb, alpha = parameter
+    for parameter in parameters.PROBABILITIES_WITH_ALPHA:
+        file, p_aa, p_bb, alpha = (
+            parameter["parameters_str"],
+            parameter["p_aa"],
+            parameter["p_bb"],
+            parameter["alpha"],
+        )
 
         print(file)
 
         graphs = read_experiments_cycles_info(
-            get_cycles_info_dir() + file + ".csv",
+            get_cycles_info_dir(parameter["number_of_experiments"]) + file + ".csv",
             max_cycle_len_with_types,
             parameters.MAX_POSSIBLE_CYCLES_LEN,
             False,
@@ -266,7 +271,12 @@ def draw_dists(
 
 def draw_true_dist_for_parameters(f_name):
     for cur_parameters in parameters.PROBABILITIES_WITH_ALPHA[5:6]:
-        folder_name, p_aa, p_bb, alpha = cur_parameters
+        folder_name, p_aa, p_bb, alpha = (
+            cur_parameters["parameters_str"],
+            cur_parameters["p_aa"],
+            cur_parameters["p_bb"],
+            cur_parameters["alpha"],
+        )
         plot_title = build_parameters_for_plot_title(p_aa, p_bb, alpha)
         print(plot_title)
 
@@ -286,8 +296,13 @@ def draw_true_dist_for_parameters(f_name):
 def draw_true_dist_with_additional_plot(
     additional_folder, additional_label, folder_to_save
 ):
-    for cur_parameters in parameters.PROBABILITIES_WITH_ALPHA[5:6]:
-        parameters_str, p_aa, p_bb, alpha = cur_parameters
+    for cur_parameters in parameters.PROBABILITIES_WITH_ALPHA:
+        parameters_str, p_aa, p_bb, alpha = (
+            cur_parameters["parameters_str"],
+            cur_parameters["p_aa"],
+            cur_parameters["p_bb"],
+            cur_parameters["alpha"],
+        )
         plot_title = build_parameters_for_plot_title(p_aa, p_bb, alpha)
         print(plot_title)
 

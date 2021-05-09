@@ -290,33 +290,25 @@ def main():
     start_time = time.time()
 
     n = parameters.NUMBER_OF_FRAGILE_EDGES
-    k = parameters.NUMBER_OF_STEPS
     experiments_log_path = create_new_directory_for_logging_experiments()
     max_cycle_len_with_types = 6
     max_interesting_cycles_len = parameters.MAX_POSSIBLE_CYCLES_LEN
 
-    for parameter in parameters.PROBABILITIES_WITH_ALPHA[1:4]:
-        string_parameters, p_aa, p_bb, a_type_edges_proportion = parameter
-        file = string_parameters + ".csv"
-        p_ab = 1 - p_aa - p_bb
-
-        if string_parameters == "paa0,333_pbb0,333_alpha0,5":
-            k = n
-        else:
-            k = parameters.NUMBER_OF_STEPS
+    for parameter in parameters.PROBABILITIES_WITH_ALPHA:
+        file = parameter["parameters_str"] + ".csv"
 
         experiments = []
-        print("parameters:", string_parameters)
+        print("parameters:", parameter["parameters_str"])
 
-        for i in range(parameters.NUMBER_OF_EXPERIMENTS):
-            a_type, b_type, edges = split_fragile_edges(n, a_type_edges_proportion)
+        for i in range(parameter["number_of_experiments"]):
+            a_type, b_type, edges = split_fragile_edges(n, parameter["alpha"])
             experiments.append(
                 markov_process(
                     n,
-                    k,
-                    p_aa,
-                    p_bb,
-                    p_ab,
+                    parameter["number_of_steps"],
+                    parameter["p_aa"],
+                    parameter["p_bb"],
+                    1 - parameter["p_aa"] - parameter["p_bb"],
                     a_type,
                     b_type,
                     edges,

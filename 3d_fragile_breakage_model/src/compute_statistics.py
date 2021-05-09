@@ -33,8 +33,13 @@ def compute_d_divide_b(x, p_aa, p_bb, alpha, max_m):
 
 def draw_d_divide_b():
     for parameter in parameters.PROBABILITIES_WITH_ALPHA:
-        s, p_aa, p_bb, alpha = parameter
-        print(s)
+        parameters_str, p_aa, p_bb, alpha = (
+            parameter["parameters_str"],
+            parameter["p_aa"],
+            parameter["p_bb"],
+            parameter["alpha"],
+        )
+        print(parameters_str)
 
         max_m = 85
         d_b_s = []
@@ -51,7 +56,7 @@ def draw_d_divide_b():
             "x",
             "d/b",
             "d/b depends on x\n" + build_parameters_for_plot_title(p_aa, p_bb, alpha),
-            "3d_fragile_breakage_model/plots/d_b/" + s,
+            "3d_fragile_breakage_model/plots/d_b/" + parameters_str,
         )
 
 
@@ -60,13 +65,22 @@ def for_finding_parameters():
     max_interesting_cycles_len = 6
 
     for parameter in parameters.PROBABILITIES_WITH_ALPHA[:4]:
-        string_parameters, p_aa, p_bb, alpha = parameter
-        file = get_cycles_info_dir() + string_parameters + ".csv"
+        parameters_str, p_aa, p_bb, alpha = (
+            parameter["parameters_str"],
+            parameter["p_aa"],
+            parameter["p_bb"],
+            parameter["alpha"],
+        )
+        file = (
+            get_cycles_info_dir(parameter["number_of_experiments"])
+            + parameters_str
+            + ".csv"
+        )
         p_ab = 1 - p_aa - p_bb
         beta = 1 - alpha
 
         Path(
-            "3d_fragile_breakage_model/plots/statistic/" + string_parameters + "/"
+            "3d_fragile_breakage_model/plots/statistic/" + parameters_str + "/"
         ).mkdir(parents=True, exist_ok=True)
 
         cycles_info = read_experiments_cycles_info(
@@ -148,7 +162,7 @@ def for_finding_parameters():
         steps = len(cycles_info)
         xs = range(1, steps + 1)
         save_path = (
-            "3d_fragile_breakage_model/plots/statistic/" + string_parameters + "/"
+            "3d_fragile_breakage_model/plots/statistic/" + parameters_str + "/"
         )
 
         draw_plots(

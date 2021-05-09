@@ -261,19 +261,20 @@ def main():
     create_new_directories_for_result_comparison()
 
     for cur_parameters in parameters.PROBABILITIES_WITH_ALPHA:
-        file, p_aa, p_bb, alpha = cur_parameters
+        file = cur_parameters["parameters_str"]
+        number_of_experiments = cur_parameters["number_of_experiments"]
 
         empirical_cycles_info = read_experiments_cycles_info(
-            get_cycles_info_dir() + file + ".csv",
+            get_cycles_info_dir(number_of_experiments) + file + ".csv",
             max_cycle_len_with_types,
             max_interesting_cycles_len,
             False,
         )[0]
         analytical_cycles_info = compute_analytical_cycles(
             n=parameters.NUMBER_OF_FRAGILE_EDGES,
-            p_aa=p_aa,
-            p_bb=p_bb,
-            alpha=alpha,
+            p_aa=cur_parameters["p_aa"],
+            p_bb=cur_parameters["p_bb"],
+            alpha=cur_parameters["alpha"],
             steps=len(empirical_cycles_info),
             f_out=get_analytical_cycles_dir() + file + ".csv",
             max_cycle_len_with_types=max_cycle_len_with_types,
@@ -285,7 +286,7 @@ def main():
             analytical_cycles_info=analytical_cycles_info,
             max_cycle_len_with_types=max_cycle_len_with_types,
             max_interesting_cycles_len=max_interesting_cycles_len,
-            f_out=get_relative_error_dir() + file + ".csv",
+            f_out=get_relative_error_dir(number_of_experiments) + file + ".csv",
         )
 
 
