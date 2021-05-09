@@ -384,5 +384,5 @@ def cycles_together(parameters_index):
 
 
 if __name__ == "__main__":
-    # main()
+    main()
     cycles_together(4)
