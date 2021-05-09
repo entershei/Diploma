@@ -156,8 +156,8 @@ def add_types_to_fragile_edges(edges, a_b_compartments):
     print("edge contains", cnt_edge_contains_multi_compartments)
     print("A and B", a_and_b)
 
-    cnt_a = defaultdict(lambda : 0)
-    cnt_b = defaultdict(lambda : 0)
+    cnt_a = defaultdict(lambda: 0)
+    cnt_b = defaultdict(lambda: 0)
     for edge in edges:
         if edge["label"] == "A":
             cnt_a[edge["chr"]] += 1

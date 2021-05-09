@@ -79,9 +79,9 @@ def for_finding_parameters():
         p_ab = 1 - p_aa - p_bb
         beta = 1 - alpha
 
-        Path(
-            "3d_fragile_breakage_model/plots/statistic/" + parameters_str + "/"
-        ).mkdir(parents=True, exist_ok=True)
+        Path("3d_fragile_breakage_model/plots/statistic/" + parameters_str + "/").mkdir(
+            parents=True, exist_ok=True
+        )
 
         cycles_info = read_experiments_cycles_info(
             file, max_cycle_len_with_types, max_interesting_cycles_len, False
@@ -161,9 +161,7 @@ def for_finding_parameters():
         parameters_for_plot_title = build_parameters_for_plot_title(p_aa, p_bb, alpha)
         steps = len(cycles_info)
         xs = range(1, steps + 1)
-        save_path = (
-            "3d_fragile_breakage_model/plots/statistic/" + parameters_str + "/"
-        )
+        save_path = "3d_fragile_breakage_model/plots/statistic/" + parameters_str + "/"
 
         draw_plots(
             xs,
