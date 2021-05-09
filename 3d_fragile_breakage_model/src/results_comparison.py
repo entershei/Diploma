@@ -235,18 +235,19 @@ def relative_error(
                 empirical_cycles_info[k].b_in_non_trivial_cycles / n,
                 analytical_cycles_info[k].b_in_non_trivial_cycles,
             )
-            errors[
-                "a_in_non_trivial_cycles_part"
-            ] = compute_relative_error_between_two_results(
-                empirical_cycles_info[k].a_in_non_trivial_cycles_part / n,
-                analytical_cycles_info[k].a_in_non_trivial_cycles_part,
-            )
-            errors[
-                "b_in_non_trivial_cycles_part"
-            ] = compute_relative_error_between_two_results(
-                empirical_cycles_info[k].b_in_non_trivial_cycles_part / n,
-                analytical_cycles_info[k].b_in_non_trivial_cycles_part,
-            )
+            if empirical_cycles_info[k].a_in_non_trivial_cycles_part >= 0:
+                errors[
+                    "a_in_non_trivial_cycles_part"
+                ] = compute_relative_error_between_two_results(
+                    empirical_cycles_info[k].a_in_non_trivial_cycles_part / n,
+                    analytical_cycles_info[k].a_in_non_trivial_cycles_part,
+                )
+                errors[
+                    "b_in_non_trivial_cycles_part"
+                ] = compute_relative_error_between_two_results(
+                    empirical_cycles_info[k].b_in_non_trivial_cycles_part / n,
+                    analytical_cycles_info[k].b_in_non_trivial_cycles_part,
+                )
 
         error_depends_on_k.append(errors)
         k += 1
