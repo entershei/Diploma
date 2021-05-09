@@ -165,6 +165,8 @@ def compute_cycles_info(colors, edges, max_cycle_len_with_types):
     cycles_m = {}
     a_in_non_trivial_cycles = 0
     b_in_non_trivial_cycles = 0
+    a_in_non_trivial_cycles_part = 0
+    b_in_non_trivial_cycles_part = 0
 
     for c in cycles.keys():
         # Since we count each edge twice, we should divide it by 2.
@@ -186,8 +188,17 @@ def compute_cycles_info(colors, edges, max_cycle_len_with_types):
             a_in_non_trivial_cycles += cnt_a
             b_in_non_trivial_cycles += cnt_b
 
+            if cur_len < parameters.PART:
+                a_in_non_trivial_cycles_part += cnt_a
+                b_in_non_trivial_cycles_part += cnt_b
+
     return CyclesInfo(
-        cycle_types, cycles_m, a_in_non_trivial_cycles, b_in_non_trivial_cycles
+        cycle_types,
+        cycles_m,
+        a_in_non_trivial_cycles,
+        b_in_non_trivial_cycles,
+        a_in_non_trivial_cycles_part,
+        b_in_non_trivial_cycles_part,
     )
 
 
@@ -284,7 +295,7 @@ def main():
     max_cycle_len_with_types = 6
     max_interesting_cycles_len = parameters.MAX_POSSIBLE_CYCLES_LEN
 
-    for parameter in parameters.PROBABILITIES_WITH_ALPHA[:2]:
+    for parameter in parameters.PROBABILITIES_WITH_ALPHA[1:4]:
         string_parameters, p_aa, p_bb, a_type_edges_proportion = parameter
         file = string_parameters + ".csv"
         p_ab = 1 - p_aa - p_bb

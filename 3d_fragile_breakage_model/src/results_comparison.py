@@ -79,53 +79,63 @@ def compute_analytical_cycles_m(m, x, p_aa, p_bb, alpha):
     return {"types": cycles, "all": sum_all}
 
 
-# Returns a_in_non_trivial_cycles, b_in_non_trivial_cycles only for for cycle_len = [1; max_interesting_cycles_len).
+# Returns a_in_non_trivial_cycles, b_in_non_trivial_cycles only for for cycle_len = [2; max_interesting_cycles_len).
 def compute_analytical_cycles(
     n,
     p_aa,
     p_bb,
     alpha,
+    steps,
     f_out,
     max_cycle_len_with_types,
     max_interesting_cycles_len,
 ):
     def write_analytical_cycles():
         with open(f_out, "w", newline="") as log:
-            field_names.append("x")
-            field_names.append("a_in_non_trivial_cycles")
-            field_names.append("b_in_non_trivial_cycles")
-
             log_cycles = csv.DictWriter(log, fieldnames=field_names)
             log_cycles.writeheader()
-            for cur_x in analytical_cycles_depends_on_x.keys():
+            for cur_k in analytical_cycles_depends_on_k.keys():
                 row = {
-                    "x": cur_x,
-                    "a_in_non_trivial_cycles": analytical_cycles_depends_on_x[
-                        cur_x
+                    "k": cur_k,
+                    "a_in_non_trivial_cycles": analytical_cycles_depends_on_k[
+                        cur_k
                     ].a_in_non_trivial_cycles,
-                    "b_in_non_trivial_cycles": analytical_cycles_depends_on_x[
-                        cur_x
+                    "b_in_non_trivial_cycles": analytical_cycles_depends_on_k[
+                        cur_k
                     ].b_in_non_trivial_cycles,
+                    "a_in_non_trivial_cycles_part": analytical_cycles_depends_on_k[
+                        cur_k
+                    ].a_in_non_trivial_cycles_part,
+                    "b_in_non_trivial_cycles_part": analytical_cycles_depends_on_k[
+                        cur_k
+                    ].b_in_non_trivial_cycles_part,
                 }
-                for c_type in analytical_cycles_depends_on_x[cur_x].cycle_types.keys():
-                    row[c_type] = analytical_cycles_depends_on_x[cur_x].cycle_types[
+                for c_type in analytical_cycles_depends_on_k[cur_k].cycle_types.keys():
+                    row[c_type] = analytical_cycles_depends_on_k[cur_k].cycle_types[
                         c_type
                     ]
-                for c_len in analytical_cycles_depends_on_x[cur_x].cycles_m.keys():
-                    row[c_len] = analytical_cycles_depends_on_x[cur_x].cycles_m[c_len]
+                for c_len in analytical_cycles_depends_on_k[cur_k].cycles_m.keys():
+                    row[c_len] = analytical_cycles_depends_on_k[cur_k].cycles_m[c_len]
 
                 log_cycles.writerow(row)
 
-    # x = k / n
-    analytical_cycles_depends_on_x = {}
-    x = 0.0
-    step = 1 / n
-    field_names = []
-    while x < parameters.NUMBER_OF_STEPS / parameters.NUMBER_OF_FRAGILE_EDGES + step:
+    analytical_cycles_depends_on_k = {}
+    field_names = [
+        "k",
+        "a_in_non_trivial_cycles",
+        "b_in_non_trivial_cycles",
+        "a_in_non_trivial_cycles_part",
+        "b_in_non_trivial_cycles_part",
+    ]
+    k = 0
+    while k < steps:
+        x = k / n
         cycle_types = {}
         cycles_m = {}
         a_in_non_trivial_cycles = 0
         b_in_non_trivial_cycles = 0
+        a_in_non_trivial_cycles_part = 0
+        b_in_non_trivial_cycles_part = 0
         for cycle_len in range(1, max_interesting_cycles_len):
             cur_analytical_cycles = compute_analytical_cycles_m(
                 cycle_len, x, p_aa, p_bb, alpha
@@ -140,21 +150,35 @@ def compute_analytical_cycles(
             if str(cycle_len) not in field_names:
                 field_names.append(str(cycle_len))
 
-            for cycle_type in cur_analytical_cycles["types"].keys():
-                a_in_non_trivial_cycles = cur_analytical_cycles["types"][
-                    cycle_type
-                ] * cycle_type.count("A")
-                b_in_non_trivial_cycles = cur_analytical_cycles["types"][
-                    cycle_type
-                ] * cycle_type.count("B")
+            if cycle_len > 1:
+                for cycle_type in cur_analytical_cycles["types"].keys():
+                    a_in_non_trivial_cycles = cur_analytical_cycles["types"][
+                        cycle_type
+                    ] * cycle_type.count("A")
+                    b_in_non_trivial_cycles = cur_analytical_cycles["types"][
+                        cycle_type
+                    ] * cycle_type.count("B")
 
-        analytical_cycles_depends_on_x[x] = CyclesInfo(
-            cycle_types, cycles_m, a_in_non_trivial_cycles, b_in_non_trivial_cycles
+                    if cycle_len < parameters.PART:
+                        a_in_non_trivial_cycles_part = cur_analytical_cycles["types"][
+                            cycle_type
+                        ] * cycle_type.count("A")
+                        b_in_non_trivial_cycles_part = cur_analytical_cycles["types"][
+                            cycle_type
+                        ] * cycle_type.count("B")
+
+        analytical_cycles_depends_on_k[k] = CyclesInfo(
+            cycle_types,
+            cycles_m,
+            a_in_non_trivial_cycles,
+            b_in_non_trivial_cycles,
+            a_in_non_trivial_cycles_part,
+            b_in_non_trivial_cycles_part,
         )
-        x += step
+        k += 1
 
     write_analytical_cycles()
-    return analytical_cycles_depends_on_x
+    return analytical_cycles_depends_on_k
 
 
 # returns 100 * |analytical_cycles_info - empirical_cycles_info| / empirical_cycles_info
@@ -182,43 +206,52 @@ def relative_error(
     for i in range(1, max_cycle_len_with_types):
         cycle_types.append(generate_cycle_types_for_len(i))
 
-    # x = k / n
-    error_depends_on_x = []
-    x = 0.0
-    step = 1 / n
-    while x < 1 + step:
-        k = int(x * n)
-
-        errors = {"x": x}
+    error_depends_on_k = []
+    k = 0
+    steps = len(empirical_cycles_info)
+    while k < steps:
+        errors = {"k": k}
         for cycle_len in range(1, max_interesting_cycles_len):
             if cycle_len < max_cycle_len_with_types:
                 for cycle_type in cycle_types[cycle_len]:
                     errors[cycle_type] = compute_relative_error_between_two_results(
                         empirical_cycles_info[k].cycle_types[cycle_type] / n,
-                        analytical_cycles_info[x].cycle_types[cycle_type],
+                        analytical_cycles_info[k].cycle_types[cycle_type],
                     )
 
             errors[str(cycle_len)] = compute_relative_error_between_two_results(
                 empirical_cycles_info[k].cycles_m[str(cycle_len)] / n,
-                analytical_cycles_info[x].cycles_m[str(cycle_len)],
+                analytical_cycles_info[k].cycles_m[str(cycle_len)],
             )
             errors[
                 "a_in_non_trivial_cycles"
             ] = compute_relative_error_between_two_results(
                 empirical_cycles_info[k].a_in_non_trivial_cycles / n,
-                analytical_cycles_info[x].a_in_non_trivial_cycles,
+                analytical_cycles_info[k].a_in_non_trivial_cycles,
             )
             errors[
                 "b_in_non_trivial_cycles"
             ] = compute_relative_error_between_two_results(
                 empirical_cycles_info[k].b_in_non_trivial_cycles / n,
-                analytical_cycles_info[x].b_in_non_trivial_cycles,
+                analytical_cycles_info[k].b_in_non_trivial_cycles,
+            )
+            errors[
+                "a_in_non_trivial_cycles_part"
+            ] = compute_relative_error_between_two_results(
+                empirical_cycles_info[k].a_in_non_trivial_cycles_part / n,
+                analytical_cycles_info[k].a_in_non_trivial_cycles_part,
+            )
+            errors[
+                "b_in_non_trivial_cycles_part"
+            ] = compute_relative_error_between_two_results(
+                empirical_cycles_info[k].b_in_non_trivial_cycles_part / n,
+                analytical_cycles_info[k].b_in_non_trivial_cycles_part,
             )
 
-        error_depends_on_x.append(errors)
-        x += step
+        error_depends_on_k.append(errors)
+        k += 1
 
-    log_dictionaries(error_depends_on_x, f_out)
+    log_dictionaries(error_depends_on_k, f_out)
 
 
 def main():
@@ -241,6 +274,7 @@ def main():
             p_aa=p_aa,
             p_bb=p_bb,
             alpha=alpha,
+            steps=len(empirical_cycles_info),
             f_out=get_analytical_cycles_dir() + file + ".csv",
             max_cycle_len_with_types=max_cycle_len_with_types,
             max_interesting_cycles_len=max_interesting_cycles_len,

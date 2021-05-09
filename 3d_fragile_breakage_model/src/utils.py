@@ -29,14 +29,24 @@ class CyclesInfo:
     cycles_m = {}
     a_in_non_trivial_cycles = 0
     b_in_non_trivial_cycles = 0
+    a_in_non_trivial_cycles_part = 0
+    b_in_non_trivial_cycles_part = 0
 
     def __init__(
-        self, cycle_types, cycles_m, a_in_non_trivial_cycles, b_in_non_trivial_cycles
+        self,
+        cycle_types,
+        cycles_m,
+        a_in_non_trivial_cycles,
+        b_in_non_trivial_cycles,
+        a_in_non_trivial_cycles_part,
+        b_in_non_trivial_cycles_part,
     ):
         self.cycle_types = cycle_types
         self.cycles_m = cycles_m
         self.a_in_non_trivial_cycles = a_in_non_trivial_cycles
         self.b_in_non_trivial_cycles = b_in_non_trivial_cycles
+        self.a_in_non_trivial_cycles_part = a_in_non_trivial_cycles_part
+        self.b_in_non_trivial_cycles_part = b_in_non_trivial_cycles_part
 
 
 def parse_logs_row(row, possible_cycle_types, max_interesting_cycles_len, is_int):
@@ -54,15 +64,27 @@ def parse_logs_row(row, possible_cycle_types, max_interesting_cycles_len, is_int
         else:
             cycles_m[str(cycle_len)] = float(row[str(cycle_len)])
 
+    a_in_non_trivial_cycles_part, b_in_non_trivial_cycles_part = -1, -1
     if is_int:
         a_in_non_trivial_cycles = int(row["a_in_non_trivial_cycles"])
         b_in_non_trivial_cycles = int(row["b_in_non_trivial_cycles"])
+        if "a_in_non_trivial_cycles_part" in row:
+            a_in_non_trivial_cycles_part = int(row["a_in_non_trivial_cycles_part"])
+            b_in_non_trivial_cycles_part = int(row["b_in_non_trivial_cycles_part"])
     else:
         a_in_non_trivial_cycles = float(row["a_in_non_trivial_cycles"])
         b_in_non_trivial_cycles = float(row["b_in_non_trivial_cycles"])
+        if "a_in_non_trivial_cycles_part" in row:
+            a_in_non_trivial_cycles_part = float(row["a_in_non_trivial_cycles_part"])
+            b_in_non_trivial_cycles_part = float(row["b_in_non_trivial_cycles_part"])
 
     return CyclesInfo(
-        cycle_types, cycles_m, a_in_non_trivial_cycles, b_in_non_trivial_cycles
+        cycle_types,
+        cycles_m,
+        a_in_non_trivial_cycles,
+        b_in_non_trivial_cycles,
+        a_in_non_trivial_cycles_part,
+        b_in_non_trivial_cycles_part,
     )
 
 
@@ -106,7 +128,12 @@ def log_experiments(
 
         fieldnames = (
             ["k"]
-            + ["a_in_non_trivial_cycles", "b_in_non_trivial_cycles"]
+            + [
+                "a_in_non_trivial_cycles",
+                "b_in_non_trivial_cycles",
+                "a_in_non_trivial_cycles_part",
+                "b_in_non_trivial_cycles_part",
+            ]
             + cycle_types
             + cycle_lens
         )
@@ -122,6 +149,8 @@ def log_experiments(
                 "k": step,
                 "a_in_non_trivial_cycles": info.a_in_non_trivial_cycles,
                 "b_in_non_trivial_cycles": info.b_in_non_trivial_cycles,
+                "a_in_non_trivial_cycles_part": info.a_in_non_trivial_cycles_part,
+                "b_in_non_trivial_cycles_part": info.b_in_non_trivial_cycles_part,
             }
             for cycle_type in cycle_types:
                 if cycle_type in info.cycle_types:

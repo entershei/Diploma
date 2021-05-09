@@ -1,17 +1,12 @@
-import csv
-
 import matplotlib.pyplot as plt
-
+import numpy as np
 import parameters
 from utils import (
-    generate_cycle_types,
     read_experiments_cycles_info,
-    parse_logs_row,
     generate_cycle_types_for_len,
 )
 from generate_directories_names import (
     create_new_directories_in_plots,
-    get_plots_aggregated_cycles_dir,
     get_cycles_info_dir,
     get_plots_relative_error,
     get_plots_compare_cycles,
@@ -37,32 +32,26 @@ def draw_number_of_cycles(cycles, title, save_as):
 
 def draw_plots(xs, plots, x_label, y_label, title, save_as):
     for i, plot in enumerate(plots):
-        plt.plot(xs, plot["plot"], label=plot["label"], color=plot["color"])
+        if "linestyle" not in plot:
+            plot["linestyle"] = "solid"
+        plt.plot(
+            xs,
+            plot["plot"],
+            label=plot["label"],
+            color=plot["color"],
+            linestyle=plot["linestyle"],
+        )
+
     plt.legend()
     plt.title(title)
     plt.xlabel(x_label)
+    if xs[-1] == 1.5:
+        xs_positions = list(np.arange(min(xs), max(xs) + 0.1, 0.2)) + [1.5]
+        plt.xticks(xs_positions)
     plt.ylabel(y_label)
     plt.grid()
     plt.savefig(save_as)
     plt.close()
-
-
-def read_logs_with_x(f, max_cycle_len_with_types, max_interesting_cycles_len):
-    possible_cycle_types = generate_cycle_types(1, max_cycle_len_with_types)
-    experiment = {}
-
-    with open(f, "r", newline="") as csvfile:
-        reader = csv.DictReader(csvfile, delimiter=",", quotechar="|")
-        for row in reader:
-            x = float(row["x"])
-            cycle_info = parse_logs_row(
-                row, possible_cycle_types, max_interesting_cycles_len, False
-            )
-            experiment[x] = cycle_info
-
-        csvfile.close()
-
-    return experiment
 
 
 def draw_relative_errors(
@@ -72,9 +61,16 @@ def draw_relative_errors(
     max_interesting_cycles_len,
 ):
     f_in_relative_error = get_relative_error_dir() + folder_name + ".csv"
-    relative_errors = read_logs_with_x(
-        f_in_relative_error, max_cycle_len_with_types, max_interesting_cycles_len
-    )
+    relative_errors = read_experiments_cycles_info(
+        f_in_relative_error,
+        max_cycle_len_with_types,
+        max_interesting_cycles_len,
+        is_int=False,
+    )[0]
+
+    n = parameters.NUMBER_OF_FRAGILE_EDGES
+    ks = range(len(relative_errors))
+    xs = list(map(lambda k: k / n, ks))
 
     save_path = get_plots_relative_error(folder_name)
 
@@ -84,11 +80,11 @@ def draw_relative_errors(
         if c_len < max_cycle_len_with_types:
             for cycle_type in generate_cycle_types_for_len(c_len):
                 draw(
-                    relative_errors.keys(),
+                    xs,
                     list(
                         map(
-                            lambda x: relative_errors[x].cycle_types[cycle_type],
-                            relative_errors.keys(),
+                            lambda k: relative_errors[k].cycle_types[cycle_type],
+                            ks,
                         )
                     ),
                     "x",
@@ -100,11 +96,11 @@ def draw_relative_errors(
                     save_path + cycle_type + ".png",
                 )
         draw(
-            relative_errors.keys(),
+            xs,
             list(
                 map(
-                    lambda x: relative_errors[x].cycles_m[cycle_len],
-                    relative_errors.keys(),
+                    lambda k: relative_errors[k].cycles_m[cycle_len],
+                    ks,
                 )
             ),
             "x",
@@ -114,46 +110,6 @@ def draw_relative_errors(
             + " depends on x,\n"
             + parameters_for_plot_title,
             save_path + cycle_len + ".png",
-        )
-
-
-def draw_average_cycles(
-    folder_name,
-    parameters_for_plot_title,
-    cycles_info,
-    max_cycle_len_with_types,
-    max_interesting_cycles_len,
-):
-    save_path = get_plots_aggregated_cycles_dir(folder_name)
-
-    for cycle_len in range(1, max_interesting_cycles_len):
-        if cycle_len < max_cycle_len_with_types:
-            for cycle_type in generate_cycle_types_for_len(cycle_len):
-                draw_number_of_cycles(
-                    list(
-                        map(
-                            lambda cycle_info: cycle_info.cycle_types[cycle_type],
-                            cycles_info,
-                        )
-                    ),
-                    "Average number of "
-                    + cycle_type
-                    + "-cycles depends of number of swaps\n"
-                    + parameters_for_plot_title,
-                    save_path + cycle_type + "_cycles" + ".png",
-                )
-        draw_number_of_cycles(
-            list(
-                map(
-                    lambda cycle_info: cycle_info.cycles_m[str(cycle_len)],
-                    cycles_info,
-                )
-            ),
-            "Average number of "
-            + str(cycle_len)
-            + "-cycles depends of number of swaps\n"
-            + parameters_for_plot_title,
-            save_path + str(cycle_len) + "_cycles" + ".png",
         )
 
 
@@ -184,7 +140,7 @@ def draw_cycles(
                 "plot": list(
                     map(
                         get_analytical_cycles_lambda,
-                        analytical_cycles_info.keys(),
+                        analytical_cycles_info,
                     )
                 ),
                 "label": "Analytical cycles",
@@ -211,14 +167,14 @@ def draw_empirical_with_analytical_cycles(
 ):
     n = parameters.NUMBER_OF_FRAGILE_EDGES
     save_path = get_plots_compare_cycles(folder_name)
-    xs = analytical_cycles_info.keys()
+    xs = list(map(lambda k: k / n, range(len(empirical_cycles_info))))
 
     for c_len in range(1, max_interesting_cycles_len):
         if c_len < max_cycle_len_with_types:
             for cycle_type in generate_cycle_types_for_len(c_len):
                 draw_cycles(
                     lambda cycle_info: cycle_info.cycle_types[cycle_type] / n,
-                    lambda x: analytical_cycles_info[x].cycle_types[cycle_type],
+                    lambda cycle_info: cycle_info.cycle_types[cycle_type],
                     xs,
                     empirical_cycles_info,
                     analytical_cycles_info,
@@ -230,7 +186,7 @@ def draw_empirical_with_analytical_cycles(
         cycle_len = str(c_len)
         draw_cycles(
             lambda cycle_info: cycle_info.cycles_m[cycle_len] / n,
-            lambda x: analytical_cycles_info[x].cycles_m[cycle_len],
+            lambda cycle_info: cycle_info.cycles_m[cycle_len],
             xs,
             empirical_cycles_info,
             analytical_cycles_info,
@@ -267,24 +223,23 @@ def main():
 
         f_in_empirical = get_cycles_info_dir() + folder_name + ".csv"
         empirical_cycles_info = read_experiments_cycles_info(
-            f_in_empirical, max_cycle_len_with_types, max_interesting_cycles_len, False
+            f_in_empirical,
+            max_cycle_len_with_types,
+            max_interesting_cycles_len,
+            is_int=False,
         )[0]
 
         f_in_analytically = get_analytical_cycles_dir() + folder_name + ".csv"
-        analytical_cycles_info = read_logs_with_x(
-            f_in_analytically, max_cycle_len_with_types, max_interesting_cycles_len
-        )
+        analytical_cycles_info = read_experiments_cycles_info(
+            f_in_analytically,
+            max_cycle_len_with_types,
+            max_interesting_cycles_len,
+            is_int=False,
+        )[0]
 
         draw_relative_errors(
             folder_name,
             parameters_for_plot_title,
-            max_cycle_len_with_types=max_cycle_len_with_types,
-            max_interesting_cycles_len=max_interesting_cycles_len,
-        )
-        draw_average_cycles(
-            folder_name,
-            parameters_for_plot_title,
-            empirical_cycles_info,
             max_cycle_len_with_types=max_cycle_len_with_types,
             max_interesting_cycles_len=max_interesting_cycles_len,
         )
@@ -298,5 +253,116 @@ def main():
         )
 
 
+def cycles_together(parameters_index):
+    max_cycle_len_with_types = 1
+    max_interesting_cycles_len = 7
+
+    folder_name, p_aa, p_bb, alpha = parameters.PROBABILITIES_WITH_ALPHA[
+        parameters_index
+    ]
+    print(folder_name)
+
+    parameters_for_plot_title = build_parameters_for_plot_title(p_aa, p_bb, alpha)
+
+    f_in_empirical = get_cycles_info_dir() + folder_name + ".csv"
+    empirical_cycles_info = read_experiments_cycles_info(
+        f_in_empirical,
+        max_cycle_len_with_types,
+        max_interesting_cycles_len,
+        is_int=False,
+    )[0]
+
+    f_in_analytically = get_analytical_cycles_dir() + folder_name + ".csv"
+    analytical_cycles_info = read_experiments_cycles_info(
+        f_in_analytically,
+        max_cycle_len_with_types,
+        max_interesting_cycles_len,
+        is_int=False,
+    )[0]
+
+    n = parameters.NUMBER_OF_FRAGILE_EDGES
+    save_path = get_plots_compare_cycles(folder_name)
+    max_steps = 1501
+    xs = list(map(lambda k: k / n, range(len(empirical_cycles_info))))[:max_steps]
+    empirical_cycles_info = empirical_cycles_info[:max_steps]
+    analytical_cycles_info = analytical_cycles_info[:max_steps]
+
+    draw_plots(
+        xs,
+        [
+            {
+                "plot": list(
+                    map(
+                        lambda cycle_info: cycle_info.cycles_m["3"] / n,
+                        empirical_cycles_info,
+                    )
+                ),
+                "label": "Empirical c3/n",
+                "color": "red",
+            },
+            {
+                "plot": list(
+                    map(
+                        lambda cycle_info: cycle_info.cycles_m["3"],
+                        analytical_cycles_info,
+                    )
+                ),
+                "label": "Analytical c3/n",
+                "color": "blue",
+                "linestyle": "dashed",
+            },
+            {
+                "plot": list(
+                    map(
+                        lambda cycle_info: cycle_info.cycles_m["4"] / n,
+                        empirical_cycles_info,
+                    )
+                ),
+                "label": "Empirical c4/n",
+                "color": "dimgray",
+            },
+            {
+                "plot": list(
+                    map(
+                        lambda cycle_info: cycle_info.cycles_m["4"],
+                        analytical_cycles_info,
+                    )
+                ),
+                "label": "Analytical c4/n",
+                "color": "lightpink",
+                "linestyle": "dashed",
+            },
+            {
+                "plot": list(
+                    map(
+                        lambda cycle_info: cycle_info.cycles_m["5"] / n,
+                        empirical_cycles_info,
+                    )
+                ),
+                "label": "Empirical c5/n",
+                "color": "darkorange",
+            },
+            {
+                "plot": list(
+                    map(
+                        lambda cycle_info: cycle_info.cycles_m["5"],
+                        analytical_cycles_info,
+                    )
+                ),
+                "label": "Analytical c5/n",
+                "color": "darkgreen",
+                "linestyle": "dashed",
+            },
+        ],
+        "x",
+        "Cycles",
+        title="Normalized number of "
+        + "cycles depends of x\n"
+        + parameters_for_plot_title,
+        save_as=save_path + "cycles_with_different_lens" + ".png",
+    )
+
+
 if __name__ == "__main__":
     main()
+    cycles_together(4)

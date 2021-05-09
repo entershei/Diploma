@@ -19,6 +19,8 @@ def sum_cycles_info(experiments, max_cycle_len_with_types, max_possible_cycles_l
         sum_cnt_cycles_m = {}
         sum_a_in_non_trivial_cycles = 0
         sum_b_in_non_trivial_cycles = 0
+        sum_a_in_non_trivial_cycles_part = 0
+        sum_b_in_non_trivial_cycles_part = 0
 
         for cycle_type in cycle_types:
             sum_cnt_cycle_types[cycle_type] = 0
@@ -37,6 +39,12 @@ def sum_cycles_info(experiments, max_cycle_len_with_types, max_possible_cycles_l
                     sum_cnt_cycles_m[str(c_len)] += experiment[i].cycles_m[str(c_len)]
             sum_a_in_non_trivial_cycles += experiment[i].a_in_non_trivial_cycles
             sum_b_in_non_trivial_cycles += experiment[i].b_in_non_trivial_cycles
+            sum_a_in_non_trivial_cycles_part += experiment[
+                i
+            ].a_in_non_trivial_cycles_part
+            sum_b_in_non_trivial_cycles_part += experiment[
+                i
+            ].b_in_non_trivial_cycles_part
 
         summed_cycles_info.append(
             CyclesInfo(
@@ -44,6 +52,8 @@ def sum_cycles_info(experiments, max_cycle_len_with_types, max_possible_cycles_l
                 sum_cnt_cycles_m,
                 sum_a_in_non_trivial_cycles,
                 sum_b_in_non_trivial_cycles,
+                sum_a_in_non_trivial_cycles_part,
+                sum_b_in_non_trivial_cycles_part,
             )
         )
 
@@ -80,6 +90,8 @@ def aggregate_cycles_info(
                 cycles_m,
                 info.a_in_non_trivial_cycles / num_experiments,
                 info.b_in_non_trivial_cycles / num_experiments,
+                info.a_in_non_trivial_cycles_part / num_experiments,
+                info.b_in_non_trivial_cycles_part / num_experiments,
             )
         )
 
@@ -97,7 +109,7 @@ def main():
     max_cycle_len_with_types = 6
     max_interesting_cycles_len = parameters.MAX_POSSIBLE_CYCLES_LEN
 
-    for parameter in parameters.PROBABILITIES_WITH_ALPHA[:2]:
+    for parameter in parameters.PROBABILITIES_WITH_ALPHA:
         string_parameters, p_aa, p_bb, a_type_edges_proportion = parameter
         file = string_parameters + ".csv"
 
