@@ -149,17 +149,23 @@ def draw_d_and_b_empirical(parameter):
     n = parameters.NUMBER_OF_FRAGILE_EDGES
 
     graphs = read_experiments_cycles_info(
-        get_cycles_info_dir(parameter["number_of_experiments"]) + parameters_str + ".csv",
+        get_cycles_info_dir(parameter["number_of_experiments"])
+        + parameters_str
+        + ".csv",
         5,
         parameters.MAX_POSSIBLE_CYCLES_LEN,
         False,
-    )[0][:1501]
+    )[0]
 
+    d_divide_bs_empirical = []
+    d_divide_bs_analytical = []
     d1s = []
     b1s = []
     d2s = []
     b2s = []
     xs = []
+    max_m = 40
+
     for k, graph in enumerate(graphs):
         x = k / parameters.NUMBER_OF_FRAGILE_EDGES
         xs.append(x)
@@ -168,13 +174,44 @@ def draw_d_and_b_empirical(parameter):
         d2s.append(d2())
         b2s.append(b2())
 
+        if k > 0:
+            d_divide_bs_empirical.append(d1() / b1())
+            d_divide_bs_analytical.append(
+                compute_analytically_d_n(x, p_aa, p_bb, alpha, max_m)
+                / compute_analytically_b_n(x, p_aa, p_bb, alpha)
+            )
+
+    parameters_for_title = build_parameters_for_plot_title(p_aa, p_bb, alpha)
+    save_path = "3d_fragile_breakage_model/plots/"
+
+    draw_plots(
+        xs[1:],
+        [
+            {
+                "plot": d_divide_bs_empirical,
+                "label": "Empirical d/b(x)",
+                "color": "red",
+            },
+            {
+                "plot": d_divide_bs_analytical,
+                "label": "Analytical d/b(x)",
+                "color": "blue",
+            },
+        ],
+        "x",
+        "d/b",
+        "d/b depends on x\n" + parameters_for_title,
+        save_path + "d_divide_b/" + parameters_str,
+    )
+
+    save_path += "d_and_b_empirical/"
     draw(
         xs,
         d1s,
         "x",
         "d1/n",
         "d1/n depends on x\n" + build_parameters_for_plot_title(p_aa, p_bb, alpha),
-        "3d_fragile_breakage_model/plots/d_and_b_empirical/d1/" + parameters_str,
+        save_path + "d1/" + parameters_str,
     )
     draw(
         xs,
@@ -182,7 +219,7 @@ def draw_d_and_b_empirical(parameter):
         "x",
         "d2/n",
         "d2/n depends on x\n" + build_parameters_for_plot_title(p_aa, p_bb, alpha),
-        "3d_fragile_breakage_model/plots/d_and_b_empirical/d2/" + parameters_str,
+        save_path + "d2/" + parameters_str,
     )
     draw(
         xs,
@@ -190,7 +227,7 @@ def draw_d_and_b_empirical(parameter):
         "x",
         "b1/n",
         "b1/n depends on x\n" + build_parameters_for_plot_title(p_aa, p_bb, alpha),
-        "3d_fragile_breakage_model/plots/d_and_b_empirical/b1/" + parameters_str,
+        save_path + "b1/" + parameters_str,
     )
     draw(
         xs,
@@ -198,7 +235,7 @@ def draw_d_and_b_empirical(parameter):
         "x",
         "b2/n",
         "b2/n depends on x\n" + build_parameters_for_plot_title(p_aa, p_bb, alpha),
-        "3d_fragile_breakage_model/plots/d_and_b_empirical/b2/" + parameters_str,
+        save_path + "b2/" + parameters_str,
     )
 
 

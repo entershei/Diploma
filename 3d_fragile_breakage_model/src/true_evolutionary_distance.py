@@ -233,6 +233,20 @@ def draw_dists(
     )
 
 
+def draw_best_x(dist_info, parameters_for_plot_title, save_as):
+    xs = list(map(lambda info: int(info["empirical_true_dist"]) / parameters.NUMBER_OF_FRAGILE_EDGES, dist_info))
+    best_xs = list(map(lambda info: float(info["best_x"]), dist_info))
+
+    draw_plots(
+        xs=xs,
+        plots=[{"plot": best_xs, "label": "best_x", "color": "black"}],
+        x_label="Real x",
+        y_label="Estimated x",
+        title="Estimated x\n" + parameters_for_plot_title,
+        save_as=save_as,
+    )
+
+
 def draw_true_dist_for_parameters(f_name):
     for cur_parameters in parameters.PROBABILITIES_WITH_ALPHA[4:5]:
         folder_name, p_aa, p_bb, alpha = (
@@ -255,6 +269,8 @@ def draw_true_dist_for_parameters(f_name):
             plot_title,
             "3d_fragile_breakage_model/plots/" + f_name + "/" + folder_name,
         )
+
+        draw_best_x(dist_info, plot_title, "3d_fragile_breakage_model/plots/" + f_name + "/best_x/" + folder_name)
 
 
 def draw_true_dist_with_additional_plot(

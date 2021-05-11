@@ -46,7 +46,7 @@ def draw_plots(xs, plots, x_label, y_label, title, save_as):
     plt.title(title)
     plt.xlabel(x_label)
     if xs[-1] == 1.5:
-        xs_positions = list(np.arange(min(xs), max(xs) + 0.1, 0.2)) + [1.5]
+        xs_positions = list(np.arange(0, max(xs) + 0.1, 0.2)) + [1.5]
         plt.xticks(xs_positions)
     plt.ylabel(y_label)
     plt.grid()
@@ -151,7 +151,7 @@ def draw_cycles(
             },
         ],
         "x",
-        "Cycles",
+        "Cycles/n",
         title="Normalized number of "
         + cycle_type
         + "-cycles depends of x\n"
