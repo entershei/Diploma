@@ -1,4 +1,5 @@
 import time
+import os
 
 import numpy as np
 
@@ -284,6 +285,11 @@ def markov_process(
     return steps_cycles_info
 
 
+def remove_previous_log(file):
+    if os.path.exists(file):
+        os.remove(file)
+
+
 def main():
     # n, k, p_aa, p_bb, p_ab = read_parameters_from_console()
 
@@ -294,12 +300,13 @@ def main():
     max_cycle_len_with_types = 6
     max_interesting_cycles_len = parameters.MAX_POSSIBLE_CYCLES_LEN
 
-    for parameter in parameters.PROBABILITIES_WITH_ALPHA:
+    for parameter in parameters.PROBABILITIES_WITH_ALPHA[-4:-1]:
         file = parameter["parameters_str"] + ".csv"
 
         experiments = []
         print("parameters:", parameter["parameters_str"])
 
+        first_log = True
         for i in range(parameter["number_of_experiments"]):
             a_type, b_type, edges = split_fragile_edges(n, parameter["alpha"])
             experiments.append(
@@ -317,6 +324,10 @@ def main():
             )
 
             if len(experiments) == parameters.EXPERIMENTS_IN_ONE_BUNCH:
+                if first_log:
+                    remove_previous_log(experiments_log_path + file)
+                    first_log = False
+
                 # Записываем сумму результатов экспериментов
                 print("i:", i, ", time: ", (time.time() - start_time) / 60, " m.")
                 log_experiments(

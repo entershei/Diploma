@@ -18,6 +18,20 @@ def compute_analytically_d_n(x, p_aa, p_bb, alpha, max_m):
     return dist
 
 
+def compute_d_m_1(x, p_aa, p_bb, alpha, max_m):
+    dist = 0.0
+    for m in range(2, max_m):
+        dist += compute_analytical_cycles_m(m, x, p_aa, p_bb, alpha)["all"] * (m - 1)
+    return dist
+
+
+def compute_b_cm(x, p_aa, p_bb, alpha, max_m):
+    dist = 0.0
+    for m in range(2, max_m):
+        dist += compute_analytical_cycles_m(m, x, p_aa, p_bb, alpha)["all"] * m
+    return dist
+
+
 # For non trivial cycles normalized sum of cycles lens
 def compute_analytically_b_n(x, p_aa, p_bb, alpha):
     return 1 - compute_analytical_cycles_m(1, x, p_aa, p_bb, alpha)["all"]
@@ -31,8 +45,8 @@ def compute_d_divide_b(x, p_aa, p_bb, alpha, max_m):
     return 0
 
 
-def draw_d_divide_b():
-    for parameter in parameters.PROBABILITIES_WITH_ALPHA:
+def draw_d_and_b_analytical():
+    for parameter in parameters.PROBABILITIES_WITH_ALPHA[4:5]:
         parameters_str, p_aa, p_bb, alpha = (
             parameter["parameters_str"],
             parameter["p_aa"],
@@ -41,14 +55,22 @@ def draw_d_divide_b():
         )
         print(parameters_str)
 
-        max_m = 85
+        max_m = 80
         d_b_s = []
+        d1s = []
+        b1s = []
+        d2s = []
+        b2s = []
         xs = []
-        for k in range(1, parameters.NUMBER_OF_FRAGILE_EDGES):
+        for k in range(1, parameter["number_of_steps"]):
             x = k / parameters.NUMBER_OF_FRAGILE_EDGES
             xs.append(x)
             d_b = compute_d_divide_b(x, p_aa, p_bb, alpha, max_m)
             d_b_s.append(d_b)
+            d1s.append(compute_d_m_1(x, p_aa, p_bb, alpha, max_m))
+            b1s.append(compute_b_cm(x, p_aa, p_bb, alpha, max_m))
+            d2s.append(compute_analytically_d_n(x, p_aa, p_bb, alpha, max_m))
+            b2s.append(compute_analytically_b_n(x, p_aa, p_bb, alpha))
 
         draw(
             xs,
@@ -56,8 +78,128 @@ def draw_d_divide_b():
             "x",
             "d/b",
             "d/b depends on x\n" + build_parameters_for_plot_title(p_aa, p_bb, alpha),
-            "3d_fragile_breakage_model/plots/d_b/" + parameters_str,
+            "3d_fragile_breakage_model/plots/d_and_b_analytical/d_b/" + parameters_str,
         )
+
+        draw(
+            xs,
+            d1s,
+            "x",
+            "d1/n",
+            "d1/n depends on x\n" + build_parameters_for_plot_title(p_aa, p_bb, alpha),
+            "3d_fragile_breakage_model/plots/d_and_b_analytical/d1/" + parameters_str,
+        )
+        draw(
+            xs,
+            d2s,
+            "x",
+            "d2/n",
+            "d2/n depends on x\n" + build_parameters_for_plot_title(p_aa, p_bb, alpha),
+            "3d_fragile_breakage_model/plots/d_and_b_analytical/d2/" + parameters_str,
+        )
+        draw(
+            xs,
+            b1s,
+            "x",
+            "b1/n",
+            "b1/n depends on x\n" + build_parameters_for_plot_title(p_aa, p_bb, alpha),
+            "3d_fragile_breakage_model/plots/d_and_b_analytical/b1/" + parameters_str,
+        )
+        draw(
+            xs,
+            b2s,
+            "x",
+            "b2/n",
+            "b2/n depends on x\n" + build_parameters_for_plot_title(p_aa, p_bb, alpha),
+            "3d_fragile_breakage_model/plots/d_and_b_analytical/b2/" + parameters_str,
+        )
+
+
+def draw_d_and_b_empirical(parameter):
+    def d1():
+        empirical_d = 0
+        for cycle_len in graph.cycles_m.keys():
+            if int(cycle_len) > 1:
+                empirical_d += graph.cycles_m[cycle_len] * (int(cycle_len) - 1)
+        return empirical_d / n
+
+    def b1():
+        empirical_b = 0
+        for cycle_len in graph.cycles_m.keys():
+            if int(cycle_len) > 1:
+                empirical_b += graph.cycles_m[cycle_len] * int(cycle_len)
+        return empirical_b / n
+
+    def d2():
+        empirical_d = n
+        for cycle_len in graph.cycles_m.keys():
+            empirical_d -= graph.cycles_m[cycle_len]
+        return empirical_d / n
+
+    def b2():
+        return 1 - graph.cycles_m["1"] / n
+
+    parameters_str, p_aa, p_bb, alpha = (
+        parameter["parameters_str"],
+        parameter["p_aa"],
+        parameter["p_bb"],
+        parameter["alpha"],
+    )
+    print(parameters_str)
+    n = parameters.NUMBER_OF_FRAGILE_EDGES
+
+    graphs = read_experiments_cycles_info(
+        get_cycles_info_dir(parameter["number_of_experiments"]) + parameters_str + ".csv",
+        5,
+        parameters.MAX_POSSIBLE_CYCLES_LEN,
+        False,
+    )[0][:1501]
+
+    d1s = []
+    b1s = []
+    d2s = []
+    b2s = []
+    xs = []
+    for k, graph in enumerate(graphs):
+        x = k / parameters.NUMBER_OF_FRAGILE_EDGES
+        xs.append(x)
+        d1s.append(d1())
+        b1s.append(b1())
+        d2s.append(d2())
+        b2s.append(b2())
+
+    draw(
+        xs,
+        d1s,
+        "x",
+        "d1/n",
+        "d1/n depends on x\n" + build_parameters_for_plot_title(p_aa, p_bb, alpha),
+        "3d_fragile_breakage_model/plots/d_and_b_empirical/d1/" + parameters_str,
+    )
+    draw(
+        xs,
+        d2s,
+        "x",
+        "d2/n",
+        "d2/n depends on x\n" + build_parameters_for_plot_title(p_aa, p_bb, alpha),
+        "3d_fragile_breakage_model/plots/d_and_b_empirical/d2/" + parameters_str,
+    )
+    draw(
+        xs,
+        b1s,
+        "x",
+        "b1/n",
+        "b1/n depends on x\n" + build_parameters_for_plot_title(p_aa, p_bb, alpha),
+        "3d_fragile_breakage_model/plots/d_and_b_empirical/b1/" + parameters_str,
+    )
+    draw(
+        xs,
+        b2s,
+        "x",
+        "b2/n",
+        "b2/n depends on x\n" + build_parameters_for_plot_title(p_aa, p_bb, alpha),
+        "3d_fragile_breakage_model/plots/d_and_b_empirical/b2/" + parameters_str,
+    )
 
 
 def for_finding_parameters():
@@ -280,5 +422,6 @@ def for_finding_parameters():
 
 
 if __name__ == "__main__":
-    # draw_d_divide_b()
-    for_finding_parameters()
+    # draw_d_divide_b_analytical()
+    draw_d_and_b_empirical(parameters.PROBABILITIES_WITH_ALPHA[4])
+    # for_finding_parameters()

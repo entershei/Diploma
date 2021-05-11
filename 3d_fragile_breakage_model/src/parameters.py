@@ -3,7 +3,7 @@ PART = NUMBER_OF_FRAGILE_EDGES / 20 + 1
 
 EXPERIMENTS_IN_ONE_BUNCH = 100
 
-MAX_POSSIBLE_CYCLES_LEN = 900
+MAX_POSSIBLE_CYCLES_LEN = NUMBER_OF_FRAGILE_EDGES + 1
 
 PROBABILITIES_WITH_ALPHA = [
     {
@@ -43,8 +43,8 @@ PROBABILITIES_WITH_ALPHA = [
         "p_aa": 0.48,
         "p_bb": 0.45,
         "alpha": 0.53,
-        "number_of_experiments": 3000,
-        "number_of_steps": 3000,
+        "number_of_experiments": 1000,
+        "number_of_steps": 1500,
     },
     {
         "parameters_str": "paa0,333_pbb0,333_alpha0,5",
@@ -83,24 +83,24 @@ PROBABILITIES_WITH_ALPHA = [
         "p_aa": 0.5,
         "p_bb": 0.45,
         "alpha": 0.5,
-        "number_of_experiments": 3000,
-        "number_of_steps": 1000,
+        "number_of_experiments": 1000,
+        "number_of_steps": 1500,
     },
     {
         "parameters_str": "paa0,45_pbb0,45_alpha0,5",
         "p_aa": 0.45,
         "p_bb": 0.45,
         "alpha": 0.5,
-        "number_of_experiments": 3000,
-        "number_of_steps": 1000,
+        "number_of_experiments": 1000,
+        "number_of_steps": 1500,
     },
     {
         "parameters_str": "paa0,5_pbb0,4_alpha0,45",
         "p_aa": 0.5,
         "p_bb": 0.4,
         "alpha": 0.45,
-        "number_of_experiments": 3000,
-        "number_of_steps": 1000,
+        "number_of_experiments": 1000,
+        "number_of_steps": 1500,
     },
     {
         "parameters_str": "paa0,45_pbb0,45_alpha0,48",

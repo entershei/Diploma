@@ -204,7 +204,7 @@ def build_parameters_for_plot_title(p_aa, p_bb, alpha):
     return (
         "n = "
         + str(parameters.NUMBER_OF_FRAGILE_EDGES)
-        + ", paa = "
+        + ", p_aa = "
         + str(p_aa)
         + ", p_bb = "
         + str(p_bb)
@@ -219,7 +219,7 @@ def main():
 
     create_new_directories_in_plots()
 
-    for cur_parameters in parameters.PROBABILITIES_WITH_ALPHA:
+    for cur_parameters in parameters.PROBABILITIES_WITH_ALPHA[-4:-1]:
         folder_name, p_aa, p_bb, alpha = (
             cur_parameters["parameters_str"],
             cur_parameters["p_aa"],

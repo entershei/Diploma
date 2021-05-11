@@ -50,10 +50,6 @@ def find_true_evolution_dist(graph, p_aa, p_bb, alpha, max_m):
         analytical_sum_lens = compute_analytically_b_n(possible_x, p_aa, p_bb, alpha)
         return analytical_min_d / analytical_sum_lens
 
-    step = 5e-4
-    l = step
-    r = 1 + step
-
     empirical_d = 0
     empirical_b = 0
     for cycle_len in graph.cycles_m.keys():
@@ -62,6 +58,10 @@ def find_true_evolution_dist(graph, p_aa, p_bb, alpha, max_m):
             empirical_b += graph.cycles_m[cycle_len] * int(cycle_len)
 
     empirical_d_b = empirical_d / empirical_b
+
+    step = 5e-4
+    l = step
+    r = 1.5 + step
 
     best_analytical_x = 0
     min_error = 10000
@@ -78,6 +78,7 @@ def find_true_evolution_dist(graph, p_aa, p_bb, alpha, max_m):
     return {
         "estimated_true_dist": estimated_true_dist,
         "empirical_min_dist": empirical_d,
+        "best_x": best_analytical_x,
     }
 
 
@@ -130,12 +131,11 @@ def find_true_evolution_dist_fbm(graph):
     }
 
 
-def compute_true_evolutionary_distance(fixed_parameters, find_parameters, fbm):
-    max_cycle_len_with_types = 6
-
+def compute_true_evolutionary_distance(max_m):
+    max_cycle_len_with_types = 1
     start_time = time.time()
 
-    for parameter in parameters.PROBABILITIES_WITH_ALPHA:
+    for parameter in parameters.PROBABILITIES_WITH_ALPHA[4:5]:
         file, p_aa, p_bb, alpha = (
             parameter["parameters_str"],
             parameter["p_aa"],
@@ -153,8 +153,6 @@ def compute_true_evolutionary_distance(fixed_parameters, find_parameters, fbm):
         )[0]
 
         dist_info_fixed_parameters = []
-        dist_info_found_parameters = []
-        dist_info_fbm = []
 
         # Go through each step.
         for k, graph in enumerate(graphs):
@@ -162,55 +160,20 @@ def compute_true_evolutionary_distance(fixed_parameters, find_parameters, fbm):
                 continue
 
             if k % 100 == 0:
-                print(k)
+                print("k:", k, "time:", (time.time() - start_time) / 60, " m.")
 
-            if fixed_parameters:
-                dist_fixed = find_true_evolution_dist(
-                    graph, p_aa, p_bb, alpha, max_m=40
-                )
-                dist_fixed["empirical_true_dist"] = k
-                dist_info_fixed_parameters.append(dist_fixed)
+            dist_fixed = find_true_evolution_dist(graph, p_aa, p_bb, alpha, max_m=max_m)
+            dist_fixed["empirical_true_dist"] = k
+            dist_info_fixed_parameters.append(dist_fixed)
 
-            if find_parameters:
-                found_alpha = compute_alpha(graph)
-                found_p_aa, found_p_bb = compute_probabilities(graph)
-                dist_found = find_true_evolution_dist(
-                    graph, found_p_aa, found_p_bb, found_alpha, max_m=40
-                )
-                dist_found["empirical_true_dist"] = k
-                dist_found["alpha"] = found_alpha
-                dist_found["p_aa"] = found_p_aa
-                dist_found["p_bb"] = found_p_bb
-                dist_info_found_parameters.append(dist_found)
+        log_dictionaries(
+            dist_info_fixed_parameters,
+            "3d_fragile_breakage_model/logs/true_evolution_distance_fixed/"
+            + file
+            + ".csv",
+        )
 
-            if fbm:
-                dist_fbm = find_true_evolution_dist_fbm(graph)
-                dist_fbm["gamma"] = 2 * k / parameters.NUMBER_OF_FRAGILE_EDGES
-                dist_info_fbm.append(dist_fbm)
-
-        if fixed_parameters:
-            log_dictionaries(
-                dist_info_fixed_parameters,
-                "3d_fragile_breakage_model/logs/true_evolution_distance_fixed/"
-                + file
-                + ".csv",
-            )
-        if find_parameters:
-            log_dictionaries(
-                dist_info_found_parameters,
-                "3d_fragile_breakage_model/logs/true_evolution_distance_found_parameters/"
-                + file
-                + ".csv",
-            )
-        if fbm:
-            log_dictionaries(
-                dist_info_fbm,
-                "3d_fragile_breakage_model/logs/true_evolution_distance_fbm/"
-                + file
-                + ".csv",
-            )
-
-        print("time: ", (time.time() - start_time) / 60, " m.")
+        print("time:", (time.time() - start_time) / 60, " m.")
 
 
 def draw_dists(
@@ -244,6 +207,7 @@ def draw_dists(
             "plot": empirical_min_distances,
             "label": "Empirical min distance",
             "color": "black",
+            "linestyle": "dashed",
         },
     ]
 
@@ -270,7 +234,7 @@ def draw_dists(
 
 
 def draw_true_dist_for_parameters(f_name):
-    for cur_parameters in parameters.PROBABILITIES_WITH_ALPHA[5:6]:
+    for cur_parameters in parameters.PROBABILITIES_WITH_ALPHA[4:5]:
         folder_name, p_aa, p_bb, alpha = (
             cur_parameters["parameters_str"],
             cur_parameters["p_aa"],
@@ -329,10 +293,8 @@ def draw_true_dist_with_additional_plot(
 
 
 if __name__ == "__main__":
-    compute_true_evolutionary_distance(
-        fixed_parameters=True, find_parameters=True, fbm=True
-    )
-    # draw_true_dist_for_parameters("true_evolution_distance_fixed")
+    # compute_true_evolutionary_distance(max_m=40)
+    draw_true_dist_for_parameters("true_evolution_distance_fixed")
     # draw_true_dist_for_parameters("true_evolution_distance_found_parameters")
     # draw_true_dist_with_additional_plot(
     #     "true_evolution_distance_found_parameters/",
