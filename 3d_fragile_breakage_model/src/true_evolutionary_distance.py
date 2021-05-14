@@ -135,11 +135,12 @@ def find_true_evolution_dist_different_errors(graph, p_aa, p_bb, alpha):
     for i in range(len(estimated_true_dists)):
         res["estimated_true_dist" + str(i)] = estimated_true_dists[i]
         res["best_x" + str(i)] = best_analytical_xs[i]
+        res["min_error" + str(i)] = min_errors[i]
 
     return res
 
 
-def find_true_evolution_dist(graph, p_aa, p_bb, alpha):
+def find_true_evolution_dist_fixed_parameters(graph, p_aa, p_bb, alpha):
     empirical_d = compute_empirical_d(graph)
     empirical_b = compute_empirical_b(graph)
 
@@ -147,16 +148,14 @@ def find_true_evolution_dist(graph, p_aa, p_bb, alpha):
     l = step
     r = 1.5 + step
 
-    min_error = 100000
+    min_error = 1e10
     best_analytical_x = 0.0
 
     for x in np.arange(l, r, step):
-        separate_errors = compute_error(x, p_aa, p_bb, alpha, graph, empirical_b)
-        if separate_errors < min_error:
-            best_analytical_x, min_error = (
-                x,
-                separate_errors,
-            )
+        error = compute_error(x, p_aa, p_bb, alpha, graph, empirical_b)
+        if error < min_error:
+            best_analytical_x = x
+            min_error = error
 
     analytical_b_n = compute_analytically_b_n(best_analytical_x, p_aa, p_bb, alpha)
     analytical_n = empirical_b / analytical_b_n
@@ -166,20 +165,21 @@ def find_true_evolution_dist(graph, p_aa, p_bb, alpha):
         "empirical_min_dist": empirical_d,
         "estimated_true_dist": estimated_true_dist,
         "best_x": best_analytical_x,
+        "min_error": min_error,
     }
 
 
 def compute_error(x, p_aa, p_bb, alpha, graph, empirical_b):
     sum_to = 10
-    separate_errors = 0
+    error = 0
 
     analytical_b_n = compute_analytically_b_n(x, p_aa, p_bb, alpha)
     for i in range(2, sum_to):
-        separate_errors += abs(
+        error += abs(
             compute_analytical_cycles_m(i, x, p_aa, p_bb, alpha)["all"] / analytical_b_n
             - graph.cycles_m[str(i)] / empirical_b
         )
-    return separate_errors
+    return error
 
 
 def find_true_evolution_dist_with_parameters_using_skopt(graph, n_calls):
@@ -273,7 +273,7 @@ def find_true_evolution_dist_and_find_parameters0(graph):
     l_x = step_x
     r_x = 1.5 + step_x
 
-    min_error = 100000
+    min_error = 1e10
 
     best_analytical_x = 0.0
     best_p_aa = 0.0
@@ -290,15 +290,13 @@ def find_true_evolution_dist_and_find_parameters0(graph):
                 )
                 p_bb = 1 - p_aa - p_ab
 
-                separate_errors = compute_error(
-                    x, p_aa, p_bb, alpha, graph, empirical_b
-                )
-                if separate_errors < min_error:
+                error = compute_error(x, p_aa, p_bb, alpha, graph, empirical_b)
+                if error < min_error:
                     best_analytical_x = x
                     best_p_aa = p_aa
                     best_p_bb = p_bb
                     best_alpha = alpha
-                    min_error = separate_errors
+                    min_error = error
 
     analytical_b_n = compute_analytically_b_n(
         best_analytical_x, best_p_aa, best_p_bb, best_alpha
@@ -351,15 +349,13 @@ def find_true_evolution_dist_and_find_parameters1(graph):
                     continue
 
                 for alpha in alphas:
-                    separate_errors = compute_error(
-                        x, p_aa, p_bb, alpha, graph, empirical_b
-                    )
-                    if separate_errors < min_error:
+                    error = compute_error(x, p_aa, p_bb, alpha, graph, empirical_b)
+                    if error < min_error:
                         best_analytical_x = x
                         best_p_aa = p_aa
                         best_p_bb = p_bb
                         best_alpha = alpha
-                        min_error = separate_errors
+                        min_error = error
 
     analytical_b_n = compute_analytically_b_n(
         best_analytical_x, best_p_aa, best_p_bb, best_alpha
@@ -406,7 +402,9 @@ def compute_true_evolutionary_distance(parameter_index, method):
             continue
 
         # cur_dist_info = find_true_evolution_dist_different_errors(graph, p_aa, p_bb, alpha)
-        # cur_dist_info = find_true_evolution_dist(graph, p_aa, p_bb, alpha)
+        # cur_dist_info = find_true_evolution_dist_fixed_parameters(
+        #     graph, p_aa, p_bb, alpha
+        # )
 
         cur_dist_info = find_true_evolution_dist_and_find_parameters1(graph)
         # cur_dist_info = find_true_evolution_dist_with_parameters_using_skopt(
@@ -434,7 +432,7 @@ def compute_true_evolutionary_distance(parameter_index, method):
 
     log_dictionaries(
         dist_info,
-        "3d_fragile_breakage_model/logs/true_evolution_distance_found_parameters/"
+        "3d_fragile_breakage_model/logs/true_evolution_distance_fixed/"
         + method
         + "/"
         + file
@@ -652,7 +650,7 @@ if __name__ == "__main__":
     draw_true_dist_for_parameters(
         "true_evolution_distance_found_parameters/1_without0/",
         parameter_index=4,
-        draw_parameters=True,
+        draw_parameters=False,
     )
     # draw_true_dist_with_additional_plot(
     #     "true_evolution_distance_found_parameters/",

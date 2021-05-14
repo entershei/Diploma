@@ -110,7 +110,7 @@ def main():
     max_cycle_len_with_types = 6
     max_interesting_cycles_len = parameters.MAX_POSSIBLE_CYCLES_LEN
 
-    for parameter in parameters.PROBABILITIES_WITH_ALPHA[4:]:
+    for parameter in parameters.PROBABILITIES_WITH_ALPHA[-4:-1]:
         cycles_info_log_path = create_new_directory_in_cycles_info(
             parameter["number_of_experiments"]
         )

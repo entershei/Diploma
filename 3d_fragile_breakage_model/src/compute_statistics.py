@@ -109,7 +109,7 @@ def compute_empirical_b(graph):
     return b
 
 
-def draw_c_m_b(max_m, mid_m, parameters_index):
+def draw_analytical_c_m_b(max_m, mid_m, parameters_index):
     cur_parameters = parameters.PROBABILITIES_WITH_ALPHA[parameters_index]
     parameters_str, p_aa, p_bb, alpha = (
         cur_parameters["parameters_str"],
@@ -121,17 +121,14 @@ def draw_c_m_b(max_m, mid_m, parameters_index):
     l = step
     r = 1.5 + step
     sum_c_n = []
-    c3_b = []
     c2_b = []
     sum_mid_b = []
-    b_n = []
     sum_c_b = []
     for x in np.arange(l, r, step):
         cur_sum_n = 0
         cur_sum_mid_b = 0
         cur_b_n = compute_analytically_b_n(x, p_aa, p_bb, alpha)
-        b_n.append(cur_b_n)
-        for m in range(1, max_m + 1):
+        for m in range(2, max_m + 1):
             c_m = compute_analytical_cycles_m(m, x, p_aa, p_bb, alpha)["all"]
             cur_sum_n += c_m
             if m <= mid_m:
@@ -140,9 +137,6 @@ def draw_c_m_b(max_m, mid_m, parameters_index):
         sum_mid_b.append(cur_sum_mid_b / cur_b_n)
         sum_c_n.append(cur_sum_n)
         sum_c_b.append(cur_sum_n / cur_b_n)
-        c3_b.append(
-            compute_analytical_cycles_m(3, x, p_aa, p_bb, alpha)["all"] / cur_b_n
-        )
         c2_b.append(
             compute_analytical_cycles_m(2, x, p_aa, p_bb, alpha)["all"] / cur_b_n
         )
@@ -150,7 +144,11 @@ def draw_c_m_b(max_m, mid_m, parameters_index):
     draw_plots(
         np.arange(l, r, step),
         [
-            {"plot": sum_c_b, "label": "(sum c_m)/b", "color": "grey"},
+            {
+                "plot": sum_c_b,
+                "label": "(c2+... +c" + str(max_m) + ")/b",
+                "color": "grey",
+            },
             {"plot": c2_b, "label": "c2/b", "color": "pink"},
             {
                 "plot": sum_mid_b,
@@ -162,7 +160,7 @@ def draw_c_m_b(max_m, mid_m, parameters_index):
         "x",
         "(Sum c_m) / b",
         "(c2 + ... + c" + str(max_m) + ") / b computed analytically",
-        "3d_fragile_breakage_model/plots/true_evolution_distance_fixed/c_m_b/"
+        "3d_fragile_breakage_model/plots/statistic/analytical_c_m_b/"
         + str(max_m)
         + "_"
         + parameters_str,
@@ -181,7 +179,6 @@ def compute_alpha(x, p_aa, p_bb, aa_cycles, ab_cycles, bb_cycles):
         elif 1 <= alpha1 and 1 <= alpha2:
             return [-1]
         elif 0 < alpha1 < 1 and 0 < alpha2 < 1:
-            # print("Both in [0, 1], case ", case)
             return [alpha1, alpha2]
 
         if alpha1 <= 0 or 1 <= alpha1:
@@ -348,15 +345,16 @@ def estimate_alpha(start_ind, end_ind):
             ],
             "steps",
             "alpha",
-            "Computed alpha in non trivial cycles\n" + parameters_for_plot_title,
+            "Computed alpha by using p_aa, p_bb and number of AA, AB and BB cycles\n"
+            + parameters_for_plot_title,
             save_path,
         )
 
 
 if __name__ == "__main__":
-    draw_c_m_b(max_m=10, mid_m=5, parameters_index=4)
-    draw_c_m_b(max_m=15, mid_m=10, parameters_index=4)
-    draw_c_m_b(max_m=20, mid_m=10, parameters_index=4)
-    draw_c_m_b(max_m=40, mid_m=20, parameters_index=4)
-    # estimate_alpha(0, 5)
-    # estimate_alpha(-4, -1)
+    draw_analytical_c_m_b(max_m=10, mid_m=5, parameters_index=4)
+    draw_analytical_c_m_b(max_m=15, mid_m=10, parameters_index=4)
+    draw_analytical_c_m_b(max_m=20, mid_m=10, parameters_index=4)
+    draw_analytical_c_m_b(max_m=40, mid_m=20, parameters_index=4)
+    estimate_alpha(0, 5)
+    estimate_alpha(-4, -1)
