@@ -5,7 +5,7 @@ from generate_directories_names import get_cycles_info_dir
 from compute_statistics import (
     compute_analytically_d_n,
     compute_analytically_b_n,
-    compute_alpha,
+    estimate_alpha,
     compute_p_ab,
     compute_empirical_d,
     compute_empirical_b,
@@ -200,7 +200,7 @@ def find_true_evolution_dist_with_parameters_using_skopt(graph, n_calls):
         if p_bb < p_ab or p_aa < p_ab:
             return max_score
 
-        alphas = compute_alpha(
+        alphas = estimate_alpha(
             x,
             p_aa,
             p_bb,
@@ -228,7 +228,7 @@ def find_true_evolution_dist_with_parameters_using_skopt(graph, n_calls):
     best_params = results.x
     best_x, best_p_aa, best_p_bb = best_params[0], best_params[1], best_params[2]
 
-    best_alphas = compute_alpha(
+    best_alphas = estimate_alpha(
         best_x,
         best_p_aa,
         best_p_bb,
@@ -337,7 +337,7 @@ def find_true_evolution_dist_and_find_parameters1(graph):
                 p_ab = p_ab_err / p_err
                 p_bb = max(1 - p_aa - p_ab, 0.0)
 
-                alphas = compute_alpha(
+                alphas = estimate_alpha(
                     x,
                     p_aa,
                     p_bb,

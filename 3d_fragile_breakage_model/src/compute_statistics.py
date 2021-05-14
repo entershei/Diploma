@@ -172,7 +172,7 @@ def compute_p_ab(x, p_aa, alpha, aa_cycles, aaa_cycles):
     return -2 * p_aa - y1 * alpha
 
 
-def compute_alpha(x, p_aa, p_bb, aa_cycles, ab_cycles, bb_cycles):
+def estimate_alpha(x, p_aa, p_bb, aa_cycles, ab_cycles, bb_cycles):
     def check_alphas(alpha1, alpha2):
         if alpha1 <= 0 and alpha2 <= 0:
             return [-1]
@@ -185,7 +185,7 @@ def compute_alpha(x, p_aa, p_bb, aa_cycles, ab_cycles, bb_cycles):
             alpha1, alpha2 = alpha2, alpha1
         return [alpha1]
 
-    def compute_alpha_aa_bb():
+    def estimate_alpha_aa_bb():
         if (
             p_aa != 0
             and p_bb != 0
@@ -206,7 +206,7 @@ def compute_alpha(x, p_aa, p_bb, aa_cycles, ab_cycles, bb_cycles):
             return check_alphas(alpha1, alpha2)
         return [-1]
 
-    def compute_alpha_aa_ab():
+    def estimate_alpha_aa_ab():
         if (
             p_aa != 0
             and p_ab != 0
@@ -228,7 +228,7 @@ def compute_alpha(x, p_aa, p_bb, aa_cycles, ab_cycles, bb_cycles):
             return check_alphas(alpha1, alpha2)
         return [-1]
 
-    def compute_alpha_bb_ab():
+    def estimate_alpha_bb_ab():
         if (
             p_ab != 0
             and p_bb != 0
@@ -257,9 +257,9 @@ def compute_alpha(x, p_aa, p_bb, aa_cycles, ab_cycles, bb_cycles):
         return [1]
 
     p_ab = max(1 - p_aa - p_bb, 0.0)
-    alpha_aa_bb = compute_alpha_aa_bb()
-    alpha_aa_ab = compute_alpha_aa_ab()
-    alpha_bb_ab = compute_alpha_bb_ab()
+    alpha_aa_bb = estimate_alpha_aa_bb()
+    alpha_aa_ab = estimate_alpha_aa_ab()
+    alpha_bb_ab = estimate_alpha_bb_ab()
 
     res_alpha = [-1]
     dif_p_aa_p_bb = abs(p_aa - p_bb)
@@ -281,7 +281,7 @@ def compute_alpha(x, p_aa, p_bb, aa_cycles, ab_cycles, bb_cycles):
     return res_alpha
 
 
-def estimate_alpha(start_ind, end_ind):
+def estimate_alphas_for_graphs(start_ind, end_ind):
     for parameter in parameters.PROBABILITIES_WITH_ALPHA[start_ind:end_ind]:
         parameters_str, p_aa, p_bb, alpha = (
             parameter["parameters_str"],
@@ -310,7 +310,7 @@ def estimate_alpha(start_ind, end_ind):
             if k == 0:
                 continue
 
-            cur_alpha = compute_alpha(
+            cur_alpha = estimate_alpha(
                 k / n,
                 p_aa,
                 p_bb,
@@ -356,5 +356,5 @@ if __name__ == "__main__":
     draw_analytical_c_m_b(max_m=15, mid_m=10, parameters_index=4)
     draw_analytical_c_m_b(max_m=20, mid_m=10, parameters_index=4)
     draw_analytical_c_m_b(max_m=40, mid_m=20, parameters_index=4)
-    estimate_alpha(0, 5)
-    estimate_alpha(-4, -1)
+    estimate_alphas_for_graphs(0, 5)
+    estimate_alphas_for_graphs(-4, -1)
