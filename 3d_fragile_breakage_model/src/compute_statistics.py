@@ -1,11 +1,81 @@
-from results_comparison import compute_analytical_cycles_m
+import math
+
+import numpy as np
 
 import parameters
-from draw_plots import draw, build_parameters_for_plot_title, draw_plots
+from draw_plots import build_parameters_for_plot_title, draw_plots
 
 from src.generate_directories_names import get_cycles_info_dir
-from src.utils import read_experiments_cycles_info
+from src.utils import read_experiments_cycles_info, generate_cycle_type
 from pathlib import Path
+
+
+# Возвращает нормированное число циклов длины m, посчитанных через аналитическую формулу, указывает число циклов по
+# типам (например, AAAB-циклы) и их общее количество.
+def compute_analytical_cycles_m(m, x, p_aa, p_bb, alpha):
+    p_ab = 1 - p_aa - p_bb
+    beta = 1 - alpha
+    eps_zero = 1e-9
+
+    def cycles_depends_on_cnt_a(l):
+        if p_ab < eps_zero or alpha < eps_zero or beta < eps_zero:
+            return 0.0
+
+        r = m - l
+
+        return (
+            (x * p_ab / (alpha * beta)) ** (m - 1)
+            * (alpha * r) ** (l - 1)
+            / math.factorial(r)
+            * (beta * l) ** (r - 1)
+            / math.factorial(l)
+            * alpha
+            * beta
+            * (1 + 2 * beta * l * p_aa / (alpha * r * p_ab)) ** (l - 1)
+            * (1 + 2 * alpha * r * p_bb / (beta * l * p_ab)) ** (r - 1)
+            * math.exp(
+                -x
+                * (
+                    2 * beta * l * p_aa
+                    + alpha * r * p_ab
+                    + beta * l * p_ab
+                    + 2 * alpha * r * p_bb
+                )
+                / (alpha * beta)
+            )
+        )
+
+    if alpha < eps_zero:
+        all_a = 0.0
+    else:
+        all_a = (
+            (2 * x * p_aa) ** (m - 1)
+            * m ** (m - 2)
+            / math.factorial(m)
+            / alpha ** (m - 2)
+            * math.exp(-x * m * (2 * p_aa + p_ab) / alpha)
+        )
+
+    if beta < eps_zero:
+        all_b = 0.0
+    else:
+        all_b = (
+            (2 * x * p_bb) ** (m - 1)
+            * m ** (m - 2)
+            / math.factorial(m)
+            / beta ** (m - 2)
+            * math.exp(-x * m * (2 * p_bb + p_ab) / beta)
+        )
+
+    cycles = {generate_cycle_type(m, m): all_a, generate_cycle_type(m, 0): all_b}
+
+    sum_all = all_a + all_b
+    for l in range(1, m):
+        cur_cycles = cycles_depends_on_cnt_a(l)
+        cycles[generate_cycle_type(m, l)] = cur_cycles
+        sum_all += cur_cycles
+
+    return {"types": cycles, "all": sum_all}
 
 
 # Normalized min distance
@@ -18,35 +88,204 @@ def compute_analytically_d_n(x, p_aa, p_bb, alpha, max_m):
     return dist
 
 
-def compute_d_m_1(x, p_aa, p_bb, alpha, max_m):
-    dist = 0.0
-    for m in range(2, max_m):
-        dist += compute_analytical_cycles_m(m, x, p_aa, p_bb, alpha)["all"] * (m - 1)
-    return dist
-
-
-def compute_b_cm(x, p_aa, p_bb, alpha, max_m):
-    dist = 0.0
-    for m in range(2, max_m):
-        dist += compute_analytical_cycles_m(m, x, p_aa, p_bb, alpha)["all"] * m
-    return dist
-
-
 # For non trivial cycles normalized sum of cycles lens
 def compute_analytically_b_n(x, p_aa, p_bb, alpha):
     return 1 - compute_analytical_cycles_m(1, x, p_aa, p_bb, alpha)["all"]
 
 
-def compute_d_divide_b(x, p_aa, p_bb, alpha, max_m):
-    analytical_min_d = compute_analytically_d_n(x, p_aa, p_bb, alpha, max_m)
-    b = compute_analytically_b_n(x, p_aa, p_bb, alpha)
-    if b > 0:
-        return analytical_min_d / b
-    return 0
+def compute_empirical_d(graph):
+    d = 0.0
+    for cycle_len in graph.cycles_m.keys():
+        if int(cycle_len) > 1:
+            d += graph.cycles_m[cycle_len] * (int(cycle_len) - 1)
+    return d
 
 
-def draw_d_and_b_analytical():
-    for parameter in parameters.PROBABILITIES_WITH_ALPHA[4:5]:
+def compute_empirical_b(graph):
+    b = 0.0
+    for cycle_len in graph.cycles_m.keys():
+        if int(cycle_len) > 1:
+            b += graph.cycles_m[cycle_len] * int(cycle_len)
+    return b
+
+
+def draw_c_m_b(max_m, mid_m, parameters_index):
+    cur_parameters = parameters.PROBABILITIES_WITH_ALPHA[parameters_index]
+    parameters_str, p_aa, p_bb, alpha = (
+        cur_parameters["parameters_str"],
+        cur_parameters["p_aa"],
+        cur_parameters["p_bb"],
+        cur_parameters["alpha"],
+    )
+    step = 1e-4
+    l = step
+    r = 1.5 + step
+    sum_c_n = []
+    c3_b = []
+    c2_b = []
+    sum_mid_b = []
+    b_n = []
+    sum_c_b = []
+    for x in np.arange(l, r, step):
+        cur_sum_n = 0
+        cur_sum_mid_b = 0
+        cur_b_n = compute_analytically_b_n(x, p_aa, p_bb, alpha)
+        b_n.append(cur_b_n)
+        for m in range(1, max_m + 1):
+            c_m = compute_analytical_cycles_m(m, x, p_aa, p_bb, alpha)["all"]
+            cur_sum_n += c_m
+            if m <= mid_m:
+                cur_sum_mid_b += c_m
+
+        sum_mid_b.append(cur_sum_mid_b / cur_b_n)
+        sum_c_n.append(cur_sum_n)
+        sum_c_b.append(cur_sum_n / cur_b_n)
+        c3_b.append(
+            compute_analytical_cycles_m(3, x, p_aa, p_bb, alpha)["all"] / cur_b_n
+        )
+        c2_b.append(
+            compute_analytical_cycles_m(2, x, p_aa, p_bb, alpha)["all"] / cur_b_n
+        )
+
+    draw_plots(
+        np.arange(l, r, step),
+        [
+            {"plot": sum_c_b, "label": "(sum c_m)/b", "color": "grey"},
+            {"plot": c2_b, "label": "c2/b", "color": "pink"},
+            {
+                "plot": sum_mid_b,
+                "label": "(c2+...+c" + str(mid_m) + ")/b",
+                "color": "blue",
+                "linestyle": "dashed",
+            },
+        ],
+        "x",
+        "(Sum c_m) / b",
+        "(c2 + ... + c" + str(max_m) + ") / b computed analytically",
+        "3d_fragile_breakage_model/plots/true_evolution_distance_fixed/c_m_b/"
+        + str(max_m)
+        + "_"
+        + parameters_str,
+    )
+
+
+def compute_p_ab(x, p_aa, alpha, aa_cycles, aaa_cycles):
+    y1 = math.log(aaa_cycles * alpha / (aa_cycles * 2 * x * p_aa)) / x
+    return -2 * p_aa - y1 * alpha
+
+
+def compute_alpha(x, p_aa, p_bb, aa_cycles, ab_cycles, bb_cycles):
+    def check_alphas(alpha1, alpha2):
+        if alpha1 <= 0 and alpha2 <= 0:
+            return [-1]
+        elif 1 <= alpha1 and 1 <= alpha2:
+            return [-1]
+        elif 0 < alpha1 < 1 and 0 < alpha2 < 1:
+            # print("Both in [0, 1], case ", case)
+            return [alpha1, alpha2]
+
+        if alpha1 <= 0 or 1 <= alpha1:
+            alpha1, alpha2 = alpha2, alpha1
+        return [alpha1]
+
+    def compute_alpha_aa_bb():
+        if (
+            p_aa != 0
+            and p_bb != 0
+            and aa_cycles != 0
+            and bb_cycles != 0
+            and not (aa_cycles == bb_cycles and p_aa == p_bb)
+        ):
+            aa_cycles_divide_bb = aa_cycles / bb_cycles
+            y1 = math.log(aa_cycles_divide_bb * p_bb / p_aa) / x
+            d = 16 + y1 ** 2 + 8 * y1 * p_aa - 8 * y1 * p_bb
+            if d < 0:
+                return [-1]
+            elif d == 0:
+                alpha1 = (y1 - 4) / (2 * y1)
+                return [alpha1]
+            alpha1 = (math.sqrt(d) + y1 - 4) / (2 * y1)
+            alpha2 = (-1 * math.sqrt(d) + y1 - 4) / (2 * y1)
+            return check_alphas(alpha1, alpha2)
+        return [-1]
+
+    def compute_alpha_aa_ab():
+        if (
+            p_aa != 0
+            and p_ab != 0
+            and aa_cycles != 0
+            and ab_cycles != 0
+            and not (aa_cycles == ab_cycles and p_aa == p_ab)
+        ):
+            aa_cycles_divide_ab = aa_cycles / ab_cycles
+            y1 = math.log(aa_cycles_divide_ab * p_ab / p_aa) / x
+            d = 4 + y1 ** 2 - 4 * y1 * p_bb + 4 * y1 * p_aa
+            if d < 0:
+                return [-1]
+            if d == 0:
+                alpha1 = (-2 + y1) / (2 * y1)
+                return [alpha1]
+
+            alpha1 = (math.sqrt(d) - 2 + y1) / (2 * y1)
+            alpha2 = (-1 * math.sqrt(d) - 2 + y1) / (2 * y1)
+            return check_alphas(alpha1, alpha2)
+        return [-1]
+
+    def compute_alpha_bb_ab():
+        if (
+            p_ab != 0
+            and p_bb != 0
+            and ab_cycles != 0
+            and bb_cycles != 0
+            and not (bb_cycles == ab_cycles and p_ab == p_bb)
+        ):
+            bb_cycles_divide_ab = bb_cycles / ab_cycles
+            y1 = math.log(bb_cycles_divide_ab * p_ab / p_bb) / x
+            d = y1 ** 2 + 4 + 4 * y1 * p_bb - 4 * y1 * p_aa
+            if d < 0:
+                return [-1]
+            if d == 0:
+                alpha1 = (y1 + 2) / (2 * y1)
+                return [alpha1]
+            alpha1 = (math.sqrt(d) + y1 + 2) / (2 * y1)
+            alpha2 = (-1 * math.sqrt(d) + y1 + 2) / (2 * y1)
+            return check_alphas(alpha1, alpha2)
+        return [-1]
+
+    if aa_cycles == 0 and bb_cycles == 0:
+        return [-1]
+    if aa_cycles == 0 and ab_cycles == 0:
+        return [0]
+    if bb_cycles == 0 and ab_cycles == 0:
+        return [1]
+
+    p_ab = max(1 - p_aa - p_bb, 0.0)
+    alpha_aa_bb = compute_alpha_aa_bb()
+    alpha_aa_ab = compute_alpha_aa_ab()
+    alpha_bb_ab = compute_alpha_bb_ab()
+
+    res_alpha = [-1]
+    dif_p_aa_p_bb = abs(p_aa - p_bb)
+    dif_p_aa_p_ab = abs(p_aa - p_ab)
+    dif_p_bb_p_ab = abs(p_bb - p_ab)
+
+    if alpha_aa_bb[0] != -1:
+        res_alpha = alpha_aa_bb
+
+    if alpha_bb_ab[0] != -1 and (res_alpha[0] == -1 or dif_p_bb_p_ab < dif_p_aa_p_bb):
+        res_alpha = alpha_bb_ab
+
+    if alpha_aa_ab[0] != -1 and (
+        res_alpha[0] == -1
+        or (dif_p_aa_p_ab < dif_p_aa_p_bb and dif_p_aa_p_ab < dif_p_bb_p_ab)
+    ):
+        res_alpha = alpha_aa_ab
+
+    return res_alpha
+
+
+def estimate_alpha(start_ind, end_ind):
+    for parameter in parameters.PROBABILITIES_WITH_ALPHA[start_ind:end_ind]:
         parameters_str, p_aa, p_bb, alpha = (
             parameter["parameters_str"],
             parameter["p_aa"],
@@ -54,411 +293,70 @@ def draw_d_and_b_analytical():
             parameter["alpha"],
         )
         print(parameters_str)
-
-        max_m = 80
-        d_b_s = []
-        d1s = []
-        b1s = []
-        d2s = []
-        b2s = []
-        xs = []
-        for k in range(1, parameter["number_of_steps"]):
-            x = k / parameters.NUMBER_OF_FRAGILE_EDGES
-            xs.append(x)
-            d_b = compute_d_divide_b(x, p_aa, p_bb, alpha, max_m)
-            d_b_s.append(d_b)
-            d1s.append(compute_d_m_1(x, p_aa, p_bb, alpha, max_m))
-            b1s.append(compute_b_cm(x, p_aa, p_bb, alpha, max_m))
-            d2s.append(compute_analytically_d_n(x, p_aa, p_bb, alpha, max_m))
-            b2s.append(compute_analytically_b_n(x, p_aa, p_bb, alpha))
-
-        draw(
-            xs,
-            d_b_s,
-            "x",
-            "d/b",
-            "d/b depends on x\n" + build_parameters_for_plot_title(p_aa, p_bb, alpha),
-            "3d_fragile_breakage_model/plots/d_and_b_analytical/d_b/" + parameters_str,
-        )
-
-        draw(
-            xs,
-            d1s,
-            "x",
-            "d1/n",
-            "d1/n depends on x\n" + build_parameters_for_plot_title(p_aa, p_bb, alpha),
-            "3d_fragile_breakage_model/plots/d_and_b_analytical/d1/" + parameters_str,
-        )
-        draw(
-            xs,
-            d2s,
-            "x",
-            "d2/n",
-            "d2/n depends on x\n" + build_parameters_for_plot_title(p_aa, p_bb, alpha),
-            "3d_fragile_breakage_model/plots/d_and_b_analytical/d2/" + parameters_str,
-        )
-        draw(
-            xs,
-            b1s,
-            "x",
-            "b1/n",
-            "b1/n depends on x\n" + build_parameters_for_plot_title(p_aa, p_bb, alpha),
-            "3d_fragile_breakage_model/plots/d_and_b_analytical/b1/" + parameters_str,
-        )
-        draw(
-            xs,
-            b2s,
-            "x",
-            "b2/n",
-            "b2/n depends on x\n" + build_parameters_for_plot_title(p_aa, p_bb, alpha),
-            "3d_fragile_breakage_model/plots/d_and_b_analytical/b2/" + parameters_str,
-        )
-
-
-def draw_d_and_b_empirical(parameter):
-    def d1():
-        empirical_d = 0
-        for cycle_len in graph.cycles_m.keys():
-            if int(cycle_len) > 1:
-                empirical_d += graph.cycles_m[cycle_len] * (int(cycle_len) - 1)
-        return empirical_d / n
-
-    def b1():
-        empirical_b = 0
-        for cycle_len in graph.cycles_m.keys():
-            if int(cycle_len) > 1:
-                empirical_b += graph.cycles_m[cycle_len] * int(cycle_len)
-        return empirical_b / n
-
-    def d2():
-        empirical_d = n
-        for cycle_len in graph.cycles_m.keys():
-            empirical_d -= graph.cycles_m[cycle_len]
-        return empirical_d / n
-
-    def b2():
-        return 1 - graph.cycles_m["1"] / n
-
-    parameters_str, p_aa, p_bb, alpha = (
-        parameter["parameters_str"],
-        parameter["p_aa"],
-        parameter["p_bb"],
-        parameter["alpha"],
-    )
-    print(parameters_str)
-    n = parameters.NUMBER_OF_FRAGILE_EDGES
-
-    graphs = read_experiments_cycles_info(
-        get_cycles_info_dir(parameter["number_of_experiments"])
-        + parameters_str
-        + ".csv",
-        5,
-        parameters.MAX_POSSIBLE_CYCLES_LEN,
-        False,
-    )[0]
-
-    d_divide_bs_empirical = []
-    d_divide_bs_analytical = []
-    d1s = []
-    b1s = []
-    d2s = []
-    b2s = []
-    xs = []
-    max_m = 40
-
-    for k, graph in enumerate(graphs):
-        x = k / parameters.NUMBER_OF_FRAGILE_EDGES
-        xs.append(x)
-        d1s.append(d1())
-        b1s.append(b1())
-        d2s.append(d2())
-        b2s.append(b2())
-
-        if k > 0:
-            d_divide_bs_empirical.append(d1() / b1())
-            d_divide_bs_analytical.append(
-                compute_analytically_d_n(x, p_aa, p_bb, alpha, max_m)
-                / compute_analytically_b_n(x, p_aa, p_bb, alpha)
-            )
-
-    parameters_for_title = build_parameters_for_plot_title(p_aa, p_bb, alpha)
-    save_path = "3d_fragile_breakage_model/plots/"
-
-    draw_plots(
-        xs[1:],
-        [
-            {
-                "plot": d_divide_bs_empirical,
-                "label": "Empirical d/b(x)",
-                "color": "red",
-            },
-            {
-                "plot": d_divide_bs_analytical,
-                "label": "Analytical d/b(x)",
-                "color": "blue",
-            },
-        ],
-        "x",
-        "d/b",
-        "d/b depends on x\n" + parameters_for_title,
-        save_path + "d_divide_b/" + parameters_str,
-    )
-
-    save_path += "d_and_b_empirical/"
-    draw(
-        xs,
-        d1s,
-        "x",
-        "d1/n",
-        "d1/n depends on x\n" + build_parameters_for_plot_title(p_aa, p_bb, alpha),
-        save_path + "d1/" + parameters_str,
-    )
-    draw(
-        xs,
-        d2s,
-        "x",
-        "d2/n",
-        "d2/n depends on x\n" + build_parameters_for_plot_title(p_aa, p_bb, alpha),
-        save_path + "d2/" + parameters_str,
-    )
-    draw(
-        xs,
-        b1s,
-        "x",
-        "b1/n",
-        "b1/n depends on x\n" + build_parameters_for_plot_title(p_aa, p_bb, alpha),
-        save_path + "b1/" + parameters_str,
-    )
-    draw(
-        xs,
-        b2s,
-        "x",
-        "b2/n",
-        "b2/n depends on x\n" + build_parameters_for_plot_title(p_aa, p_bb, alpha),
-        save_path + "b2/" + parameters_str,
-    )
-
-
-def for_finding_parameters():
-    max_cycle_len_with_types = 6
-    max_interesting_cycles_len = 6
-
-    for parameter in parameters.PROBABILITIES_WITH_ALPHA[:4]:
-        parameters_str, p_aa, p_bb, alpha = (
-            parameter["parameters_str"],
-            parameter["p_aa"],
-            parameter["p_bb"],
-            parameter["alpha"],
-        )
         file = (
             get_cycles_info_dir(parameter["number_of_experiments"])
             + parameters_str
             + ".csv"
         )
-        p_ab = 1 - p_aa - p_bb
-        beta = 1 - alpha
 
-        Path("3d_fragile_breakage_model/plots/statistic/" + parameters_str + "/").mkdir(
+        Path("3d_fragile_breakage_model/plots/statistic/computed_alpha/").mkdir(
             parents=True, exist_ok=True
         )
 
-        cycles_info = read_experiments_cycles_info(
-            file, max_cycle_len_with_types, max_interesting_cycles_len, False
-        )[0][1:]
+        graphs = read_experiments_cycles_info(file, 4, 4, False,)[
+            0
+        ][:1501]
 
-        c_aa_divide_c2 = list(
-            map(
-                lambda cycle_info: cycle_info.cycle_types["AA"]
-                / cycle_info.cycles_m["2"],
-                cycles_info,
-            )
-        )
-        c_ab_divide_c2 = list(
-            map(
-                lambda cycle_info: cycle_info.cycle_types["AB"]
-                / cycle_info.cycles_m["2"],
-                cycles_info,
-            )
-        )
-        c_bb_divide_c2 = list(
-            map(
-                lambda cycle_info: cycle_info.cycle_types["BB"]
-                / cycle_info.cycles_m["2"],
-                cycles_info,
-            )
-        )
-        c_aa_divide_c_bb = list(
-            map(
-                lambda cycle_info: cycle_info.cycle_types["AA"]
-                / cycle_info.cycle_types["BB"],
-                cycles_info,
-            )
-        )
+        alphas = []
+        n = parameters.NUMBER_OF_FRAGILE_EDGES
+        for k, graph in enumerate(graphs):
+            if k == 0:
+                continue
 
-        a_edges_divide_non_trivial = list(
-            map(
-                lambda cycle_info: cycle_info.a_in_non_trivial_cycles
-                / (
-                    cycle_info.a_in_non_trivial_cycles
-                    + cycle_info.b_in_non_trivial_cycles
-                ),
-                cycles_info,
+            cur_alpha = compute_alpha(
+                k / n,
+                p_aa,
+                p_bb,
+                graph.cycle_types["AA"],
+                graph.cycle_types["AB"],
+                graph.cycle_types["BB"],
             )
-        )
-        b_edges_divide_non_trivial = list(
-            map(
-                lambda cycle_info: cycle_info.b_in_non_trivial_cycles
-                / (
-                    cycle_info.a_in_non_trivial_cycles
-                    + cycle_info.b_in_non_trivial_cycles
-                ),
-                cycles_info,
-            )
-        )
+            if len(cur_alpha) > 1:
+                print("two alphas")
+            alphas.append(cur_alpha[0])
 
-        a_edges_divide_non_trivial_part = list(
-            map(
-                lambda cycle_info: cycle_info.a_in_non_trivial_cycles_part
-                / (
-                    cycle_info.a_in_non_trivial_cycles_part
-                    + cycle_info.b_in_non_trivial_cycles_part
-                ),
-                cycles_info,
-            )
-        )
-        b_edges_divide_non_trivial_part = list(
-            map(
-                lambda cycle_info: cycle_info.b_in_non_trivial_cycles_part
-                / (
-                    cycle_info.a_in_non_trivial_cycles_part
-                    + cycle_info.b_in_non_trivial_cycles_part
-                ),
-                cycles_info,
-            )
-        )
-
+        steps = len(graphs)
         parameters_for_plot_title = build_parameters_for_plot_title(p_aa, p_bb, alpha)
-        steps = len(cycles_info)
-        xs = range(1, steps + 1)
-        save_path = "3d_fragile_breakage_model/plots/statistic/" + parameters_str + "/"
-
-        draw_plots(
-            xs,
-            [
-                {"plot": c_aa_divide_c2, "label": "c_aa/c2", "color": "red"},
-                {"plot": [p_aa] * steps, "label": "p_aa", "color": "black"},
-                {"plot": [alpha] * steps, "label": "alpha", "color": "blue"},
-            ],
-            "steps",
-            "normalized cycles",
-            "c_aa/c2 depends on steps,\n" + parameters_for_plot_title,
-            save_path + "c_aa_c2",
-        )
-        draw_plots(
-            xs,
-            [
-                {"plot": c_ab_divide_c2, "label": "c_ab/c2", "color": "red"},
-                {"plot": [p_ab] * steps, "label": "p_ab", "color": "black"},
-                {"plot": [alpha] * steps, "label": "alpha", "color": "blue"},
-                {"plot": [beta] * steps, "label": "beta", "color": "slateblue"},
-            ],
-            "steps",
-            "normalized cycles",
-            "c_ab/c2 depends on steps,\n" + parameters_for_plot_title,
-            save_path + "c_ab_c2",
-        )
-        draw_plots(
-            xs,
-            [
-                {"plot": c_bb_divide_c2, "label": "c_bb/c2", "color": "red"},
-                {"plot": [p_bb] * steps, "label": "p_bb", "color": "black"},
-                {"plot": [alpha] * steps, "label": "alpha", "color": "blue"},
-            ],
-            "steps",
-            "normalized cycles",
-            "c_bb/c2 depends on steps,\n" + parameters_for_plot_title,
-            save_path + "c_bb_c2",
-        )
-        draw_plots(
-            xs,
-            [
-                {"plot": c_aa_divide_c_bb, "label": "c_aa/c_bb", "color": "red"},
-                {"plot": [p_aa / p_bb] * steps, "label": "p_aa", "color": "black"},
-            ],
-            "steps",
-            "normalized cycles",
-            "c_aa/c_bb depends on steps,\n" + parameters_for_plot_title,
-            save_path + "c_aa_c_bb",
+        save_path = (
+            "3d_fragile_breakage_model/plots/statistic/computed_alpha/" + parameters_str
         )
 
         draw_plots(
-            xs,
+            range(1, steps),
             [
                 {
-                    "plot": a_edges_divide_non_trivial,
-                    "label": "A/(A+B) edges",
-                    "color": "red",
+                    "plot": alphas,
+                    "label": "Estimated alpha",
+                    "color": "blue",
                 },
-                {"plot": [alpha] * steps, "label": "alpha", "color": "blue"},
-            ],
-            "steps",
-            "normalized edges",
-            "A-edges/(A-edges + B-edges) in non trivial cycles,\n"
-            + parameters_for_plot_title,
-            save_path + "a_edges",
-        )
-        draw_plots(
-            xs,
-            [
                 {
-                    "plot": b_edges_divide_non_trivial,
-                    "label": "B/(A+B) edges",
+                    "plot": [alpha] * (steps - 1),
+                    "label": "Empirical alpha",
                     "color": "red",
+                    "linestyle": "dashed",
                 },
-                {"plot": [beta] * steps, "label": "beta", "color": "blue"},
             ],
             "steps",
-            "normalized edges",
-            "B-edges/(A-edges + B-edges) in non trivial cycles,\n"
-            + parameters_for_plot_title,
-            save_path + "b_edges",
-        )
-
-        draw_plots(
-            xs,
-            [
-                {
-                    "plot": a_edges_divide_non_trivial_part,
-                    "label": "A/(A+B) part edges",
-                    "color": "red",
-                },
-                {"plot": [alpha] * steps, "label": "alpha", "color": "blue"},
-            ],
-            "steps",
-            "normalized edges",
-            "A-edges/(A-edges + B-edges) in non trivial cycles with len <= 50,\n"
-            + parameters_for_plot_title,
-            save_path + "a_edges_part",
-        )
-        draw_plots(
-            xs,
-            [
-                {
-                    "plot": b_edges_divide_non_trivial_part,
-                    "label": "B/(A+B) part edges",
-                    "color": "red",
-                },
-                {"plot": [beta] * steps, "label": "beta", "color": "blue"},
-            ],
-            "steps",
-            "normalized edges",
-            "B-edges/(A-edges + B-edges) in non trivial cycles with len <= 50,\n"
-            + parameters_for_plot_title,
-            save_path + "b_edges_part",
+            "alpha",
+            "Computed alpha in non trivial cycles\n" + parameters_for_plot_title,
+            save_path,
         )
 
 
 if __name__ == "__main__":
-    # draw_d_divide_b_analytical()
-    draw_d_and_b_empirical(parameters.PROBABILITIES_WITH_ALPHA[4])
-    # for_finding_parameters()
+    draw_c_m_b(max_m=10, mid_m=5, parameters_index=4)
+    draw_c_m_b(max_m=15, mid_m=10, parameters_index=4)
+    draw_c_m_b(max_m=20, mid_m=10, parameters_index=4)
+    draw_c_m_b(max_m=40, mid_m=20, parameters_index=4)
+    # estimate_alpha(0, 5)
+    # estimate_alpha(-4, -1)

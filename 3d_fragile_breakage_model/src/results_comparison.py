@@ -1,11 +1,10 @@
 import csv
-import math
 
 import parameters
 from aggregate_cycles_info import read_experiments_cycles_info
+from compute_statistics import compute_analytical_cycles_m
 from utils import (
     CyclesInfo,
-    generate_cycle_type,
     generate_cycle_types_for_len,
     log_dictionaries,
 )
@@ -15,68 +14,6 @@ from generate_directories_names import (
     get_relative_error_dir,
     get_analytical_cycles_dir,
 )
-
-
-# Возвращает нормированное число циклов длины m, посчитанных через аналитическую формулу, указывает число циклов по
-# типам (например, AAAB-циклы) и их общее количество.
-def compute_analytical_cycles_m(m, x, p_aa, p_bb, alpha):
-    p_ab = 1 - p_aa - p_bb
-    beta = 1 - alpha
-
-    def cycles_depends_on_cnt_a(l):
-        eps_zero = 1e-9
-        if p_ab < eps_zero or alpha < eps_zero or beta < eps_zero:
-            return 0.0
-
-        r = m - l
-
-        return (
-            (x * p_ab / (alpha * beta)) ** (m - 1)
-            * (alpha * r) ** (l - 1)
-            / math.factorial(r)
-            * (beta * l) ** (r - 1)
-            / math.factorial(l)
-            * alpha
-            * beta
-            * (1 + 2 * beta * l * p_aa / (alpha * r * p_ab)) ** (l - 1)
-            * (1 + 2 * alpha * r * p_bb / (beta * l * p_ab)) ** (r - 1)
-            * math.exp(
-                -x
-                * (
-                    2 * beta * l * p_aa
-                    + alpha * r * p_ab
-                    + beta * l * p_ab
-                    + 2 * alpha * r * p_bb
-                )
-                / (alpha * beta)
-            )
-        )
-
-    all_a = (
-        (2 * x * p_aa) ** (m - 1)
-        * m ** (m - 2)
-        / math.factorial(m)
-        / alpha ** (m - 2)
-        * math.exp(-x * m * (2 * p_aa + p_ab) / alpha)
-    )
-
-    all_b = (
-        (2 * x * p_bb) ** (m - 1)
-        * m ** (m - 2)
-        / math.factorial(m)
-        / beta ** (m - 2)
-        * math.exp(-x * m * (2 * p_bb + p_ab) / beta)
-    )
-
-    cycles = {generate_cycle_type(m, m): all_a, generate_cycle_type(m, 0): all_b}
-
-    sum_all = all_a + all_b
-    for l in range(1, m):
-        cur_cycles = cycles_depends_on_cnt_a(l)
-        cycles[generate_cycle_type(m, l)] = cur_cycles
-        sum_all += cur_cycles
-
-    return {"types": cycles, "all": sum_all}
 
 
 # Returns a_in_non_trivial_cycles, b_in_non_trivial_cycles only for for cycle_len = [2; max_interesting_cycles_len).
@@ -261,7 +198,7 @@ def main():
 
     create_new_directories_for_result_comparison()
 
-    for cur_parameters in parameters.PROBABILITIES_WITH_ALPHA:
+    for cur_parameters in parameters.PROBABILITIES_WITH_ALPHA[-4:-1]:
         file = cur_parameters["parameters_str"]
         number_of_experiments = cur_parameters["number_of_experiments"]
 
