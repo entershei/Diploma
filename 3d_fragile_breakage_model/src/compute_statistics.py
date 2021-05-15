@@ -175,9 +175,9 @@ def compute_p_ab(x, p_aa, alpha, aa_cycles, aaa_cycles):
 def estimate_alpha(x, p_aa, p_bb, aa_cycles, ab_cycles, bb_cycles):
     def check_alphas(alpha1, alpha2):
         if alpha1 <= 0 and alpha2 <= 0:
-            return [-1]
+            return []
         elif 1 <= alpha1 and 1 <= alpha2:
-            return [-1]
+            return []
         elif 0 < alpha1 < 1 and 0 < alpha2 < 1:
             return [alpha1, alpha2]
 
@@ -197,14 +197,14 @@ def estimate_alpha(x, p_aa, p_bb, aa_cycles, ab_cycles, bb_cycles):
             y1 = math.log(aa_cycles_divide_bb * p_bb / p_aa) / x
             d = 16 + y1 ** 2 + 8 * y1 * p_aa - 8 * y1 * p_bb
             if d < 0:
-                return [-1]
+                return []
             elif d == 0:
                 alpha1 = (y1 - 4) / (2 * y1)
                 return [alpha1]
             alpha1 = (math.sqrt(d) + y1 - 4) / (2 * y1)
             alpha2 = (-1 * math.sqrt(d) + y1 - 4) / (2 * y1)
             return check_alphas(alpha1, alpha2)
-        return [-1]
+        return []
 
     def estimate_alpha_aa_ab():
         if (
@@ -218,7 +218,7 @@ def estimate_alpha(x, p_aa, p_bb, aa_cycles, ab_cycles, bb_cycles):
             y1 = math.log(aa_cycles_divide_ab * p_ab / p_aa) / x
             d = 4 + y1 ** 2 - 4 * y1 * p_bb + 4 * y1 * p_aa
             if d < 0:
-                return [-1]
+                return []
             if d == 0:
                 alpha1 = (-2 + y1) / (2 * y1)
                 return [alpha1]
@@ -226,7 +226,7 @@ def estimate_alpha(x, p_aa, p_bb, aa_cycles, ab_cycles, bb_cycles):
             alpha1 = (math.sqrt(d) - 2 + y1) / (2 * y1)
             alpha2 = (-1 * math.sqrt(d) - 2 + y1) / (2 * y1)
             return check_alphas(alpha1, alpha2)
-        return [-1]
+        return []
 
     def estimate_alpha_bb_ab():
         if (
@@ -240,17 +240,17 @@ def estimate_alpha(x, p_aa, p_bb, aa_cycles, ab_cycles, bb_cycles):
             y1 = math.log(bb_cycles_divide_ab * p_ab / p_bb) / x
             d = y1 ** 2 + 4 + 4 * y1 * p_bb - 4 * y1 * p_aa
             if d < 0:
-                return [-1]
+                return []
             if d == 0:
                 alpha1 = (y1 + 2) / (2 * y1)
                 return [alpha1]
             alpha1 = (math.sqrt(d) + y1 + 2) / (2 * y1)
             alpha2 = (-1 * math.sqrt(d) + y1 + 2) / (2 * y1)
             return check_alphas(alpha1, alpha2)
-        return [-1]
+        return []
 
     if aa_cycles == 0 and bb_cycles == 0:
-        return [-1]
+        return []
     if aa_cycles == 0 and ab_cycles == 0:
         return [0]
     if bb_cycles == 0 and ab_cycles == 0:
@@ -261,19 +261,19 @@ def estimate_alpha(x, p_aa, p_bb, aa_cycles, ab_cycles, bb_cycles):
     alpha_aa_ab = estimate_alpha_aa_ab()
     alpha_bb_ab = estimate_alpha_bb_ab()
 
-    res_alpha = [-1]
+    res_alpha = []
     dif_p_aa_p_bb = abs(p_aa - p_bb)
     dif_p_aa_p_ab = abs(p_aa - p_ab)
     dif_p_bb_p_ab = abs(p_bb - p_ab)
 
-    if alpha_aa_bb[0] != -1:
+    if alpha_aa_bb:
         res_alpha = alpha_aa_bb
 
-    if alpha_bb_ab[0] != -1 and (res_alpha[0] == -1 or dif_p_bb_p_ab < dif_p_aa_p_bb):
+    if alpha_bb_ab and (not res_alpha or dif_p_bb_p_ab < dif_p_aa_p_bb):
         res_alpha = alpha_bb_ab
 
-    if alpha_aa_ab[0] != -1 and (
-        res_alpha[0] == -1
+    if alpha_aa_ab and (
+        not res_alpha
         or (dif_p_aa_p_ab < dif_p_aa_p_bb and dif_p_aa_p_ab < dif_p_bb_p_ab)
     ):
         res_alpha = alpha_aa_ab
@@ -320,7 +320,8 @@ def estimate_alphas_for_graphs(start_ind, end_ind):
             )
             if len(cur_alpha) > 1:
                 print("two alphas")
-            alphas.append(cur_alpha[0])
+            if cur_alpha:
+                alphas.append(cur_alpha[0])
 
         steps = len(graphs)
         parameters_for_plot_title = build_parameters_for_plot_title(p_aa, p_bb, alpha)
