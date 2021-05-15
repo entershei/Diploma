@@ -6,7 +6,7 @@ from compute_statistics import (
     compute_analytically_d_n,
     compute_analytically_b_n,
     estimate_alpha,
-    compute_p_ab,
+    estimate_p_ab,
     compute_empirical_d,
     compute_empirical_b,
 )
@@ -256,6 +256,7 @@ def find_true_evolution_dist_with_parameters_using_skopt(graph, n_calls):
         "estimated_true_dist": estimated_true_dist,
         "best_x": best_x,
         "best_p_aa": best_p_aa,
+        "best_p_ab": 1 - best_p_aa - best_p_bb,
         "best_p_bb": best_p_bb,
         "best_alpha": best_alpha,
         "min_error": error1,
@@ -266,7 +267,7 @@ def find_true_evolution_dist_and_find_parameters0(graph):
     empirical_d = compute_empirical_d(graph)
     empirical_b = compute_empirical_b(graph)
 
-    step_x = 5e-4
+    step_x = 1e-3
     l_x = step_x
     r_x = 1.5 + step_x
 
@@ -274,24 +275,26 @@ def find_true_evolution_dist_and_find_parameters0(graph):
 
     best_analytical_x = 0.0
     best_p_aa = 0.0
+    best_p_ab = 0.0
     best_p_bb = 0.0
     best_alpha = 0.0
-    p_step = 0.01
+    p_step = 0.015
 
     for x in np.arange(l_x, r_x, step_x):
         for p_aa in np.arange(p_step, 1, p_step):
             for alpha in np.arange(p_step, 1, p_step):
-                p_ab = compute_p_ab(
+                p_ab = estimate_p_ab(
                     x, p_aa, alpha, graph.cycle_types["AA"], graph.cycle_types["AAA"]
                 )
                 p_bb = max(1 - p_aa - p_ab, 0.0)
-                if p_aa < p_ab or p_bb < p_ab:
+                if p_ab < 0 or p_aa < p_ab or p_bb < p_ab:
                     continue
 
                 error = compute_error(x, p_aa, p_bb, alpha, graph, empirical_b)
                 if error < min_error:
                     best_analytical_x = x
                     best_p_aa = p_aa
+                    best_p_ab = p_ab
                     best_p_bb = p_bb
                     best_alpha = alpha
                     min_error = error
@@ -307,8 +310,10 @@ def find_true_evolution_dist_and_find_parameters0(graph):
         "estimated_true_dist": estimated_true_dist,
         "best_x": best_analytical_x,
         "best_p_aa": best_p_aa,
+        "best_p_ab": best_p_ab,
         "best_p_bb": best_p_bb,
         "best_alpha": best_alpha,
+        "min_error": min_error,
     }
 
 
@@ -324,6 +329,7 @@ def find_true_evolution_dist_and_find_parameters1(graph):
 
     best_x = 0.0
     best_p_aa = 0.0
+    best_p_ab = 0.0
     best_p_bb = 0.0
     best_alpha = 0.0
     p_step = 0.01
@@ -346,6 +352,7 @@ def find_true_evolution_dist_and_find_parameters1(graph):
                     if error < min_error:
                         best_x = x
                         best_p_aa = p_aa
+                        best_p_ab = p_ab
                         best_p_bb = p_bb
                         best_alpha = alpha
                         min_error = error
@@ -359,6 +366,7 @@ def find_true_evolution_dist_and_find_parameters1(graph):
         "estimated_true_dist": estimated_true_dist,
         "best_x": best_x,
         "best_p_aa": best_p_aa,
+        "best_p_ab": best_p_ab,
         "best_p_bb": best_p_bb,
         "best_alpha": best_alpha,
         "min_error": min_error,
@@ -413,19 +421,23 @@ def compute_true_evolutionary_distance(parameter_index, method):
             print(
                 "k:",
                 k,
-                "best x:",
+                "best_x:",
                 cur_dist_info["best_x"],
                 "best_p_aa:",
                 cur_dist_info["best_p_aa"],
+                "best_p_ab:",
+                cur_dist_info["best_p_ab"],
                 "best_p_bb:",
                 cur_dist_info["best_p_bb"],
                 "best_alpha:",
                 cur_dist_info["best_alpha"],
-                "min error:",
+                "min_error:",
                 cur_dist_info["min_error"],
+            )
+            print(
                 "time:",
-                (time.time() - start_time) / 60,
-                " m.",
+                (time.time() - start_time) / 60 / 60,
+                " h.",
             )
 
     log_dictionaries(
@@ -530,6 +542,7 @@ def draw_true_dist_for_parameters(f_name, parameter_index, draw_parameters):
         cur_parameters["p_bb"],
         cur_parameters["alpha"],
     )
+    p_ab = 1 - p_aa - p_bb
     plot_title = build_parameters_for_plot_title(p_aa, p_bb, alpha)
     print(plot_title)
 
@@ -583,16 +596,27 @@ def draw_true_dist_for_parameters(f_name, parameter_index, draw_parameters):
                 "color": "lightpink",
             },
             {
-                "plot": list(map(lambda info: float(info["real_p_bb"]), dist_info)),
-                "label": "Empirical p_bb",
+                "plot": [p_ab] * len(xs),
+                "label": "Empirical p_ab",
                 "color": "darkorange",
                 "linestyle": "dashed",
             },
             {
-                "plot": list(map(lambda info: float(info["best_p_bb"]), dist_info)),
-                "label": "Estimated p_bb",
+                "plot": list(map(lambda info: float(info["best_p_ab"]), dist_info)),
+                "label": "Estimated p_ab",
                 "color": "dimgray",
             },
+            # {
+            #     "plot": list(map(lambda info: float(info["real_p_bb"]), dist_info)),
+            #     "label": "Empirical p_bb",
+            #     "color": "darkorange",
+            #     "linestyle": "dashed",
+            # },
+            # {
+            #     "plot": list(map(lambda info: float(info["best_p_bb"]), dist_info)),
+            #     "label": "Estimated p_bb",
+            #     "color": "dimgray",
+            # },
         ]
 
         draw_plots(

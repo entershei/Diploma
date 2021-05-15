@@ -10,6 +10,9 @@ from src.graphs.real_data_graph import (
     sp_blocks_from_df,
     uniq_predicate,
 )
+from src.true_evolutionary_distance import find_true_evolution_dist_and_find_parameters1, \
+    find_true_evolution_dist_and_find_parameters0
+from src.utils import CyclesInfo
 
 
 def read_compartments(file):
@@ -50,23 +53,38 @@ def read_compartments(file):
     return a_b_compartments
 
 
+def read_files_path():
+    print("Enter a path to a file that contains A and B compartments:")
+    compartments_file = input()
+
+    print("Enter a path to a file with orthology blocks:")
+    blocks_file = input()
+
+    return compartments_file, blocks_file
+
+
 def read_species(orthology_blocks):
     species = orthology_blocks.species.unique()
     # print("Choose two species from the list:")
-    print("Choose one species from the list to compare with homo_sapiens:")
+    # must match the one for which the blocking was introduced
+    print("Choose two species from the list to compare with homo_sapiens)")
     print(*species, sep=", ")
 
-    # species1, species2 = input().split()
-    species1 = input()
-    species2 = "homo_sapiens"
+    print(
+        "Format: species1, species2\n",
+        "The second species must coincide with the one for which the partitioning into A/B compartments was",
+        " introduced:",
+    )
+
+    species1, species2 = input().split()
 
     if species1 not in species:
         print("First species is not from the list")
         exit()
 
-    # if species2 not in species:
-    #     print("Second species is not from the list")
-    #     exit()
+    if species2 not in species:
+        print("Second species is not from the list")
+        exit()
     return species1, species2
 
 
@@ -152,20 +170,20 @@ def add_types_to_fragile_edges(edges, a_b_compartments):
         if a_compartments + b_compartments > 1e6:
             cnt_edge_contains_multi_compartments += 1
 
-    print("edge inside", cnt_edge_inside_compartment)
-    print("edge contains", cnt_edge_contains_multi_compartments)
-    print("A and B", a_and_b)
+    # print("edge inside", cnt_edge_inside_compartment)
+    # print("edge contains", cnt_edge_contains_multi_compartments)
+    # print("A and B", a_and_b)
+    #
+    # cnt_a = defaultdict(lambda: 0)
+    # cnt_b = defaultdict(lambda: 0)
+    # for edge in edges:
+    #     if edge["label"] == "A":
+    #         cnt_a[edge["chr"]] += 1
+    #     else:
+    #         cnt_b[edge["chr"]] += 1
 
-    cnt_a = defaultdict(lambda: 0)
-    cnt_b = defaultdict(lambda: 0)
-    for edge in edges:
-        if edge["label"] == "A":
-            cnt_a[edge["chr"]] += 1
-        else:
-            cnt_b[edge["chr"]] += 1
-
-    for chr_ in cnt_a.keys():
-        print(chr_, cnt_a[chr_], cnt_b[chr_])
+    # for chr_ in cnt_a.keys():
+    #     print(chr_, cnt_a[chr_], cnt_b[chr_])
 
 
 def len_of_blocks(orthology_blocks, species):
@@ -176,10 +194,7 @@ def len_of_blocks(orthology_blocks, species):
     # print("Length of orthology blocks for", species, ":", len_blocks, "\n")
 
 
-def get_compartments_and_orthology_blocks():
-    compartments_file = "3d_fragile_breakage_model/data/a_b_compartments.xlsx"
-    blocks_file = "3d_fragile_breakage_model/data/orthology_blocks.txt"
-
+def get_compartments_and_orthology_blocks(compartments_file, blocks_file):
     a_b_compartments = read_compartments(compartments_file)
     orthology_blocks = parse_to_df(blocks_file)
     return a_b_compartments, orthology_blocks
@@ -230,9 +245,8 @@ def get_graph_statistic(g):
         cycle = g.subgraph(component)
         if len(cycle.nodes) == len(cycle.edges):
             cycle_len = len(cycle.edges) // 2
-            statistic["cycles"][cycle_len] += 1
+            statistic["cycles"][str(cycle_len)] += 1
             edges_types = list(map(lambda edge: edge[2], cycle.edges(data="label")))
-            # if cycle_len < max_cycles_len_with_type:
             statistic["cycles_with_types"][to_cycle_type(edges_types)] += 1
 
             if cycle_len > 1:
@@ -288,13 +302,53 @@ def print_graph_statistic(graph_statistic):
     print()
 
 
+def find_true_evolution_dist(graph_statistic):
+    graph_cycles_info = CyclesInfo(
+        dict(graph_statistic["cycles_with_types"]),
+        dict(graph_statistic["cycles"]),
+        graph_statistic["A-edges in non-trivial cycles"],
+        graph_statistic["B-edges in non-trivial cycles"],
+        -1,
+        -1,
+    )
+    sum_to_in_error = 10
+    for i in range(2, sum_to_in_error):
+        if str(i) not in graph_cycles_info.cycles_m:
+            graph_cycles_info.cycles_m[str(i)] = 0
+
+    dist_info = find_true_evolution_dist_and_find_parameters0(graph_cycles_info)
+
+    print("Estimated true evolutionary distance:", dist_info["estimated_true_dist"])
+    print(
+        "Parameters at which the distance is reached:\n    p_aa:",
+        dist_info["best_p_aa"],
+        "p_ab:",
+        1 - dist_info["best_p_aa"] - dist_info["best_p_bb"],
+        "p_bb:",
+        dist_info["best_p_bb"],
+        "alpha:",
+        dist_info["best_alpha"],
+        "beta:",
+        1 - dist_info["best_alpha"],
+    )
+    print("Min error:", dist_info["min_error"])
+    print("Empirical min distance:", dist_info["empirical_min_dist"])
+
+
 def main():
-    a_b_compartments, orthology_blocks = get_compartments_and_orthology_blocks()
+    # compartments_file, blocks_file = read_files_path()
+    compartments_file = "3d_fragile_breakage_model/data/a_b_compartments.xlsx"
+    blocks_file = "3d_fragile_breakage_model/data/orthology_blocks.txt"
+
+    a_b_compartments, orthology_blocks = get_compartments_and_orthology_blocks(
+        compartments_file, blocks_file
+    )
     # species1, species2 = read_species(orthology_blocks)
-    species1, species2 = "mus_musculus", "homo_sapiens"
+    species1, species2 = "rattus_norvegicus", "homo_sapiens"
     g = build_breakpoint_graph(species1, species2, a_b_compartments, orthology_blocks)
     graph_statistic = get_graph_statistic(g)
     print_graph_statistic(graph_statistic)
+    find_true_evolution_dist(graph_statistic)
 
 
 if __name__ == "__main__":

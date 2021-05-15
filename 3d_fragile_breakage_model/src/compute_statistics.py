@@ -167,9 +167,9 @@ def draw_analytical_c_m_b(max_m, mid_m, parameters_index):
     )
 
 
-def compute_p_ab(x, p_aa, alpha, aa_cycles, aaa_cycles):
-    y1 = math.log(aaa_cycles * alpha / (aa_cycles * 2 * x * p_aa)) / x
-    return -2 * p_aa - y1 * alpha
+def estimate_p_ab(x, p_aa, alpha, aa_cycles, aaa_cycles):
+    log = math.log(aaa_cycles * alpha / (aa_cycles * 2 * x * p_aa))
+    return -2 * p_aa - log * alpha / x
 
 
 def estimate_alpha(x, p_aa, p_bb, aa_cycles, ab_cycles, bb_cycles):
