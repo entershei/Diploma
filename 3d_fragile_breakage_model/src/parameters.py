@@ -110,4 +110,12 @@ PROBABILITIES_WITH_ALPHA = [
         "number_of_experiments": 3000,
         "number_of_steps": 1000,
     },
+    {
+        "parameters_str": "paa0,63_pbb0,21_alpha0,4",
+        "p_aa": 0.63,
+        "p_bb": 0.21,
+        "alpha": 0.4,
+        "number_of_experiments": 1000,
+        "number_of_steps": 1500,
+    },
 ]

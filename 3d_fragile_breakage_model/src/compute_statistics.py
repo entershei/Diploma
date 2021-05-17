@@ -194,15 +194,19 @@ def estimate_alpha(x, p_aa, p_bb, aa_cycles, ab_cycles, bb_cycles):
             and not (aa_cycles == bb_cycles and p_aa == p_bb)
         ):
             aa_cycles_divide_bb = aa_cycles / bb_cycles
-            y1 = math.log(aa_cycles_divide_bb * p_bb / p_aa) / x
-            d = 16 + y1 ** 2 + 8 * y1 * p_aa - 8 * y1 * p_bb
+            y = math.log(aa_cycles_divide_bb * p_bb / p_aa) / x
+            d = 16 + y ** 2 + 8 * y * p_aa - 8 * y * p_bb
             if d < 0:
                 return []
             elif d == 0:
-                alpha1 = (y1 - 4) / (2 * y1)
-                return [alpha1]
-            alpha1 = (math.sqrt(d) + y1 - 4) / (2 * y1)
-            alpha2 = (-1 * math.sqrt(d) + y1 - 4) / (2 * y1)
+                alpha1 = (y - 4) / (2 * y)
+                return check_alphas(alpha1, -1)
+            if y == 0:
+                alpha1 = (p_aa - p_bb + 1) / 2
+                return check_alphas(alpha1, -1)
+
+            alpha1 = (math.sqrt(d) + y - 4) / (2 * y)
+            alpha2 = (-1 * math.sqrt(d) + y - 4) / (2 * y)
             return check_alphas(alpha1, alpha2)
         return []
 
@@ -215,16 +219,19 @@ def estimate_alpha(x, p_aa, p_bb, aa_cycles, ab_cycles, bb_cycles):
             and not (aa_cycles == ab_cycles and p_aa == p_ab)
         ):
             aa_cycles_divide_ab = aa_cycles / ab_cycles
-            y1 = math.log(aa_cycles_divide_ab * p_ab / p_aa) / x
-            d = 4 + y1 ** 2 - 4 * y1 * p_bb + 4 * y1 * p_aa
+            y = math.log(aa_cycles_divide_ab * p_ab / p_aa) / x
+            d = 4 + y ** 2 - 4 * y * p_bb + 4 * y * p_aa
             if d < 0:
                 return []
             if d == 0:
-                alpha1 = (-2 + y1) / (2 * y1)
-                return [alpha1]
+                alpha1 = (-2 + y) / (2 * y)
+                return check_alphas(alpha1, -1)
+            if y == 0:
+                alpha1 = (p_aa - p_bb + 1) / 2
+                return check_alphas(alpha1, -1)
 
-            alpha1 = (math.sqrt(d) - 2 + y1) / (2 * y1)
-            alpha2 = (-1 * math.sqrt(d) - 2 + y1) / (2 * y1)
+            alpha1 = (math.sqrt(d) - 2 + y) / (2 * y)
+            alpha2 = (-1 * math.sqrt(d) - 2 + y) / (2 * y)
             return check_alphas(alpha1, alpha2)
         return []
 
@@ -237,15 +244,19 @@ def estimate_alpha(x, p_aa, p_bb, aa_cycles, ab_cycles, bb_cycles):
             and not (bb_cycles == ab_cycles and p_ab == p_bb)
         ):
             bb_cycles_divide_ab = bb_cycles / ab_cycles
-            y1 = math.log(bb_cycles_divide_ab * p_ab / p_bb) / x
-            d = y1 ** 2 + 4 + 4 * y1 * p_bb - 4 * y1 * p_aa
+            y = math.log(bb_cycles_divide_ab * p_ab / p_bb) / x
+            d = y ** 2 + 4 + 4 * y * p_bb - 4 * y * p_aa
             if d < 0:
                 return []
             if d == 0:
-                alpha1 = (y1 + 2) / (2 * y1)
+                alpha1 = (y + 2) / (2 * y)
                 return [alpha1]
-            alpha1 = (math.sqrt(d) + y1 + 2) / (2 * y1)
-            alpha2 = (-1 * math.sqrt(d) + y1 + 2) / (2 * y1)
+            if y == 0:
+                alpha1 = (2 * p_aa + p_ab) / 2
+                return check_alphas(alpha1, -1)
+
+            alpha1 = (math.sqrt(d) + y + 2) / (2 * y)
+            alpha2 = (-1 * math.sqrt(d) + y + 2) / (2 * y)
             return check_alphas(alpha1, alpha2)
         return []
 

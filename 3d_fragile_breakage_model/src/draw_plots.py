@@ -219,7 +219,7 @@ def main():
 
     create_new_directories_in_plots()
 
-    for cur_parameters in parameters.PROBABILITIES_WITH_ALPHA[-4:-1]:
+    for cur_parameters in parameters.PROBABILITIES_WITH_ALPHA[-1:]:
         folder_name, p_aa, p_bb, alpha = (
             cur_parameters["parameters_str"],
             cur_parameters["p_aa"],
@@ -385,4 +385,4 @@ def cycles_together(parameters_index):
 
 if __name__ == "__main__":
     main()
-    cycles_together(4)
+    cycles_together(-1)

@@ -10,7 +10,7 @@ from compute_statistics import (
     compute_empirical_d,
     compute_empirical_b,
 )
-from draw_plots import draw_plots, build_parameters_for_plot_title
+from draw_plots import draw_plots, build_parameters_for_plot_title, draw
 from src.compute_statistics import compute_analytical_cycles_m
 from utils import read_experiments_cycles_info, log_dictionaries, read_logs
 import numpy as np
@@ -267,7 +267,7 @@ def find_true_evolution_dist_and_find_parameters0(graph):
     empirical_d = compute_empirical_d(graph)
     empirical_b = compute_empirical_b(graph)
 
-    step_x = 1e-3
+    step_x = 5e-4
     l_x = step_x
     r_x = 1.5 + step_x
 
@@ -405,8 +405,8 @@ def compute_true_evolutionary_distance(parameter_index, method):
         #     graph, p_aa, p_bb, alpha
         # )
 
-        cur_dist_info = find_true_evolution_dist_and_find_parameters0(graph)
-        # cur_dist_info = find_true_evolution_dist_and_find_parameters1(graph)
+        # cur_dist_info = find_true_evolution_dist_and_find_parameters0(graph)
+        cur_dist_info = find_true_evolution_dist_and_find_parameters1(graph)
         # cur_dist_info = find_true_evolution_dist_with_parameters_using_skopt(
         #     graph, 2000
         # )
@@ -442,9 +442,8 @@ def compute_true_evolutionary_distance(parameter_index, method):
 
     log_dictionaries(
         dist_info,
-        "3d_fragile_breakage_model/logs/true_evolution_distance_found_parameters/"
+        "3d_fragile_breakage_model/logs/"
         + method
-        + "/"
         + file
         + ".csv",
     )
@@ -464,6 +463,7 @@ def draw_dists(
     empirical_min_distances = list(
         map(lambda v: float(v["empirical_min_dist"]), to_draw_main)
     )
+    estimated_true_distances = list(map(lambda v: float(v["estimated_true_dist"]), to_draw_main))
 
     plots = [
         {
@@ -478,7 +478,7 @@ def draw_dists(
             "linestyle": "dashed",
         },
         {
-            "plot": list(map(lambda v: float(v["estimated_true_dist"]), to_draw_main)),
+            "plot": estimated_true_distances,
             "label": "Estimated true distance",
             "color": "blue",
         },
@@ -503,6 +503,20 @@ def draw_dists(
         y_label="Estimated number of rearrangements",
         title="Evolutionary distance\n" + parameters_for_plot_title,
         save_as=save_as,
+    )
+
+    relative_error = []
+    for i, true_distance in enumerate(empirical_true_distances):
+        relative_error.append(100 * abs(true_distance - estimated_true_distances[i]) / true_distance)
+
+    draw(
+        xs,
+        relative_error,
+        "Real number of rearrangements",
+        "% relative error",
+        "Relative percentage error of estimated true evolutionary distance\n"
+        + parameters_for_plot_title,
+        save_as + "_relative_percentage_error"
     )
 
 
@@ -606,17 +620,6 @@ def draw_true_dist_for_parameters(f_name, parameter_index, draw_parameters):
                 "label": "Estimated p_ab",
                 "color": "dimgray",
             },
-            # {
-            #     "plot": list(map(lambda info: float(info["real_p_bb"]), dist_info)),
-            #     "label": "Empirical p_bb",
-            #     "color": "darkorange",
-            #     "linestyle": "dashed",
-            # },
-            # {
-            #     "plot": list(map(lambda info: float(info["best_p_bb"]), dist_info)),
-            #     "label": "Estimated p_bb",
-            #     "color": "dimgray",
-            # },
         ]
 
         draw_plots(
@@ -668,11 +671,13 @@ def draw_true_dist_with_additional_plot(
 
 
 if __name__ == "__main__":
-    compute_true_evolutionary_distance(parameter_index=4, method="0")
+    method_to_run = "true_evolution_distance_found_parameters/1/"
+    index_of_parameters = -1
+    compute_true_evolutionary_distance(parameter_index=index_of_parameters, method=method_to_run)
     draw_true_dist_for_parameters(
-        "true_evolution_distance_found_parameters/0/",
-        parameter_index=4,
-        draw_parameters=True,
+        method_to_run,
+        parameter_index=index_of_parameters,
+        draw_parameters=False,
     )
     # draw_true_dist_with_additional_plot(
     #     "true_evolution_distance_found_parameters/",

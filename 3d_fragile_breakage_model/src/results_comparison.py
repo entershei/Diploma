@@ -198,7 +198,7 @@ def main():
 
     create_new_directories_for_result_comparison()
 
-    for cur_parameters in parameters.PROBABILITIES_WITH_ALPHA[-4:-1]:
+    for cur_parameters in parameters.PROBABILITIES_WITH_ALPHA[-1:]:
         file = cur_parameters["parameters_str"]
         number_of_experiments = cur_parameters["number_of_experiments"]
 
