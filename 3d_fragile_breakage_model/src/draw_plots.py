@@ -231,7 +231,10 @@ def main():
         parameters_for_plot_title = build_parameters_for_plot_title(p_aa, p_bb, alpha)
 
         f_in_empirical = (
-            get_cycles_info_dir(cur_parameters["number_of_experiments"])
+            get_cycles_info_dir(
+                cur_parameters["number_of_experiments"],
+                cur_parameters["experiments_in_one_bunch"],
+            )
             + folder_name
             + ".csv"
         )
@@ -284,7 +287,13 @@ def cycles_together(parameters_index):
 
     parameters_for_plot_title = build_parameters_for_plot_title(p_aa, p_bb, alpha)
 
-    f_in_empirical = get_cycles_info_dir(number_of_experiments) + folder_name + ".csv"
+    f_in_empirical = (
+        get_cycles_info_dir(
+            number_of_experiments, cur_parameters["experiments_in_one_bunch"]
+        )
+        + folder_name
+        + ".csv"
+    )
     empirical_cycles_info = read_experiments_cycles_info(
         f_in_empirical,
         max_cycle_len_with_types,
@@ -384,5 +393,5 @@ def cycles_together(parameters_index):
 
 
 if __name__ == "__main__":
-    main()
-    cycles_together(-1)
+    # main()
+    cycles_together(4)

@@ -10,29 +10,34 @@ def get_parameters_as_string(number_of_experiments):
     return number_of_fragile_edges() + str(number_of_experiments) + "_experiments/"
 
 
-def get_cycles_info_dir(number_of_experiments):
-    return "3d_fragile_breakage_model/logs/cycles_info/" + get_parameters_as_string(
-        number_of_experiments
+def get_cycles_info_dir(number_of_experiments, experiments_in_one_bunch):
+    return (
+        "3d_fragile_breakage_model/logs/cycles_info/"
+        + get_parameters_as_string(number_of_experiments)
+        + "from_experiments_"
+        + str(experiments_in_one_bunch)
     )
 
 
-def create_new_directory_in_cycles_info(number_of_experiments):
-    path = get_cycles_info_dir(number_of_experiments)
+def create_new_directory_in_cycles_info(
+    number_of_experiments, experiments_in_one_bunch
+):
+    path = get_cycles_info_dir(number_of_experiments, experiments_in_one_bunch)
     Path(path).mkdir(parents=True, exist_ok=True)
     return path
 
 
-def get_experiments_dir():
+def get_experiments_dir(experiments_in_one_bunch):
     return (
         "3d_fragile_breakage_model/logs/experiments_"
-        + str(parameters.EXPERIMENTS_IN_ONE_BUNCH)
+        + str(experiments_in_one_bunch)
         + "/"
         + number_of_fragile_edges()
     )
 
 
-def create_new_directory_for_logging_experiments():
-    path = get_experiments_dir()
+def create_new_directory_for_logging_experiments(experiments_in_one_bunch):
+    path = get_experiments_dir(experiments_in_one_bunch)
     Path(path).mkdir(parents=True, exist_ok=True)
     return path
 

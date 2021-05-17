@@ -1,8 +1,6 @@
 NUMBER_OF_FRAGILE_EDGES = 1000
 PART = NUMBER_OF_FRAGILE_EDGES / 20 + 1
 
-EXPERIMENTS_IN_ONE_BUNCH = 100
-
 MAX_POSSIBLE_CYCLES_LEN = NUMBER_OF_FRAGILE_EDGES + 1
 
 PROBABILITIES_WITH_ALPHA = [
@@ -13,6 +11,7 @@ PROBABILITIES_WITH_ALPHA = [
         "alpha": 0.5,
         "number_of_experiments": 1000,
         "number_of_steps": 3000,
+        "experiments_in_one_bunch": 100,
     },
     {
         "parameters_str": "paa0,4_pbb0,4_alpha0,5",
@@ -21,6 +20,7 @@ PROBABILITIES_WITH_ALPHA = [
         "alpha": 0.5,
         "number_of_experiments": 1000,
         "number_of_steps": 1500,
+        "experiments_in_one_bunch": 100,
     },
     {
         "parameters_str": "paa0,57142857142_pbb0,28571428571_alpha0,33333333333",
@@ -29,6 +29,7 @@ PROBABILITIES_WITH_ALPHA = [
         "alpha": 0.33333333333,
         "number_of_experiments": 1000,
         "number_of_steps": 1500,
+        "experiments_in_one_bunch": 100,
     },
     {
         "parameters_str": "paa0,4_pbb0,4_alpha0,33333333333",
@@ -37,6 +38,7 @@ PROBABILITIES_WITH_ALPHA = [
         "alpha": 0.33333333333,
         "number_of_experiments": 1000,
         "number_of_steps": 1500,
+        "experiments_in_one_bunch": 100,
     },
     {
         "parameters_str": "paa0,48_pbb0,45_alpha0,53",
@@ -45,6 +47,7 @@ PROBABILITIES_WITH_ALPHA = [
         "alpha": 0.53,
         "number_of_experiments": 1000,
         "number_of_steps": 1500,
+        "experiments_in_one_bunch": 100,
     },
     {
         "parameters_str": "paa0,333_pbb0,333_alpha0,5",
@@ -53,6 +56,7 @@ PROBABILITIES_WITH_ALPHA = [
         "alpha": 0.5,
         "number_of_experiments": 3000,
         "number_of_steps": 1000,
+        "experiments_in_one_bunch": 100,
     },
     {
         "parameters_str": "paa0,4_pbb0,35_alpha0,7",
@@ -61,6 +65,7 @@ PROBABILITIES_WITH_ALPHA = [
         "alpha": 0.7,
         "number_of_experiments": 3000,
         "number_of_steps": 1000,
+        "experiments_in_one_bunch": 100,
     },
     {
         "parameters_str": "paa0,5_pbb0,5_alpha0,5",
@@ -69,6 +74,7 @@ PROBABILITIES_WITH_ALPHA = [
         "alpha": 0.5,
         "number_of_experiments": 3000,
         "number_of_steps": 1000,
+        "experiments_in_one_bunch": 100,
     },
     {
         "parameters_str": "paa0,5_pbb0,5_alpha0,8",
@@ -77,6 +83,7 @@ PROBABILITIES_WITH_ALPHA = [
         "alpha": 0.8,
         "number_of_experiments": 3000,
         "number_of_steps": 1000,
+        "experiments_in_one_bunch": 100,
     },
     {
         "parameters_str": "paa0,5_pbb0,45_alpha0,5",
@@ -85,6 +92,7 @@ PROBABILITIES_WITH_ALPHA = [
         "alpha": 0.5,
         "number_of_experiments": 1000,
         "number_of_steps": 1500,
+        "experiments_in_one_bunch": 1,
     },
     {
         "parameters_str": "paa0,45_pbb0,45_alpha0,5",
@@ -93,6 +101,7 @@ PROBABILITIES_WITH_ALPHA = [
         "alpha": 0.5,
         "number_of_experiments": 1000,
         "number_of_steps": 1500,
+        "experiments_in_one_bunch": 1,
     },
     {
         "parameters_str": "paa0,5_pbb0,4_alpha0,45",
@@ -101,6 +110,7 @@ PROBABILITIES_WITH_ALPHA = [
         "alpha": 0.45,
         "number_of_experiments": 1000,
         "number_of_steps": 1500,
+        "experiments_in_one_bunch": 1,
     },
     {
         "parameters_str": "paa0,45_pbb0,45_alpha0,48",
@@ -109,6 +119,7 @@ PROBABILITIES_WITH_ALPHA = [
         "alpha": 0.48,
         "number_of_experiments": 3000,
         "number_of_steps": 1000,
+        "experiments_in_one_bunch": 100,
     },
     {
         "parameters_str": "paa0,63_pbb0,21_alpha0,4",
@@ -117,5 +128,15 @@ PROBABILITIES_WITH_ALPHA = [
         "alpha": 0.4,
         "number_of_experiments": 1000,
         "number_of_steps": 1500,
+        "experiments_in_one_bunch": 100,
+    },
+    {
+        "parameters_str": "paa0,48_pbb0,45_alpha0,53",
+        "p_aa": 0.48,
+        "p_bb": 0.45,
+        "alpha": 0.53,
+        "number_of_experiments": 100,
+        "number_of_steps": 1500,
+        "experiments_in_one_bunch": 1,
     },
 ]

@@ -8,7 +8,7 @@ from utils import CyclesInfo, log_experiments
 
 
 def sum_cycles_info(experiments, max_cycle_len_with_types, max_possible_cycles_len):
-    print("start sum")
+    # print("start sum")
     num_steps_of_markov_process = len(experiments[0])
 
     cycle_types = generate_cycle_types(1, max_cycle_len_with_types)
@@ -57,14 +57,14 @@ def sum_cycles_info(experiments, max_cycle_len_with_types, max_possible_cycles_l
             )
         )
 
-    print("finish sum")
+    # print("finish sum")
     return summed_cycles_info
 
 
 # If a_in_non_trivial_cycles_part and b_in_non_trivial_cycles_part were not calculated for experiments, there will be
 # negative values.
 def aggregate_cycles_info(
-    f_in, f_out, max_cycle_len_with_types, max_interesting_cycles_len
+    f_in, f_out, experiments_in_one_bunch, max_cycle_len_with_types, max_interesting_cycles_len
 ):
     print("start read experiments")
     experiments = read_experiments_cycles_info(
@@ -72,7 +72,7 @@ def aggregate_cycles_info(
     )
     print("finish read")
 
-    num_experiments = len(experiments) * parameters.EXPERIMENTS_IN_ONE_BUNCH
+    num_experiments = len(experiments) * experiments_in_one_bunch
     summed_cycles_info = sum_cycles_info(
         experiments, max_cycle_len_with_types, max_interesting_cycles_len
     )
@@ -111,8 +111,9 @@ def main():
     max_interesting_cycles_len = parameters.MAX_POSSIBLE_CYCLES_LEN
 
     for parameter in parameters.PROBABILITIES_WITH_ALPHA[-1:]:
+        experiments_in_one_bunch = parameter["experiments_in_one_bunch"]
         cycles_info_log_path = create_new_directory_in_cycles_info(
-            parameter["number_of_experiments"]
+            parameter["number_of_experiments"], experiments_in_one_bunch
         )
 
         string_parameters = parameter["parameters_str"]
@@ -121,8 +122,9 @@ def main():
         print(string_parameters)
 
         aggregate_cycles_info(
-            f_in=get_experiments_dir() + file,
+            f_in=get_experiments_dir(experiments_in_one_bunch) + file,
             f_out=cycles_info_log_path + string_parameters,
+            experiments_in_one_bunch=experiments_in_one_bunch,
             max_cycle_len_with_types=max_cycle_len_with_types,
             max_interesting_cycles_len=max_interesting_cycles_len,
         )

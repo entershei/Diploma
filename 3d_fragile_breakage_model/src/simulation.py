@@ -292,16 +292,16 @@ def remove_previous_log(file):
 
 def main():
     # n, k, p_aa, p_bb, p_ab = read_parameters_from_console()
-
     start_time = time.time()
 
     n = parameters.NUMBER_OF_FRAGILE_EDGES
-    experiments_log_path = create_new_directory_for_logging_experiments()
     max_cycle_len_with_types = 6
     max_interesting_cycles_len = parameters.MAX_POSSIBLE_CYCLES_LEN
 
-    for parameter in parameters.PROBABILITIES_WITH_ALPHA[-1:]:
+    for parameter in parameters.PROBABILITIES_WITH_ALPHA[9:12]:
         file = parameter["parameters_str"] + ".csv"
+        experiments_in_one_bunch = parameter["experiments_in_one_bunch"]
+        experiments_log_path = create_new_directory_for_logging_experiments(experiments_in_one_bunch)
 
         experiments = []
         print("parameters:", parameter["parameters_str"])
@@ -323,13 +323,14 @@ def main():
                 )
             )
 
-            if len(experiments) == parameters.EXPERIMENTS_IN_ONE_BUNCH:
+            if len(experiments) == experiments_in_one_bunch:
                 if first_log:
                     remove_previous_log(experiments_log_path + file)
                     first_log = False
 
                 # Записываем сумму результатов экспериментов
-                print("i:", i, ", time: ", (time.time() - start_time) / 60, " m.")
+                if i % 100 == 0:
+                    print("i:", i, ", time: ", (time.time() - start_time) / 60, " m.")
                 log_experiments(
                     sum_cycles_info(
                         experiments,

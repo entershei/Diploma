@@ -302,7 +302,7 @@ def estimate_alphas_for_graphs(start_ind, end_ind):
         )
         print(parameters_str)
         file = (
-            get_cycles_info_dir(parameter["number_of_experiments"])
+            get_cycles_info_dir(parameter["number_of_experiments"], parameter["experiments_in_one_bunch"])
             + parameters_str
             + ".csv"
         )

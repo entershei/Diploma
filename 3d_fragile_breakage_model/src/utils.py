@@ -119,7 +119,7 @@ def read_experiments_cycles_info(
 def log_experiments(
     experiments, file, open_mode, max_cycle_len_with_types, max_interesting_cycles_len
 ):
-    print("start log")
+    # print("start log")
     file_exists = os.path.isfile(file)
 
     with open(file, open_mode, newline="") as f_log:
@@ -166,7 +166,7 @@ def log_experiments(
 
             log_cycles.writerow(cur_result)
         f_log.close()
-    print("finish log")
+    # print("finish log")
 
 
 def log_dictionaries(dictionaries, f):

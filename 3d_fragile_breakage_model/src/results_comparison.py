@@ -203,7 +203,7 @@ def main():
         number_of_experiments = cur_parameters["number_of_experiments"]
 
         empirical_cycles_info = read_experiments_cycles_info(
-            get_cycles_info_dir(number_of_experiments) + file + ".csv",
+            get_cycles_info_dir(number_of_experiments, cur_parameters["experiments_in_one_bunch"]) + file + ".csv",
             max_cycle_len_with_types,
             max_interesting_cycles_len,
             False,

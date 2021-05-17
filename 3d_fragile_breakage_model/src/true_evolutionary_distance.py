@@ -387,7 +387,7 @@ def compute_true_evolutionary_distance(parameter_index, method):
     print(file)
 
     graphs = read_experiments_cycles_info(
-        get_cycles_info_dir(parameter["number_of_experiments"]) + file + ".csv",
+        get_cycles_info_dir(parameter["number_of_experiments"], parameter["experiments_in_one_bunch"]) + file + ".csv",
         max_cycle_len_with_types,
         parameters.MAX_POSSIBLE_CYCLES_LEN,
         False,
