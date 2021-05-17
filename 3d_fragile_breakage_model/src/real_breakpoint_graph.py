@@ -10,9 +10,10 @@ from src.graphs.real_data_graph import (
     sp_blocks_from_df,
     uniq_predicate,
 )
-from src.true_evolutionary_distance import find_true_evolution_dist_and_find_parameters1, \
-    find_true_evolution_dist_and_find_parameters0
-from src.utils import CyclesInfo
+from src.true_evolutionary_distance import (
+    find_true_evolution_dist_and_find_parameters1,
+)
+from src.utils import CyclesInfo, log_dictionaries
 
 
 def read_compartments(file):
@@ -45,10 +46,10 @@ def read_compartments(file):
         else:
             cnt_na += 1
 
-    print("Sum of A regions in compartments file:", cnt_a, "Mb")
-    print("Sum of B regions in compartments file:", cnt_b, "Mb")
-    print("Sum of NA regions in compartments file:", cnt_na, "Mb")
-    print()
+    # print("Sum of A regions in compartments file:", cnt_a, "Mb")
+    # print("Sum of B regions in compartments file:", cnt_b, "Mb")
+    # print("Sum of NA regions in compartments file:", cnt_na, "Mb")
+    # print()
 
     return a_b_compartments
 
@@ -316,7 +317,7 @@ def find_true_evolution_dist(graph_statistic):
         if str(i) not in graph_cycles_info.cycles_m:
             graph_cycles_info.cycles_m[str(i)] = 0
 
-    dist_info = find_true_evolution_dist_and_find_parameters0(graph_cycles_info)
+    dist_info = find_true_evolution_dist_and_find_parameters1(graph_cycles_info)
 
     print("Estimated true evolutionary distance:", dist_info["estimated_true_dist"])
     print(
@@ -333,6 +334,32 @@ def find_true_evolution_dist(graph_statistic):
     )
     print("Min error:", dist_info["min_error"])
     print("Empirical min distance:", dist_info["empirical_min_dist"])
+    print()
+    return dist_info
+
+
+def estimate_distance_for_many_species(
+    species_pairs, a_b_compartments, orthology_blocks
+):
+    for species_pair in species_pairs:
+        species1, species2 = species_pair
+        g = build_breakpoint_graph(
+            species1, species2, a_b_compartments, orthology_blocks
+        )
+        graph_statistic = get_graph_statistic(g)
+        # print_graph_statistic(graph_statistic)
+        dist_info = find_true_evolution_dist(graph_statistic)
+        dist_info["species1"] = species1
+        dist_info["species2"] = species2
+
+        log_dictionaries(
+            [{**dist_info, **graph_statistic}],
+            "3d_fragile_breakage_model/logs/true_evolution_distance_found_parameters/real_genomes/"
+            + species1
+            + "_"
+            + species2
+            + ".csv",
+        )
 
 
 def main():
@@ -344,11 +371,16 @@ def main():
         compartments_file, blocks_file
     )
     # species1, species2 = read_species(orthology_blocks)
-    species1, species2 = "rattus_norvegicus", "homo_sapiens"
-    g = build_breakpoint_graph(species1, species2, a_b_compartments, orthology_blocks)
-    graph_statistic = get_graph_statistic(g)
-    print_graph_statistic(graph_statistic)
-    find_true_evolution_dist(graph_statistic)
+    estimate_distance_for_many_species(
+        [
+            ("macaca_mulatta", "homo_sapiens"),
+            ("mus_musculus", "homo_sapiens"),
+            ("rattus_norvegicus", "homo_sapiens"),
+            ("monodelphis_domestica", "homo_sapiens"),
+        ],
+        a_b_compartments,
+        orthology_blocks,
+    )
 
 
 if __name__ == "__main__":
