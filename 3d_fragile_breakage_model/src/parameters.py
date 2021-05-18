@@ -135,7 +135,7 @@ PROBABILITIES_WITH_ALPHA = [
         "p_aa": 0.48,
         "p_bb": 0.45,
         "alpha": 0.53,
-        "number_of_experiments": 100,
+        "number_of_experiments": 1000,
         "number_of_steps": 1500,
         "experiments_in_one_bunch": 1,
     },

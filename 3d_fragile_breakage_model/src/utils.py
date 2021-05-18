@@ -89,7 +89,7 @@ def parse_logs_row(row, possible_cycle_types, max_interesting_cycles_len, is_int
 
 
 def read_experiments_cycles_info(
-    f_in, max_cycle_len_with_types, max_interesting_cycles_len, is_int
+    f_in, max_cycle_len_with_types, max_interesting_cycles_len, is_int, number_of_experiments=None
 ):
     possible_cycle_types = generate_cycle_types(1, max_cycle_len_with_types)
     experiments = []
@@ -106,10 +106,13 @@ def read_experiments_cycles_info(
             if k == 0 and len(experiment) > 0:
                 experiments.append(experiment)
                 experiment = [cycle_info]
+                if number_of_experiments is not None and len(experiments) == number_of_experiments:
+                    break
             else:
                 experiment.append(cycle_info)
 
-        experiments.append(experiment)
+        if number_of_experiments is None or len(experiments) < number_of_experiments:
+            experiments.append(experiment)
 
         csvfile.close()
 

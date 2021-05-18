@@ -42,6 +42,42 @@ def create_new_directory_for_logging_experiments(experiments_in_one_bunch):
     return path
 
 
+def get_confidence_intervals_dir(experiments, cycle_len, divide):
+    return (
+        "3d_fragile_breakage_model/logs/confidence_intervals_"
+        + str(experiments)
+        + "/"
+        + number_of_fragile_edges()
+        + "c_"
+        + str(cycle_len)
+        + "_"
+        + divide
+        + "/"
+    )
+
+
+def create_directory_for_confidence_intervals(experiments, cycle_len, divide):
+    path = get_confidence_intervals_dir(experiments, cycle_len, divide)
+    Path(path).mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def get_confidence_intervals_dir_plots(experiments, cycle_len, divide):
+    path = (
+        "3d_fragile_breakage_model/plots/confidence_intervals_"
+        + str(experiments)
+        + "/"
+        + number_of_fragile_edges()
+        + "c_"
+        + cycle_len
+        + "_"
+        + divide
+        + "/"
+    )
+    Path(path).mkdir(parents=True, exist_ok=True)
+    return path
+
+
 def get_relative_error_dir(number_of_experiments, add_depends_on_k=True):
     path = "3d_fragile_breakage_model/logs/relative_error/" + get_parameters_as_string(
         number_of_experiments
