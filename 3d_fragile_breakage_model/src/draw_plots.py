@@ -4,6 +4,7 @@ import parameters
 from utils import (
     read_experiments_cycles_info,
     generate_cycle_types_for_len,
+    define_cycles_representative,
 )
 from generate_directories_names import (
     create_new_directories_in_plots,
@@ -60,6 +61,7 @@ def draw_relative_errors(
     number_of_experiments,
     max_cycle_len_with_types,
     max_interesting_cycles_len,
+    to_represent,
 ):
     f_in_relative_error = (
         get_relative_error_dir(number_of_experiments) + folder_name + ".csv"
@@ -86,14 +88,16 @@ def draw_relative_errors(
                     xs,
                     list(
                         map(
-                            lambda k: relative_errors[k].cycle_types[cycle_type],
+                            lambda k: relative_errors[k].cycles_with_edges_order[
+                                to_represent[cycle_type]
+                            ],
                             ks,
                         )
                     ),
                     "x",
                     "Relative error",
                     "Relative error of number of "
-                    + cycle_type
+                    + to_represent[cycle_type]
                     + " depends on x,\n"
                     + parameters_for_plot_title,
                     save_path + cycle_type + ".png",
@@ -168,6 +172,7 @@ def draw_empirical_with_analytical_cycles(
     number_of_experiments,
     max_cycle_len_with_types,
     max_interesting_cycles_len,
+    to_represent,
 ):
     n = parameters.NUMBER_OF_FRAGILE_EDGES
     save_path = get_plots_compare_cycles(number_of_experiments, folder_name)
@@ -177,8 +182,13 @@ def draw_empirical_with_analytical_cycles(
         if c_len < max_cycle_len_with_types:
             for cycle_type in generate_cycle_types_for_len(c_len):
                 draw_cycles(
-                    lambda cycle_info: cycle_info.cycle_types[cycle_type] / n,
-                    lambda cycle_info: cycle_info.cycle_types[cycle_type],
+                    lambda cycle_info: cycle_info.cycles_with_edges_order[
+                        to_represent[cycle_type]
+                    ]
+                    / n,
+                    lambda cycle_info: cycle_info.cycles_with_edges_order[
+                        to_represent[cycle_type]
+                    ],
                     xs,
                     empirical_cycles_info,
                     analytical_cycles_info,
@@ -216,7 +226,7 @@ def build_parameters_for_plot_title(p_aa, p_bb, alpha):
 def main():
     max_interesting_cycles_len = 11
     max_cycle_len_with_types = 6
-
+    to_represent, _ = define_cycles_representative(max_cycle_len_with_types)
     create_new_directories_in_plots()
 
     for cur_parameters in parameters.PROBABILITIES_WITH_ALPHA[-1:]:
@@ -259,6 +269,7 @@ def main():
             cur_parameters["number_of_experiments"],
             max_cycle_len_with_types=max_cycle_len_with_types,
             max_interesting_cycles_len=max_interesting_cycles_len,
+            to_represent=to_represent,
         )
         draw_empirical_with_analytical_cycles(
             folder_name,
@@ -268,6 +279,7 @@ def main():
             cur_parameters["number_of_experiments"],
             max_cycle_len_with_types=max_cycle_len_with_types,
             max_interesting_cycles_len=max_interesting_cycles_len,
+            to_represent=to_represent,
         )
 
 

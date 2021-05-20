@@ -31,7 +31,7 @@ def get_experiments_dir(experiments_in_one_bunch):
     return (
         "3d_fragile_breakage_model/logs/experiments_"
         + str(experiments_in_one_bunch)
-        + "/"
+        + "_with_b_d/"
         + number_of_fragile_edges()
     )
 

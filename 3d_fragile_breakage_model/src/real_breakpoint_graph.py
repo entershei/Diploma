@@ -4,16 +4,17 @@ import networkx as nx
 import pandas as pd
 
 from build_breakpoint_graph.src.utils.parsers import parse_to_df
+from compute_statistics import compute_d_by_cycles, compute_b_by_cycles
 from src.graphs.real_data_graph import (
     RealDataGraph,
     nodes_edges_one_sp,
     sp_blocks_from_df,
     uniq_predicate,
 )
-from src.true_evolutionary_distance import (
+from true_evolutionary_distance import (
     find_true_evolution_dist_and_find_parameters1,
 )
-from src.utils import CyclesInfo, log_dictionaries
+from utils import CyclesInfo, log_dictionaries, define_cycles_representative
 
 
 def read_compartments(file):
@@ -230,10 +231,56 @@ def build_breakpoint_graph(species1, species2, a_b_compartments, orthology_block
 
 
 def get_graph_statistic(g):
-    def to_cycle_type(edges):
+    def to_order(edges):
+        def dfs(v, edge_to):
+            used[v] = True
+            ordered_edges.append(edge_to)
+            for u_edge in adjacency[v]:
+                if not used[u_edge[1]]:
+                    dfs(u_edge[1], u_edge)
+
+        adjacency = {}
+        used = {}
+        for i, edge in enumerate(edges):
+            used[edge[0]] = False
+            used[edge[1]] = False
+            if edge[0] not in adjacency:
+                adjacency[edge[0]] = [edge]
+            else:
+                adjacency[edge[0]].append(edge)
+
+            if edge[1] not in adjacency:
+                adjacency[edge[1]] = [(edge[1], edge[0], edge[2])]
+            else:
+                adjacency[edge[1]].append((edge[1], edge[0], edge[2]))
+
+        used[edges[0][0]] = True
+        ordered_edges = []
+        dfs(edges[0][1], edges[0])
+
+        for connected_to_first in adjacency[edges[0][0]]:
+            if connected_to_first[1] != edges[0][1] or connected_to_first[2] != edges[0][2]:
+                ordered_edges.append((connected_to_first[1], connected_to_first[0], connected_to_first[2]))
+                break
+
+        return ordered_edges
+
+    def to_edges_types(edges):
+        edges = to_order(edges)
+        edges_types = []
+        for edge in edges:
+            if edge[2] == "A" or edge[2] == "B":
+                edges_types.append(edge[2])
+        return edges_types
+
+    def cycle_to_represent(edges):
+        if len(edges) < max_cycles_len_with_order:
+            return to_represent["".join(edges)]
         cycle_type = ["A"] * edges.count("A") + ["B"] * edges.count("B")
         return "".join(cycle_type)
 
+    max_cycles_len_with_order = 6
+    to_represent, _ = define_cycles_representative(max_cycles_len_with_order)
     statistic = {
         "cycles": defaultdict(lambda: 0),
         "cycles_with_types": defaultdict(lambda: 0),
@@ -247,14 +294,14 @@ def get_graph_statistic(g):
         if len(cycle.nodes) == len(cycle.edges):
             cycle_len = len(cycle.edges) // 2
             statistic["cycles"][str(cycle_len)] += 1
-            edges_types = list(map(lambda edge: edge[2], cycle.edges(data="label")))
-            statistic["cycles_with_types"][to_cycle_type(edges_types)] += 1
+            all_edges = to_edges_types(list(cycle.edges(data="label")))
+            statistic["cycles_with_types"][cycle_to_represent(all_edges)] += 1
 
             if cycle_len > 1:
-                statistic["A-edges in non-trivial cycles"] += edges_types.count("A")
-                statistic["B-edges in non-trivial cycles"] += edges_types.count("B")
-            statistic["total A-edges"] += edges_types.count("A")
-            statistic["total B-edges"] += edges_types.count("B")
+                statistic["A-edges in non-trivial cycles"] += all_edges.count("A")
+                statistic["B-edges in non-trivial cycles"] += all_edges.count("B")
+            statistic["total A-edges"] += all_edges.count("A")
+            statistic["total B-edges"] += all_edges.count("B")
 
     return statistic
 
@@ -304,20 +351,27 @@ def print_graph_statistic(graph_statistic):
 
 
 def find_true_evolution_dist(graph_statistic):
+    cycles_m = dict(graph_statistic["cycles"])
     graph_cycles_info = CyclesInfo(
+        cycles_m,
         dict(graph_statistic["cycles_with_types"]),
-        dict(graph_statistic["cycles"]),
         graph_statistic["A-edges in non-trivial cycles"],
         graph_statistic["B-edges in non-trivial cycles"],
         -1,
         -1,
+        compute_d_by_cycles(cycles_m),
+        compute_b_by_cycles(cycles_m),
     )
     sum_to_in_error = 10
     for i in range(2, sum_to_in_error):
         if str(i) not in graph_cycles_info.cycles_m:
             graph_cycles_info.cycles_m[str(i)] = 0
 
-    dist_info = find_true_evolution_dist_and_find_parameters1(graph_cycles_info)
+    max_cycles_len_with_order = 6
+    to_represent, _ = define_cycles_representative(max_cycles_len_with_order)
+    dist_info = find_true_evolution_dist_and_find_parameters1(
+        graph_cycles_info, to_represent
+    )
 
     print("Estimated true evolutionary distance:", dist_info["estimated_true_dist"])
     print(
@@ -347,7 +401,7 @@ def estimate_distance_for_many_species(
             species1, species2, a_b_compartments, orthology_blocks
         )
         graph_statistic = get_graph_statistic(g)
-        # print_graph_statistic(graph_statistic)
+        print_graph_statistic(graph_statistic)
         dist_info = find_true_evolution_dist(graph_statistic)
         dist_info["species1"] = species1
         dist_info["species2"] = species2
@@ -373,10 +427,10 @@ def main():
     # species1, species2 = read_species(orthology_blocks)
     estimate_distance_for_many_species(
         [
-            ("macaca_mulatta", "homo_sapiens"),
+            # ("macaca_mulatta", "homo_sapiens"),
             ("mus_musculus", "homo_sapiens"),
-            ("rattus_norvegicus", "homo_sapiens"),
-            ("monodelphis_domestica", "homo_sapiens"),
+            # ("rattus_norvegicus", "homo_sapiens"),
+            # ("monodelphis_domestica", "homo_sapiens"),
         ],
         a_b_compartments,
         orthology_blocks,

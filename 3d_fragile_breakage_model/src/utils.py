@@ -23,75 +23,125 @@ def generate_cycle_types(min_len, max_len):
 
 
 class CyclesInfo:
-    # Number of cycles with different types
-    cycle_types = {}
     # Number of cycles with length is key. Cycle len is a number of fragile edges in it.
     cycles_m = {}
+    # Number of cycles with different types
+    cycles_with_edges_order = {}
     a_in_non_trivial_cycles = 0
     b_in_non_trivial_cycles = 0
     a_in_non_trivial_cycles_part = 0
     b_in_non_trivial_cycles_part = 0
+    d = 0
+    b = 0
 
     def __init__(
         self,
-        cycle_types,
         cycles_m,
+        cycles_with_edges_order,
         a_in_non_trivial_cycles,
         b_in_non_trivial_cycles,
         a_in_non_trivial_cycles_part,
         b_in_non_trivial_cycles_part,
+        d,
+        b,
     ):
-        self.cycle_types = cycle_types
         self.cycles_m = cycles_m
+        self.cycles_with_edges_order = cycles_with_edges_order
         self.a_in_non_trivial_cycles = a_in_non_trivial_cycles
         self.b_in_non_trivial_cycles = b_in_non_trivial_cycles
         self.a_in_non_trivial_cycles_part = a_in_non_trivial_cycles_part
         self.b_in_non_trivial_cycles_part = b_in_non_trivial_cycles_part
+        self.d = d
+        self.b = b
 
 
-def parse_logs_row(row, possible_cycle_types, max_interesting_cycles_len, is_int):
-    cycle_types = {}
+def parse_logs_row(
+    row,
+    cycles_representatives,
+    max_interesting_cycles_len,
+    is_int,
+):
+    def to_type(value):
+        return int(value) if is_int else float(value)
+
     cycles_m = {}
-    for cycle_type in possible_cycle_types:
-        if is_int:
-            cycle_types[cycle_type] = int(row[cycle_type])
-        else:
-            cycle_types[cycle_type] = float(row[cycle_type])
+    cycles_with_edges_order = {}
+
+    for cycle_type in cycles_representatives:
+        cycles_with_edges_order[cycle_type] = to_type(row[cycle_type])
 
     for cycle_len in range(1, max_interesting_cycles_len):
-        if is_int:
-            cycles_m[str(cycle_len)] = int(row[str(cycle_len)])
-        else:
-            cycles_m[str(cycle_len)] = float(row[str(cycle_len)])
+        cycles_m[str(cycle_len)] = to_type(row[str(cycle_len)])
 
     a_in_non_trivial_cycles_part, b_in_non_trivial_cycles_part = -1, -1
-    if is_int:
-        a_in_non_trivial_cycles = int(row["a_in_non_trivial_cycles"])
-        b_in_non_trivial_cycles = int(row["b_in_non_trivial_cycles"])
-        if "a_in_non_trivial_cycles_part" in row:
-            a_in_non_trivial_cycles_part = int(row["a_in_non_trivial_cycles_part"])
-            b_in_non_trivial_cycles_part = int(row["b_in_non_trivial_cycles_part"])
-    else:
-        a_in_non_trivial_cycles = float(row["a_in_non_trivial_cycles"])
-        b_in_non_trivial_cycles = float(row["b_in_non_trivial_cycles"])
-        if "a_in_non_trivial_cycles_part" in row:
-            a_in_non_trivial_cycles_part = float(row["a_in_non_trivial_cycles_part"])
-            b_in_non_trivial_cycles_part = float(row["b_in_non_trivial_cycles_part"])
+    a_in_non_trivial_cycles = to_type(row["a_in_non_trivial_cycles"])
+    b_in_non_trivial_cycles = to_type(row["b_in_non_trivial_cycles"])
+    if "a_in_non_trivial_cycles_part" in row:
+        a_in_non_trivial_cycles_part = to_type(row["a_in_non_trivial_cycles_part"])
+        b_in_non_trivial_cycles_part = to_type(row["b_in_non_trivial_cycles_part"])
+    d, b = -1, -1
+    if "d" in row:
+        d = to_type((row["d"]))
+        b = to_type((row["b"]))
 
     return CyclesInfo(
-        cycle_types,
         cycles_m,
+        cycles_with_edges_order,
         a_in_non_trivial_cycles,
         b_in_non_trivial_cycles,
         a_in_non_trivial_cycles_part,
         b_in_non_trivial_cycles_part,
+        d,
+        b,
     )
 
 
+def define_cycles_representative(max_m):
+    def for_m(m):
+        def generate(cur_len, cycles):
+            if m == cur_len:
+                return cycles
+            cycles1 = list(map(lambda c: c + "A", cycles))
+            cycles2 = list(map(lambda c: c + "B", cycles))
+            return generate(cur_len + 1, cycles1 + cycles2)
+
+        all_cycles = generate(1, ["A", "B"])
+        used = set()
+        res = {}
+        representatives_m = []
+
+        for cycle in all_cycles:
+            if cycle in used:
+                continue
+            representatives_m.append(cycle)
+            for i in range(len(cycle)):
+                shifted_cycle = cycle[i:] + cycle[:i]
+                used.add(shifted_cycle)
+                res[shifted_cycle] = cycle
+            reversed_cycle = cycle[::-1]
+            for i in range(len(cycle)):
+                shifted_cycle = reversed_cycle[i:] + reversed_cycle[:i]
+                used.add(shifted_cycle)
+                res[shifted_cycle] = cycle
+        return res, representatives_m
+
+    result = {}
+    representatives = []
+    for cycle_len in range(1, max_m):
+        representatives_for_types, cur_representatives = for_m(cycle_len)
+        result.update(representatives_for_types)
+        representatives += cur_representatives
+    return result, representatives
+
+
 def read_experiments_cycles_info(
-    f_in, max_cycle_len_with_types, max_interesting_cycles_len, is_int, number_of_experiments=None
+    f_in,
+    max_cycle_len_with_types,
+    max_interesting_cycles_len,
+    is_int,
+    number_of_experiments=None,
 ):
-    possible_cycle_types = generate_cycle_types(1, max_cycle_len_with_types)
+    _, cycles_representatives = define_cycles_representative(max_cycle_len_with_types)
     experiments = []
 
     with open(f_in, "r", newline="") as csvfile:
@@ -100,13 +150,16 @@ def read_experiments_cycles_info(
         for row in reader:
             k = int(row["k"])
             cycle_info = parse_logs_row(
-                row, possible_cycle_types, max_interesting_cycles_len, is_int
+                row, cycles_representatives, max_interesting_cycles_len, is_int
             )
 
             if k == 0 and len(experiment) > 0:
                 experiments.append(experiment)
                 experiment = [cycle_info]
-                if number_of_experiments is not None and len(experiments) == number_of_experiments:
+                if (
+                    number_of_experiments is not None
+                    and len(experiments) == number_of_experiments
+                ):
                     break
             else:
                 experiment.append(cycle_info)
@@ -120,13 +173,16 @@ def read_experiments_cycles_info(
 
 
 def log_experiments(
-    experiments, file, open_mode, max_cycle_len_with_types, max_interesting_cycles_len
+    experiments,
+    file,
+    open_mode,
+    max_interesting_cycles_len,
+    cycles_representatives,
 ):
     # print("start log")
     file_exists = os.path.isfile(file)
 
     with open(file, open_mode, newline="") as f_log:
-        cycle_types = generate_cycle_types(1, max_cycle_len_with_types)
         cycle_lens = list(map(lambda l: str(l), range(1, max_interesting_cycles_len)))
 
         fieldnames = (
@@ -136,9 +192,11 @@ def log_experiments(
                 "b_in_non_trivial_cycles",
                 "a_in_non_trivial_cycles_part",
                 "b_in_non_trivial_cycles_part",
+                "d",
+                "b",
             ]
-            + cycle_types
             + cycle_lens
+            + cycles_representatives
         )
 
         log_cycles = csv.DictWriter(f_log, fieldnames=fieldnames)
@@ -154,10 +212,12 @@ def log_experiments(
                 "b_in_non_trivial_cycles": info.b_in_non_trivial_cycles,
                 "a_in_non_trivial_cycles_part": info.a_in_non_trivial_cycles_part,
                 "b_in_non_trivial_cycles_part": info.b_in_non_trivial_cycles_part,
+                "d": info.d,
+                "b": info.b,
             }
-            for cycle_type in cycle_types:
-                if cycle_type in info.cycle_types:
-                    cur_result[cycle_type] = info.cycle_types[cycle_type]
+            for cycle_type in cycles_representatives:
+                if cycle_type in info.cycles_with_edges_order:
+                    cur_result[cycle_type] = info.cycles_with_edges_order[cycle_type]
                 else:
                     cur_result[cycle_type] = 0
 

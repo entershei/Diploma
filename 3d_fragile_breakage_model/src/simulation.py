@@ -3,11 +3,15 @@ import os
 
 import numpy as np
 
+from collections import defaultdict
+
 import parameters
 from aggregate_cycles_info import sum_cycles_info
+from compute_statistics import compute_d_by_cycles, compute_b_by_cycles
 from utils import (
     CyclesInfo,
     log_experiments,
+    define_cycles_representative,
 )
 from generate_directories_names import create_new_directory_for_logging_experiments
 
@@ -69,52 +73,7 @@ def split_fragile_edges(n, a_type_edges_proportion):
     return a_type, b_type, edges
 
 
-def is_in_cycle(x, edges, y):
-    cur = edges[x].to
-
-    if y == cur:
-        return True
-
-    while cur != x:
-        if cur % 2 == 0:
-            cur = cur + 1
-        else:
-            cur = cur - 1
-
-        if y == cur:
-            return True
-
-        if cur == x:
-            break
-
-        cur = edges[cur].to
-
-        if y == cur:
-            return True
-
-    return False
-
-
-def set_color(x, edges, colors, color):
-    colors[x] = color
-    cur = edges[x].to
-
-    while cur != x:
-        colors[cur] = color
-
-        if cur % 2 == 0:
-            cur = cur + 1
-        else:
-            cur = cur - 1
-
-        if cur == x:
-            break
-
-        colors[cur] = color
-        cur = edges[cur].to
-
-
-def update_cycles(edge1, edge2, joining_type, edges, colors, last_color):
+def update_cycles(edge1, edge2, joining_type, edges):
     x, y = edge1
     u, v = edge2
 
@@ -141,89 +100,83 @@ def update_cycles(edge1, edge2, joining_type, edges, colors, last_color):
         if new_edge1_type != new_edge2_type and new_edge1_type == "B":
             new_edges.reverse()
 
-    if colors[x] == colors[u]:
-        if is_in_cycle(x, edges, y):
-            new_color = last_color
+    return new_edges
+
+
+def get_cycle(start_v, used, edges):
+    used[start_v] = True
+
+    cycle_edges_types = [edges[start_v].edge_type]
+
+    cur_v = edges[start_v].to
+    while cur_v != start_v:
+        used[cur_v] = True
+
+        if cur_v % 2 == 0:
+            cur_v = cur_v + 1
         else:
-            set_color(x, edges, colors, last_color)
-            new_color = last_color + 1
-    else:
-        set_color(x, edges, colors, colors[x])
-        new_color = last_color
+            cur_v = cur_v - 1
 
-    return new_color, new_edges
+        if cur_v == start_v:
+            break
+
+        used[cur_v] = True
+        cycle_edges_types.append(edges[cur_v].edge_type)
+        cur_v = edges[cur_v].to
+
+    return "".join(cycle_edges_types)
 
 
-def compute_cycles_info(colors, edges, max_cycle_len_with_types):
-    cycles = {}
-    for i, c in enumerate(colors):
-        if c in cycles.keys():
-            cycles[c].append(edges[i].edge_type)
-        else:
-            cycles[c] = [edges[i].edge_type]
-
-    cycle_types = {}
-    cycles_m = {}
+def compute_cycles_info(edges, max_cycle_len_with_types, cycle_to_represent):
+    cycles_with_edges_order = defaultdict(int)
+    cycles_m = defaultdict(int)
     a_in_non_trivial_cycles = 0
     b_in_non_trivial_cycles = 0
     a_in_non_trivial_cycles_part = 0
     b_in_non_trivial_cycles_part = 0
 
-    for c in cycles.keys():
-        # Since we count each edge twice, we should divide it by 2.
-        cur_len = len(cycles[c]) // 2
-        if cur_len < max_cycle_len_with_types:
-            cycle_type = to_cycle_type(cycles[c])
-            if cycle_type in cycle_types:
-                cycle_types[cycle_type] += 1
-            else:
-                cycle_types[cycle_type] = 1
+    vertices = len(edges)
+    used = [False] * len(edges)
+    for v in range(vertices):
+        if not used[v]:
+            cycle_edges = get_cycle(v, used, edges)
+            cycle_len = len(cycle_edges)
 
-        if str(cur_len) in cycles_m:
-            cycles_m[str(cur_len)] += 1
-        else:
-            cycles_m[str(cur_len)] = 1
+            if cycle_len < max_cycle_len_with_types:
+                cycles_with_edges_order[cycle_to_represent[cycle_edges]] += 1
 
-        if cur_len > 1:
-            cnt_a, cnt_b = count_a_b(cycles[c])
-            a_in_non_trivial_cycles += cnt_a
-            b_in_non_trivial_cycles += cnt_b
+            cycles_m[str(cycle_len)] += 1
 
-            if cur_len < parameters.PART:
-                a_in_non_trivial_cycles_part += cnt_a
-                b_in_non_trivial_cycles_part += cnt_b
+            if cycle_len > 1:
+                a_in_non_trivial_cycles += cycle_edges.count("A")
+                b_in_non_trivial_cycles += cycle_edges.count("B")
+
+                if cycle_len < parameters.PART:
+                    a_in_non_trivial_cycles_part += cycle_edges.count("A")
+                    b_in_non_trivial_cycles_part += cycle_edges.count("B")
 
     return CyclesInfo(
-        cycle_types,
-        cycles_m,
+        dict(cycles_m),
+        dict(cycles_with_edges_order),
         a_in_non_trivial_cycles,
         b_in_non_trivial_cycles,
         a_in_non_trivial_cycles_part,
         b_in_non_trivial_cycles_part,
+        compute_d_by_cycles(cycles_m),
+        compute_b_by_cycles(cycles_m),
     )
 
 
-def to_cycle_type(edges_type):
-    edges_type.sort()
-    cycle_type = ""
-    for i in range(0, len(edges_type), 2):
-        cycle_type += edges_type[i]
-    return cycle_type
-
-
-def count_a_b(edges_type):
-    cnt_a = 0
-    cnt_b = 0
-    for t in edges_type:
-        if t == "A":
-            cnt_a += 1
-        else:
-            cnt_b += 1
-    return cnt_a // 2, cnt_b // 2
-
-
 def markov_process(
-    n, k, p_aa, p_bb, p_ab, a_type, b_type, edges, max_cycle_len_with_types
+    k,
+    p_aa,
+    p_bb,
+    p_ab,
+    a_type,
+    b_type,
+    edges,
+    max_cycle_len_with_types,
+    cycle_to_represent,
 ):
     steps_cycles_info = []
     len_a = len(a_type)
@@ -231,15 +184,8 @@ def markov_process(
 
     probabilities = [p_aa, p_bb, p_ab]
 
-    colors = [0] * (2 * n)
-    for i in range(n):
-        colors[2 * i] = i
-        colors[2 * i + 1] = i
-
-    new_color = n
-
     steps_cycles_info.append(
-        compute_cycles_info(colors, edges, max_cycle_len_with_types)
+        compute_cycles_info(edges, max_cycle_len_with_types, cycle_to_represent)
     )
 
     for i in range(k):
@@ -251,18 +197,14 @@ def markov_process(
             edge1 = a_type[edge_ind1]
             edge2 = a_type[edge_ind2]
 
-            new_color, new_edges = update_cycles(
-                edge1, edge2, joining_type, edges, colors, new_color
-            )
+            new_edges = update_cycles(edge1, edge2, joining_type, edges)
             a_type[edge_ind1], a_type[edge_ind2] = new_edges
         elif dcj_type == "bb":
             edge_ind1, edge_ind2 = np.random.choice(len(b_type), 2, replace=False)
             edge1 = b_type[edge_ind1]
             edge2 = b_type[edge_ind2]
 
-            new_color, new_edges = update_cycles(
-                edge1, edge2, joining_type, edges, colors, new_color
-            )
+            new_edges = update_cycles(edge1, edge2, joining_type, edges)
             b_type[edge_ind1], b_type[edge_ind2] = new_edges
         else:
             edge_ind1 = np.random.choice(len(a_type), 1)[0]
@@ -271,13 +213,11 @@ def markov_process(
             edge1 = a_type[edge_ind1]
             edge2 = b_type[edge_ind2]
 
-            new_color, new_edges = update_cycles(
-                edge1, edge2, joining_type, edges, colors, new_color
-            )
+            new_edges = update_cycles(edge1, edge2, joining_type, edges)
             a_type[edge_ind1], b_type[edge_ind2] = new_edges
 
         steps_cycles_info.append(
-            compute_cycles_info(colors, edges, max_cycle_len_with_types)
+            compute_cycles_info(edges, max_cycle_len_with_types, cycle_to_represent)
         )
 
         assert len_a == len(a_type) and len_b == len(b_type)
@@ -295,13 +235,19 @@ def main():
     start_time = time.time()
 
     n = parameters.NUMBER_OF_FRAGILE_EDGES
-    max_cycle_len_with_types = 6
+    max_cycle_len_with_types = 7
     max_interesting_cycles_len = parameters.MAX_POSSIBLE_CYCLES_LEN
 
-    for parameter in parameters.PROBABILITIES_WITH_ALPHA[9:12]:
+    to_represent, representatives = define_cycles_representative(
+        max_cycle_len_with_types
+    )
+
+    for parameter in parameters.PROBABILITIES_WITH_ALPHA[15:]:
         file = parameter["parameters_str"] + ".csv"
         experiments_in_one_bunch = parameter["experiments_in_one_bunch"]
-        experiments_log_path = create_new_directory_for_logging_experiments(experiments_in_one_bunch)
+        experiments_log_path = create_new_directory_for_logging_experiments(
+            experiments_in_one_bunch
+        )
 
         experiments = []
         print("parameters:", parameter["parameters_str"])
@@ -311,7 +257,6 @@ def main():
             a_type, b_type, edges = split_fragile_edges(n, parameter["alpha"])
             experiments.append(
                 markov_process(
-                    n,
                     parameter["number_of_steps"],
                     parameter["p_aa"],
                     parameter["p_bb"],
@@ -320,6 +265,7 @@ def main():
                     b_type,
                     edges,
                     max_cycle_len_with_types,
+                    to_represent,
                 )
             )
 
@@ -334,13 +280,13 @@ def main():
                 log_experiments(
                     sum_cycles_info(
                         experiments,
-                        max_cycle_len_with_types,
                         max_interesting_cycles_len,
+                        representatives,
                     ),
                     experiments_log_path + file,
                     open_mode="a",
-                    max_cycle_len_with_types=max_cycle_len_with_types,
                     max_interesting_cycles_len=max_interesting_cycles_len,
+                    cycles_representatives=representatives,
                 )
                 experiments = []
 

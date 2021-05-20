@@ -2,11 +2,11 @@ import csv
 
 import parameters
 from aggregate_cycles_info import read_experiments_cycles_info
-from compute_statistics import compute_analytical_cycles_m
+from compute_statistics import compute_analytical_cycles_m, compute_analytically_b_n
 from utils import (
     CyclesInfo,
-    generate_cycle_types_for_len,
     log_dictionaries,
+    define_cycles_representative,
 )
 from generate_directories_names import (
     create_new_directories_for_result_comparison,
@@ -17,6 +17,8 @@ from generate_directories_names import (
 
 
 # Returns a_in_non_trivial_cycles, b_in_non_trivial_cycles only for for cycle_len = [2; max_interesting_cycles_len).
+# Since in analytical formula we can't discern cycles with the same number of A and B edges, like AABB and ABAB, we will
+# count it together and log it as one of them.
 def compute_analytical_cycles(
     n,
     p_aa,
@@ -26,6 +28,7 @@ def compute_analytical_cycles(
     f_out,
     max_cycle_len_with_types,
     max_interesting_cycles_len,
+    to_represent,
 ):
     def write_analytical_cycles():
         with open(f_out, "w", newline="") as log:
@@ -47,10 +50,12 @@ def compute_analytical_cycles(
                         cur_k
                     ].b_in_non_trivial_cycles_part,
                 }
-                for c_type in analytical_cycles_depends_on_k[cur_k].cycle_types.keys():
-                    row[c_type] = analytical_cycles_depends_on_k[cur_k].cycle_types[
-                        c_type
-                    ]
+                for c_type in analytical_cycles_depends_on_k[
+                    cur_k
+                ].cycles_with_edges_order.keys():
+                    row[c_type] = analytical_cycles_depends_on_k[
+                        cur_k
+                    ].cycles_with_edges_order[c_type]
                 for c_len in analytical_cycles_depends_on_k[cur_k].cycles_m.keys():
                     row[c_len] = analytical_cycles_depends_on_k[cur_k].cycles_m[c_len]
 
@@ -64,8 +69,7 @@ def compute_analytical_cycles(
         "a_in_non_trivial_cycles_part",
         "b_in_non_trivial_cycles_part",
     ]
-    k = 0
-    while k < steps:
+    for k in range(steps):
         x = k / n
         cycle_types = {}
         cycles_m = {}
@@ -79,9 +83,11 @@ def compute_analytical_cycles(
             )
             if cycle_len < max_cycle_len_with_types:
                 for cycle_type in cur_analytical_cycles["types"].keys():
-                    cycle_types[cycle_type] = cur_analytical_cycles["types"][cycle_type]
-                    if cycle_type not in field_names:
-                        field_names.append(cycle_type)
+                    cycle_types[to_represent[cycle_type]] = cur_analytical_cycles[
+                        "types"
+                    ][cycle_type]
+                    if to_represent[cycle_type] not in field_names:
+                        field_names.append(to_represent[cycle_type])
 
             cycles_m[str(cycle_len)] = cur_analytical_cycles["all"]
             if str(cycle_len) not in field_names:
@@ -105,14 +111,15 @@ def compute_analytical_cycles(
                         ] * cycle_type.count("B")
 
         analytical_cycles_depends_on_k[k] = CyclesInfo(
-            cycle_types,
             cycles_m,
+            cycle_types,
             a_in_non_trivial_cycles,
             b_in_non_trivial_cycles,
             a_in_non_trivial_cycles_part,
             b_in_non_trivial_cycles_part,
+            -1,
+            compute_analytically_b_n(x, p_aa, p_bb, alpha),
         )
-        k += 1
 
     write_analytical_cycles()
     return analytical_cycles_depends_on_k
@@ -134,14 +141,10 @@ def compute_relative_error_between_two_results(
 def relative_error(
     empirical_cycles_info,
     analytical_cycles_info,
-    max_cycle_len_with_types,
     max_interesting_cycles_len,
     f_out,
 ):
     n = parameters.NUMBER_OF_FRAGILE_EDGES
-    cycle_types = [[]]
-    for i in range(1, max_cycle_len_with_types):
-        cycle_types.append(generate_cycle_types_for_len(i))
 
     error_depends_on_k = []
     k = 0
@@ -149,13 +152,6 @@ def relative_error(
     while k < steps:
         errors = {"k": k}
         for cycle_len in range(1, max_interesting_cycles_len):
-            if cycle_len < max_cycle_len_with_types:
-                for cycle_type in cycle_types[cycle_len]:
-                    errors[cycle_type] = compute_relative_error_between_two_results(
-                        empirical_cycles_info[k].cycle_types[cycle_type] / n,
-                        analytical_cycles_info[k].cycle_types[cycle_type],
-                    )
-
             errors[str(cycle_len)] = compute_relative_error_between_two_results(
                 empirical_cycles_info[k].cycles_m[str(cycle_len)] / n,
                 analytical_cycles_info[k].cycles_m[str(cycle_len)],
@@ -196,6 +192,7 @@ def main():
     max_interesting_cycles_len = 11
     max_cycle_len_with_types = 6
 
+    to_represent, _ = define_cycles_representative(max_cycle_len_with_types)
     create_new_directories_for_result_comparison()
 
     for cur_parameters in parameters.PROBABILITIES_WITH_ALPHA[-1:]:
@@ -203,7 +200,11 @@ def main():
         number_of_experiments = cur_parameters["number_of_experiments"]
 
         empirical_cycles_info = read_experiments_cycles_info(
-            get_cycles_info_dir(number_of_experiments, cur_parameters["experiments_in_one_bunch"]) + file + ".csv",
+            get_cycles_info_dir(
+                number_of_experiments, cur_parameters["experiments_in_one_bunch"]
+            )
+            + file
+            + ".csv",
             max_cycle_len_with_types,
             max_interesting_cycles_len,
             False,
@@ -217,12 +218,12 @@ def main():
             f_out=get_analytical_cycles_dir() + file + ".csv",
             max_cycle_len_with_types=max_cycle_len_with_types,
             max_interesting_cycles_len=max_interesting_cycles_len,
+            to_represent=to_represent,
         )
 
         relative_error(
             empirical_cycles_info=empirical_cycles_info,
             analytical_cycles_info=analytical_cycles_info,
-            max_cycle_len_with_types=max_cycle_len_with_types,
             max_interesting_cycles_len=max_interesting_cycles_len,
             f_out=get_relative_error_dir(number_of_experiments) + file + ".csv",
         )

@@ -1,4 +1,5 @@
 3d_fragile_breakage_model/logs/experiments_1/*
+3d_fragile_breakage_model/logs/experiments_1_with_b_d/*
 *.zip
 **/.idea/*
 .git.bfg-report/*

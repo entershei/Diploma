@@ -1,19 +1,19 @@
 import time
 
-from src.compute_statistics import (
+from compute_statistics import (
     compute_analytical_cycles_m,
     compute_empirical_b,
     compute_analytically_b_n,
 )
-from src.draw_plots import build_parameters_for_plot_title
-from src.generate_directories_names import (
+from draw_plots import build_parameters_for_plot_title
+from generate_directories_names import (
     get_experiments_dir,
     create_directory_for_confidence_intervals,
     get_confidence_intervals_dir,
     get_confidence_intervals_dir_plots,
 )
 import parameters
-from src.utils import read_experiments_cycles_info, log_dictionaries, read_logs
+from utils import read_experiments_cycles_info, log_dictionaries, read_logs
 from statistics import mean
 import matplotlib.pyplot as plt
 import numpy as np
@@ -41,7 +41,9 @@ def get_intervals(
 
     f_in = get_experiments_dir(experiments_in_one_bunch) + string_parameters + ".csv"
 
-    max_interesting_cycles_len = parameters.MAX_POSSIBLE_CYCLES_LEN if divide == "b" else cycle_len + 1
+    max_interesting_cycles_len = (
+        parameters.MAX_POSSIBLE_CYCLES_LEN if divide == "b" else cycle_len + 1
+    )
     experiments = read_experiments_cycles_info(
         f_in,
         0,
@@ -305,7 +307,7 @@ def main():
         "lightslategray",
         "lightgray",
         "#b7e1a1",
-        "lightgray"
+        "lightgray",
     ]
     draw_many_confidence_interval(
         index,

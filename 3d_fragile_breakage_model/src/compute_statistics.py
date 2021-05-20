@@ -1,13 +1,19 @@
 import math
+import time
 
 import numpy as np
 
 import parameters
 from draw_plots import build_parameters_for_plot_title, draw_plots
 
-from src.generate_directories_names import get_cycles_info_dir
-from src.utils import read_experiments_cycles_info, generate_cycle_type
+from generate_directories_names import get_cycles_info_dir, get_experiments_dir
+from utils import (
+    read_experiments_cycles_info,
+    generate_cycle_type,
+    define_cycles_representative,
+)
 from pathlib import Path
+from statistics import mean
 
 
 # Возвращает нормированное число циклов длины m, посчитанных через аналитическую формулу, указывает число циклов по
@@ -93,20 +99,28 @@ def compute_analytically_b_n(x, p_aa, p_bb, alpha):
     return 1 - compute_analytical_cycles_m(1, x, p_aa, p_bb, alpha)["all"]
 
 
-def compute_empirical_d(graph):
+def compute_d_by_cycles(cycles_m):
     d = 0.0
-    for cycle_len in graph.cycles_m.keys():
-        if int(cycle_len) > 1:
-            d += graph.cycles_m[cycle_len] * (int(cycle_len) - 1)
+    for c_len in cycles_m.keys():
+        if int(c_len) > 1:
+            d += cycles_m[c_len] * (int(c_len) - 1)
     return d
 
 
-def compute_empirical_b(graph):
+def compute_b_by_cycles(cycles_m):
     b = 0.0
-    for cycle_len in graph.cycles_m.keys():
-        if int(cycle_len) > 1:
-            b += graph.cycles_m[cycle_len] * int(cycle_len)
+    for c_len in cycles_m.keys():
+        if int(c_len) > 1:
+            b += cycles_m[c_len] * int(c_len)
     return b
+
+
+def compute_empirical_d(graph):
+    return compute_d_by_cycles(graph.cycles_m)
+
+
+def compute_empirical_b(graph):
+    return compute_b_by_cycles(graph.cycles_m)
 
 
 def draw_analytical_c_m_b(max_m, mid_m, parameters_index):
@@ -292,7 +306,7 @@ def estimate_alpha(x, p_aa, p_bb, aa_cycles, ab_cycles, bb_cycles):
     return res_alpha
 
 
-def estimate_alphas_for_graphs(start_ind, end_ind):
+def estimate_alphas_for_graphs(start_ind, end_ind, to_represent):
     for parameter in parameters.PROBABILITIES_WITH_ALPHA[start_ind:end_ind]:
         parameters_str, p_aa, p_bb, alpha = (
             parameter["parameters_str"],
@@ -302,7 +316,10 @@ def estimate_alphas_for_graphs(start_ind, end_ind):
         )
         print(parameters_str)
         file = (
-            get_cycles_info_dir(parameter["number_of_experiments"], parameter["experiments_in_one_bunch"])
+            get_cycles_info_dir(
+                parameter["number_of_experiments"],
+                parameter["experiments_in_one_bunch"],
+            )
             + parameters_str
             + ".csv"
         )
@@ -325,9 +342,9 @@ def estimate_alphas_for_graphs(start_ind, end_ind):
                 k / n,
                 p_aa,
                 p_bb,
-                graph.cycle_types["AA"],
-                graph.cycle_types["AB"],
-                graph.cycle_types["BB"],
+                graph.cycles_with_edges_order[to_represent["AA"]],
+                graph.cycles_with_edges_order[to_represent["AB"]],
+                graph.define_cycles_representative[to_represent["BB"]],
             )
             if len(cur_alpha) > 1:
                 print("two alphas")
@@ -363,10 +380,127 @@ def estimate_alphas_for_graphs(start_ind, end_ind):
         )
 
 
+def cycles_distribution_in_one_length(cycle_types, parameter_index, colors):
+    start_time = time.time()
+    parameter = parameters.PROBABILITIES_WITH_ALPHA[parameter_index]
+    to_represent, _ = define_cycles_representative(len(cycle_types[0]) + 1)
+    cycle_types = list(map(lambda c_type: to_represent[c_type], cycle_types))
+    experiments = read_experiments_cycles_info(
+        get_experiments_dir(parameter["experiments_in_one_bunch"])
+        + parameter["parameters_str"]
+        + ".csv",
+        len(cycle_types[0]) + 1,
+        len(cycle_types[0]) + 1,
+        is_int=False,
+    )
+    print("finish read", (time.time() - start_time) / 60, "m")
+
+    mean_cycle_types = {}
+    for cycle_type in cycle_types:
+        mean_cycle_types[cycle_type] = []
+
+    steps = len(experiments[0])
+    for k in range(steps):
+        for cycle_type in cycle_types:
+            mean_cycle_types[cycle_type].append(
+                mean(
+                    list(
+                        map(
+                            lambda experiment: experiment[k].cycles_with_edges_order[
+                                cycle_type
+                            ],
+                            experiments,
+                        )
+                    )
+                )
+            )
+    print("finish counting mean", (time.time() - start_time) / 60, "m")
+
+    cycle_types_x = {}
+    xs = []
+    for cycle_type in cycle_types:
+        cycle_types_x[cycle_type] = []
+
+    m = str(steps)
+    n = parameters.NUMBER_OF_FRAGILE_EDGES
+    first_divide_second = []
+
+    for k in range(steps):
+        xs.append(k / n)
+        # if mean_cycle_types[cycle_types[1]][k] == 0.0:
+        #     first_divide_second.append(0.0)
+        # else:
+        #     first_divide_second.append(mean_cycle_types[cycle_types[0]][k] / mean_cycle_types[cycle_types[1]][k])
+
+        s = 0.0
+        for cycle_type in cycle_types:
+            s += mean_cycle_types[cycle_type][k]
+
+        for cycle_type in cycle_types:
+            if s == 0.0:
+                cycle_types_x[cycle_type].append(0.0)
+            else:
+                cycle_types_x[cycle_type].append(mean_cycle_types[cycle_type][k] / s)
+
+    # plots = [{"plot": first_divide_second, "label": cycle_types[0] + "/" + cycle_types[1], "color": colors[0]}]
+
+    plots = []
+    for i, cycle_type in enumerate(cycle_types):
+        plots.append(
+            {
+                "plot": cycle_types_x[cycle_type],
+                "label": cycle_type + "/ sum_types",
+                "color": colors[i],
+            }
+        )
+
+    cycle_types_str = ""
+    for i, cycle_type in enumerate(cycle_types):
+        cycle_types_str += cycle_type
+        if i != len(cycle_types) - 1:
+            cycle_types_str += ","
+
+    # cycle_types_str = cycle_types[0] + "_" + cycle_types[1]
+
+    save_as = (
+        "3d_fragile_breakage_model/plots/statistic/type_distribution/"
+        + cycle_types_str
+        + "_"
+        + parameter["parameters_str"]
+    )
+
+    draw_plots(
+        xs,
+        plots,
+        "x",
+        "cycles",
+        "Normalized cycles for length "
+        + m
+        + "\n"
+        + build_parameters_for_plot_title(
+            parameter["p_aa"], parameter["p_bb"], parameter["alpha"]
+        ),
+        save_as,
+    )
+
+
+def main():
+    colors = ["red", "blue"]
+    cycles_distribution_in_one_length(["AABB", "ABAB"], 15, colors)
+    cycles_distribution_in_one_length(["BBAAA", "BABAA"], 15, colors)
+    cycles_distribution_in_one_length(["BBBAA", "BBABA"], 15, colors)
+
+    cycles_distribution_in_one_length(["AABB", "ABAB"], 14, colors)
+    cycles_distribution_in_one_length(["BBAAA", "BABAA"], 14, colors)
+    cycles_distribution_in_one_length(["BBBAA", "BBABA"], 14, colors)
+
+    # draw_analytical_c_m_b(max_m=10, mid_m=5, parameters_index=4)
+    # draw_analytical_c_m_b(max_m=15, mid_m=10, parameters_index=4)
+    # draw_analytical_c_m_b(max_m=20, mid_m=10, parameters_index=4)
+    # draw_analytical_c_m_b(max_m=40, mid_m=20, parameters_index=4)
+    # estimate_alphas_for_graphs(0, 5)
+    # estimate_alphas_for_graphs(-4, -1)
+
+
 if __name__ == "__main__":
-    draw_analytical_c_m_b(max_m=10, mid_m=5, parameters_index=4)
-    draw_analytical_c_m_b(max_m=15, mid_m=10, parameters_index=4)
-    draw_analytical_c_m_b(max_m=20, mid_m=10, parameters_index=4)
-    draw_analytical_c_m_b(max_m=40, mid_m=20, parameters_index=4)
-    estimate_alphas_for_graphs(0, 5)
-    estimate_alphas_for_graphs(-4, -1)
+    main()

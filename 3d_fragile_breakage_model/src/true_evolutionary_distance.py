@@ -11,8 +11,13 @@ from compute_statistics import (
     compute_empirical_b,
 )
 from draw_plots import draw_plots, build_parameters_for_plot_title, draw
-from src.compute_statistics import compute_analytical_cycles_m
-from utils import read_experiments_cycles_info, log_dictionaries, read_logs
+from compute_statistics import compute_analytical_cycles_m
+from utils import (
+    read_experiments_cycles_info,
+    log_dictionaries,
+    read_logs,
+    define_cycles_representative,
+)
 import numpy as np
 import skopt
 
@@ -182,7 +187,7 @@ def compute_error(x, p_aa, p_bb, alpha, graph, empirical_b):
     return error
 
 
-def find_true_evolution_dist_with_parameters_using_skopt(graph, n_calls):
+def find_true_evolution_dist_with_parameters_using_skopt(graph, n_calls, to_represent):
     space = [
         skopt.space.Real(0, 1.5, name="x"),
         skopt.space.Real(0, 1, name="p_aa"),
@@ -204,9 +209,9 @@ def find_true_evolution_dist_with_parameters_using_skopt(graph, n_calls):
             x,
             p_aa,
             p_bb,
-            graph.cycle_types["AA"],
-            graph.cycle_types["AB"],
-            graph.cycle_types["BB"],
+            graph.cycles_with_edges_order[aa_represent],
+            graph.cycles_with_edges_order[ab_represent],
+            graph.cycles_with_edges_order[bb_represent],
         )
         min_error = max_score
         for alpha in alphas:
@@ -224,14 +229,17 @@ def find_true_evolution_dist_with_parameters_using_skopt(graph, n_calls):
     results = skopt.forest_minimize(objective, space, n_calls=n_calls)
     best_params = results.x
     best_x, best_p_aa, best_p_bb = best_params[0], best_params[1], best_params[2]
+    aa_represent = to_represent["AA"]
+    ab_represent = to_represent["AB"]
+    bb_represent = to_represent["BB"]
 
     best_alphas = estimate_alpha(
         best_x,
         best_p_aa,
         best_p_bb,
-        graph.cycle_types["AA"],
-        graph.cycle_types["AB"],
-        graph.cycle_types["BB"],
+        graph.cycles_with_edges_order[aa_represent],
+        graph.cycles_with_edges_order[ab_represent],
+        graph.cycles_with_edges_order[bb_represent],
     )
     error1 = compute_error(
         best_x, best_p_aa, best_p_bb, best_alphas[0], graph, empirical_b
@@ -263,7 +271,7 @@ def find_true_evolution_dist_with_parameters_using_skopt(graph, n_calls):
     }
 
 
-def find_true_evolution_dist_and_find_parameters0(graph):
+def find_true_evolution_dist_and_find_parameters0(graph, to_represent):
     empirical_d = compute_empirical_d(graph)
     empirical_b = compute_empirical_b(graph)
 
@@ -279,12 +287,18 @@ def find_true_evolution_dist_and_find_parameters0(graph):
     best_p_bb = 0.0
     best_alpha = 0.0
     p_step = 0.015
+    aa_represent = to_represent["AA"]
+    aaa_represent = to_represent["AAA"]
 
     for x in np.arange(l_x, r_x, step_x):
         for p_aa in np.arange(p_step, 1, p_step):
             for alpha in np.arange(p_step, 1, p_step):
                 p_ab = estimate_p_ab(
-                    x, p_aa, alpha, graph.cycle_types["AA"], graph.cycle_types["AAA"]
+                    x,
+                    p_aa,
+                    alpha,
+                    graph.cycles_with_edges_order[aa_represent],
+                    graph.cycles_with_edges_order[aaa_represent],
                 )
                 p_bb = max(1 - p_aa - p_ab, 0.0)
                 if p_ab < 0 or p_aa < p_ab or p_bb < p_ab:
@@ -317,7 +331,7 @@ def find_true_evolution_dist_and_find_parameters0(graph):
     }
 
 
-def find_true_evolution_dist_and_find_parameters1(graph):
+def find_true_evolution_dist_and_find_parameters1(graph, to_represent):
     empirical_d = compute_empirical_d(graph)
     empirical_b = compute_empirical_b(graph)
 
@@ -333,6 +347,9 @@ def find_true_evolution_dist_and_find_parameters1(graph):
     best_p_bb = 0.0
     best_alpha = 0.0
     p_step = 0.01
+    aa_represent = to_represent["AA"]
+    ab_represent = to_represent["AB"]
+    bb_represent = to_represent["BB"]
 
     for x in np.arange(l_x, r_x, step_x):
         for p_aa in np.arange(p_step, 1, p_step):
@@ -342,9 +359,9 @@ def find_true_evolution_dist_and_find_parameters1(graph):
                     x,
                     p_aa,
                     p_bb,
-                    graph.cycle_types["AA"],
-                    graph.cycle_types["AB"],
-                    graph.cycle_types["BB"],
+                    graph.cycles_with_edges_order[aa_represent],
+                    graph.cycles_with_edges_order[ab_represent],
+                    graph.cycles_with_edges_order[bb_represent],
                 )
 
                 for alpha in alphas:
@@ -374,7 +391,8 @@ def find_true_evolution_dist_and_find_parameters1(graph):
 
 
 def compute_true_evolutionary_distance(parameter_index, method):
-    max_cycle_len_with_types = 5
+    max_cycle_len_with_types = 4
+    to_represent, _ = define_cycles_representative(max_cycle_len_with_types)
     start_time = time.time()
     parameter = parameters.PROBABILITIES_WITH_ALPHA[parameter_index]
     file, p_aa, p_bb, alpha = (
@@ -387,7 +405,11 @@ def compute_true_evolutionary_distance(parameter_index, method):
     print(file)
 
     graphs = read_experiments_cycles_info(
-        get_cycles_info_dir(parameter["number_of_experiments"], parameter["experiments_in_one_bunch"]) + file + ".csv",
+        get_cycles_info_dir(
+            parameter["number_of_experiments"], parameter["experiments_in_one_bunch"]
+        )
+        + file
+        + ".csv",
         max_cycle_len_with_types,
         parameters.MAX_POSSIBLE_CYCLES_LEN,
         False,
@@ -442,10 +464,7 @@ def compute_true_evolutionary_distance(parameter_index, method):
 
     log_dictionaries(
         dist_info,
-        "3d_fragile_breakage_model/logs/"
-        + method
-        + file
-        + ".csv",
+        "3d_fragile_breakage_model/logs/" + method + file + ".csv",
     )
 
     print("time:", (time.time() - start_time) / 60, " m.")
@@ -463,7 +482,9 @@ def draw_dists(
     empirical_min_distances = list(
         map(lambda v: float(v["empirical_min_dist"]), to_draw_main)
     )
-    estimated_true_distances = list(map(lambda v: float(v["estimated_true_dist"]), to_draw_main))
+    estimated_true_distances = list(
+        map(lambda v: float(v["estimated_true_dist"]), to_draw_main)
+    )
 
     plots = [
         {
@@ -507,7 +528,9 @@ def draw_dists(
 
     relative_error = []
     for i, true_distance in enumerate(empirical_true_distances):
-        relative_error.append(100 * abs(true_distance - estimated_true_distances[i]) / true_distance)
+        relative_error.append(
+            100 * abs(true_distance - estimated_true_distances[i]) / true_distance
+        )
 
     draw(
         xs,
@@ -516,7 +539,7 @@ def draw_dists(
         "% relative error",
         "Relative percentage error of estimated true evolutionary distance\n"
         + parameters_for_plot_title,
-        save_as + "_relative_percentage_error"
+        save_as + "_relative_percentage_error",
     )
 
 
@@ -673,7 +696,9 @@ def draw_true_dist_with_additional_plot(
 if __name__ == "__main__":
     method_to_run = "true_evolution_distance_found_parameters/1/"
     index_of_parameters = -1
-    compute_true_evolutionary_distance(parameter_index=index_of_parameters, method=method_to_run)
+    compute_true_evolutionary_distance(
+        parameter_index=index_of_parameters, method=method_to_run
+    )
     draw_true_dist_for_parameters(
         method_to_run,
         parameter_index=index_of_parameters,
