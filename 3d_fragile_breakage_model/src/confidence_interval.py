@@ -307,11 +307,11 @@ def main():
         "lightslategray",
         "lightgray",
         "#b7e1a1",
-        "lightgray",
+        # "lightgray",
     ]
     draw_many_confidence_interval(
         index,
-        [2, 3],
+        [2, 4],
         left_quantile,
         right_quantile,
         colors,
@@ -321,7 +321,7 @@ def main():
     )
     draw_many_confidence_interval(
         index,
-        [4, 5],
+        [3, 6],
         left_quantile,
         right_quantile,
         colors,
