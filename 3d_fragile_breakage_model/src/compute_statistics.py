@@ -423,7 +423,7 @@ def cycles_distribution_in_one_length(cycle_types, parameter_index, colors):
 
     m = str(steps)
     n = parameters.NUMBER_OF_FRAGILE_EDGES
-    first_divide_second = []
+    # first_divide_second = []
 
     for k in range(steps):
         xs.append(k / n)

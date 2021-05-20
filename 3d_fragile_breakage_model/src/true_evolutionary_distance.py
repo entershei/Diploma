@@ -391,7 +391,7 @@ def find_true_evolution_dist_and_find_parameters1(graph, to_represent):
 
 
 def compute_true_evolutionary_distance(parameter_index, method):
-    max_cycle_len_with_types = 4
+    max_cycle_len_with_types = 5
     to_represent, _ = define_cycles_representative(max_cycle_len_with_types)
     start_time = time.time()
     parameter = parameters.PROBABILITIES_WITH_ALPHA[parameter_index]
@@ -414,6 +414,7 @@ def compute_true_evolutionary_distance(parameter_index, method):
         parameters.MAX_POSSIBLE_CYCLES_LEN,
         False,
     )[0]
+    to_represent, _ = define_cycles_representative(max_cycle_len_with_types)
 
     dist_info = []
 
@@ -427,10 +428,10 @@ def compute_true_evolutionary_distance(parameter_index, method):
         #     graph, p_aa, p_bb, alpha
         # )
 
-        # cur_dist_info = find_true_evolution_dist_and_find_parameters0(graph)
-        cur_dist_info = find_true_evolution_dist_and_find_parameters1(graph)
+        # cur_dist_info = find_true_evolution_dist_and_find_parameters0(graph, to_represent)
+        cur_dist_info = find_true_evolution_dist_and_find_parameters1(graph, to_represent)
         # cur_dist_info = find_true_evolution_dist_with_parameters_using_skopt(
-        #     graph, 2000
+        #     graph, 2000, to_represent
         # )
         cur_dist_info["real_alpha"] = alpha
         cur_dist_info["real_p_aa"] = p_aa
