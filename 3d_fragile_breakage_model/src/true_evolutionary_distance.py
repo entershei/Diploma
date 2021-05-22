@@ -506,7 +506,7 @@ def compute_true_evolutionary_distance(parameter_index, method):
 
 
 def compute_true_evolutionary_distance_for_box_plot(
-    parameter_index, number_of_experiments, method
+    parameter_index, number_of_experiments, k_step, method
 ):
     max_cycle_len_with_types = 4
     sum_to = 10
@@ -538,7 +538,7 @@ def compute_true_evolutionary_distance_for_box_plot(
 
     for i, experiment in enumerate(experiments):
         # Go through each step.
-        for k in range(100, len(experiment), 200):
+        for k in range(100, len(experiment), k_step):
             graph = experiment[k]
             # cur_dist_info = find_true_evolution_dist_fixed_parameters(
             #     graph, p_aa, p_bb, alpha, use_b_d_in_log=True
@@ -788,16 +788,11 @@ def draw_true_dist_with_additional_plot(
         )
 
 
-def get_median_min_distance_error(parameter_index, number_of_experiments):
+def get_median_errors_by_min_dist(parameter_index, number_of_experiments, k_step=100):
     max_cycle_len_with_types = 0
     start_time = time.time()
     parameter = parameters.PROBABILITIES_WITH_ALPHA[parameter_index]
-    file, p_aa, p_bb, alpha = (
-        parameter["parameters_str"],
-        parameter["p_aa"],
-        parameter["p_bb"],
-        parameter["alpha"],
-    )
+    file = parameter["parameters_str"]
     if parameter["experiments_in_one_bunch"] != 1:
         print("experiments_in_one_bunch should be 1")
         return
@@ -816,19 +811,25 @@ def get_median_min_distance_error(parameter_index, number_of_experiments):
     median_errors_by_min_dist_k = []
     steps = len(experiments[0])
 
-    for k in range(100, steps, 200):
+    for k in range(100, steps, k_step):
         sample = list(map(lambda experiment: (experiment[k].d - k) / k, experiments))
-        median_errors_by_min_dist_k.append({"k": k, "median_errors_by_min_dist": median(sample)})
+        median_errors_by_min_dist_k.append(
+            {"k": k, "median_errors_by_min_dist": median(sample)}
+        )
 
     log_dictionaries(
         median_errors_by_min_dist_k,
-        "3d_fragile_breakage_model/logs/min_distance_relative_error/" + file + ".csv",
+        "3d_fragile_breakage_model/logs/median_errors_by_min_dist/" + file + ".csv",
     )
 
-    print("time:", (time.time() - start_time) / 60, " m.")
+    print(
+        "finish get_median_errors_by_min_dist, time:",
+        (time.time() - start_time) / 60,
+        " m.",
+    )
 
 
-def draw_box_plot(folder_name, number_of_experiments, parameter_index):
+def draw_box_plot(folder_name, number_of_experiments, parameter_index, from_percentile, to_percentile):
     cur_parameters = parameters.PROBABILITIES_WITH_ALPHA[parameter_index]
     file, p_aa, p_bb, alpha = (
         cur_parameters["parameters_str"],
@@ -842,6 +843,14 @@ def draw_box_plot(folder_name, number_of_experiments, parameter_index):
     dist_info = read_logs(
         "3d_fragile_breakage_model/logs/" + folder_name + file + ".csv"
     )
+    median_errors_by_min_dist_log = read_logs(
+        "3d_fragile_breakage_model/logs/median_errors_by_min_dist/" + file + ".csv"
+    )
+    median_errors_by_min_dist_dict = {}
+    for median_error in median_errors_by_min_dist_log:
+        median_errors_by_min_dist_dict[median_error["k"]] = float(
+            median_error["median_errors_by_min_dist"]
+        )
     experiments = []
     cur_experiment_index = 0
     cur_experiment = []
@@ -858,7 +867,12 @@ def draw_box_plot(folder_name, number_of_experiments, parameter_index):
     samples_k = []
     steps = len(experiments[0])
     ks = []
+    median_errors_by_min_dist = []
     for k in range(steps):
+        median_errors_by_min_dist.append(
+            median_errors_by_min_dist_dict[experiments[0][k]["empirical_true_dist"]]
+        )
+
         ks.append(
             float(experiments[0][k]["empirical_true_dist"])
             / parameters.NUMBER_OF_FRAGILE_EDGES
@@ -876,8 +890,6 @@ def draw_box_plot(folder_name, number_of_experiments, parameter_index):
 
         samples_k.append(sample)
 
-    from_percentile = 7.5
-    to_percentile = 92.5
     fig, ax1 = plt.subplots()
     ax1.boxplot(samples_k, sym="", whis=(from_percentile, to_percentile))
     ax1.set(
@@ -895,6 +907,13 @@ def draw_box_plot(folder_name, number_of_experiments, parameter_index):
     )
     plt.grid()
 
+    plt.scatter(
+        range(1, steps + 1),
+        median_errors_by_min_dist,
+        label="Median relative error by min dist",
+    )
+    plt.legend(loc="lower left")
+
     ax1.set_xlim(0.5, len(samples_k) + 0.5)
     ax1.set_xticklabels(ks)
 
@@ -909,15 +928,23 @@ def main():
     # method_to_run = "true_evolution_distance_fixed/box_plot/log_"
     index_of_parameters = 14
     number_of_experiments = 100
+    k_step = 200
+    # k_step = 100
     # compute_true_evolutionary_distance_for_box_plot(
     #     parameter_index=index_of_parameters,
     #     number_of_experiments=number_of_experiments,
+    #     k_step=k_step,
     #     method=method_to_run,
     # )
+    # get_median_errors_by_min_dist(index_of_parameters, number_of_experiments)
+    from_percentile = 5
+    to_percentile = 95
     draw_box_plot(
         folder_name=method_to_run,
         number_of_experiments=number_of_experiments,
         parameter_index=index_of_parameters,
+        from_percentile=from_percentile,
+        to_percentile=to_percentile
     )
     # compute_true_evolutionary_distance(index_of_parameters, method_to_run)
     # draw_true_dist_for_parameters(
