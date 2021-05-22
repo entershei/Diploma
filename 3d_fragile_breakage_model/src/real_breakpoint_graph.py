@@ -370,7 +370,7 @@ def find_true_evolution_dist(graph_statistic):
     max_cycles_len_with_order = 6
     to_represent, _ = define_cycles_representative(max_cycles_len_with_order)
     dist_info = find_true_evolution_dist_and_find_parameters1(
-        graph_cycles_info, to_represent
+        graph_cycles_info, to_represent, use_b_d_in_log=True
     )
 
     print("Estimated true evolutionary distance:", dist_info["estimated_true_dist"])

@@ -15,7 +15,7 @@ def get_cycles_info_dir(number_of_experiments, experiments_in_one_bunch):
         "3d_fragile_breakage_model/logs/cycles_info/"
         + get_parameters_as_string(number_of_experiments)
         + "from_experiments_"
-        + str(experiments_in_one_bunch)
+        + str(experiments_in_one_bunch) + "/"
     )
 
 

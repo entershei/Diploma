@@ -328,7 +328,7 @@ def estimate_alphas_for_graphs(start_ind, end_ind, to_represent):
             parents=True, exist_ok=True
         )
 
-        graphs = read_experiments_cycles_info(file, 4, 4, False,)[
+        graphs = read_experiments_cycles_info(file, 4, 4, False, is_cycles_ordered=False)[
             0
         ][:1501]
 
@@ -392,6 +392,7 @@ def cycles_distribution_in_one_length(cycle_types, parameter_index, colors):
         len(cycle_types[0]) + 1,
         len(cycle_types[0]) + 1,
         is_int=False,
+        is_cycles_ordered=True
     )
     print("finish read", (time.time() - start_time) / 60, "m")
 

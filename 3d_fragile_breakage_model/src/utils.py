@@ -96,16 +96,29 @@ def parse_logs_row(
     )
 
 
+# [min_len, max_len)
+def generate_cycle_types_representative(min_len, max_len):
+    to_representative = {}
+    representatives = []
+    for cycle_len in range(min_len, max_len):
+        representatives += generate_cycle_types(min_len, max_len)
+        all_cycles = generate_all_cycles(1, cycle_len, ["A", "B"])
+        for cycle in all_cycles:
+            to_representative[cycle] = "".join(["A"] * cycle.count("A") + ["B"] * cycle.count("B"))
+    return to_representative, representatives
+
+
+def generate_all_cycles(cur_len, max_cycle_len, cycles):
+    if cur_len == max_cycle_len:
+        return cycles
+    cycles1 = list(map(lambda c: c + "A", cycles))
+    cycles2 = list(map(lambda c: c + "B", cycles))
+    return generate_all_cycles(cur_len + 1, max_cycle_len, cycles1 + cycles2)
+
+
 def define_cycles_representative(max_m):
     def for_m(m):
-        def generate(cur_len, cycles):
-            if m == cur_len:
-                return cycles
-            cycles1 = list(map(lambda c: c + "A", cycles))
-            cycles2 = list(map(lambda c: c + "B", cycles))
-            return generate(cur_len + 1, cycles1 + cycles2)
-
-        all_cycles = generate(1, ["A", "B"])
+        all_cycles = generate_all_cycles(1, m, ["A", "B"])
         used = set()
         res = {}
         representatives_m = []
@@ -140,8 +153,12 @@ def read_experiments_cycles_info(
     max_interesting_cycles_len,
     is_int,
     number_of_experiments=None,
+    is_cycles_ordered=False,
 ):
-    _, cycles_representatives = define_cycles_representative(max_cycle_len_with_types)
+    if is_cycles_ordered:
+        _, cycles_representatives = define_cycles_representative(max_cycle_len_with_types)
+    else:
+        cycles_representatives = generate_cycle_types(1, max_cycle_len_with_types)
     experiments = []
 
     with open(f_in, "r", newline="") as csvfile:

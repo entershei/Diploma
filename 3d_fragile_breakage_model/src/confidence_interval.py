@@ -50,6 +50,7 @@ def get_intervals(
         max_interesting_cycles_len,
         is_int=True,
         number_of_experiments=number_of_experiments,
+        is_cycles_ordered=True,
     )
     n = parameters.NUMBER_OF_FRAGILE_EDGES
     steps = len(experiments[0])
