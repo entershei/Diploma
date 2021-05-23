@@ -5,7 +5,9 @@
 
 [aggregate_cycles_info.py](3d_fragile_breakage_model/src/aggregate_cycles_info.py) обрабатывает результаты экспериментов
 из [logs/experiments_n](3d_fragile_breakage_model/logs/) и записывает агрегированные результаты в
-[logs/cycles_info/](3d_fragile_breakage_model/logs/cycles_info/).
+[logs/cycles_info/](3d_fragile_breakage_model/logs/cycles_info/). Из-за большого объема данных на
+[Гугл Диск](https://drive.google.com/drive/folders/1uALp2yIs_-3Dpz0_tv1styecyQEbf8A4) выложены данные о каждом
+эксперименте отдельно. 
 
 В [build_breakpoint_graph/](build_breakpoint_graph/) используется код из репозитория
 [github.com/ctlab/true-dist-infer](https://github.com/ctlab/true-dist-infer) для построения графа точек разрыва
