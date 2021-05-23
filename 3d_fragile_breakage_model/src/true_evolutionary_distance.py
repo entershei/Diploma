@@ -937,8 +937,8 @@ def main():
     #     method=method_to_run,
     # )
     # get_median_errors_by_min_dist(index_of_parameters, number_of_experiments)
-    from_percentile = 5
-    to_percentile = 95
+    from_percentile = 7.5
+    to_percentile = 92.5
     draw_box_plot(
         folder_name=method_to_run,
         number_of_experiments=number_of_experiments,
