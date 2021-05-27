@@ -754,38 +754,43 @@ def draw_true_dist_for_parameters(folder_name, parameter_index, draw_parameters)
 
 
 def draw_true_dist_with_additional_plot(
-    additional_folder, additional_label, folder_to_save
+    index_of_parameters, additional_folder, additional_label, folder_to_save
 ):
-    for cur_parameters in parameters.PROBABILITIES_WITH_ALPHA:
-        parameters_str, p_aa, p_bb, alpha = (
-            cur_parameters["parameters_str"],
-            cur_parameters["p_aa"],
-            cur_parameters["p_bb"],
-            cur_parameters["alpha"],
-        )
-        plot_title = build_parameters_for_plot_title(p_aa, p_bb, alpha)
-        print(plot_title)
+    cur_parameters = parameters.PROBABILITIES_WITH_ALPHA[index_of_parameters]
+    parameters_str, p_aa, p_bb, alpha = (
+        cur_parameters["parameters_str"],
+        cur_parameters["p_aa"],
+        cur_parameters["p_bb"],
+        cur_parameters["alpha"],
+    )
+    plot_title = build_parameters_for_plot_title(p_aa, p_bb, alpha)
+    print(plot_title)
 
-        dist_info_fixed = read_logs(
-            "3d_fragile_breakage_model/logs/true_evolution_distance_fixed/"
-            + parameters_str
-            + ".csv"
-        )
+    all_dist_info_fixed = read_logs(
+        "3d_fragile_breakage_model/logs/true_evolution_distance_fixed/"
+        + parameters_str
+        + ".csv"
+    )
 
-        dist_info_found = read_logs(
-            "3d_fragile_breakage_model/logs/"
-            + additional_folder
-            + parameters_str
-            + ".csv"
-        )
+    dist_info_found = read_logs(
+        "3d_fragile_breakage_model/logs/"
+        + additional_folder
+        + parameters_str
+        + ".csv"
+    )
+    need_ks = set(map(lambda info: info["empirical_true_dist"], dist_info_found))
+    dist_info_fixed = []
+    for k in range(len(all_dist_info_fixed)):
+        if all_dist_info_fixed[k]["empirical_true_dist"] in need_ks:
+            dist_info_fixed.append(all_dist_info_fixed[k])
 
-        draw_dists(
-            dist_info_fixed,
-            dist_info_found,
-            additional_label,
-            plot_title,
-            "3d_fragile_breakage_model/plots/" + folder_to_save + parameters_str,
-        )
+    draw_dists(
+        dist_info_fixed,
+        dist_info_found,
+        additional_label,
+        plot_title,
+        "3d_fragile_breakage_model/plots/" + folder_to_save + parameters_str,
+    )
 
 
 def get_median_errors_by_min_dist(parameter_index, number_of_experiments, k_step=100):
@@ -937,8 +942,8 @@ def main():
     #     method=method_to_run,
     # )
     # get_median_errors_by_min_dist(index_of_parameters, number_of_experiments)
-    from_percentile = 7.5
-    to_percentile = 92.5
+    from_percentile = 5
+    to_percentile = 95
     draw_box_plot(
         folder_name=method_to_run,
         number_of_experiments=number_of_experiments,
@@ -946,6 +951,7 @@ def main():
         from_percentile=from_percentile,
         to_percentile=to_percentile
     )
+    # index_of_parameters = 4
     # compute_true_evolutionary_distance(index_of_parameters, method_to_run)
     # draw_true_dist_for_parameters(
     #     method_to_run,
@@ -953,7 +959,8 @@ def main():
     #     draw_parameters=True,
     # )
     # draw_true_dist_with_additional_plot(
-    #     "true_evolution_distance_found_parameters/",
+    #     index_of_parameters,
+    #     "true_evolution_distance_found_parameters/1/log_",
     #     "Estimated true distance with found parameters",
     #     "true_evolution_distance_fixed_and_found_parameters/",
     # )
