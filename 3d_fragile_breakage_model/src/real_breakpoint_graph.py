@@ -11,6 +11,7 @@ from src.graphs.real_data_graph import (
     sp_blocks_from_df,
     uniq_predicate,
 )
+from src.real_data_est_common import print_graph_stats
 from true_evolutionary_distance import (
     find_true_evolution_dist_and_find_parameters1,
 )
@@ -26,10 +27,6 @@ def read_compartments(file):
 
     a_b_compartments = {}
 
-    cnt_a = 0
-    cnt_b = 0
-    cnt_na = 0
-
     for i in range(len(df_compartments)):
         if df_compartments.iat[i, chr_index] not in a_b_compartments:
             a_b_compartments[df_compartments.iat[i, chr_index]] = []
@@ -40,17 +37,6 @@ def read_compartments(file):
                 "compartment": df_compartments.iat[i, h1_index],
             }
         )
-        if df_compartments.iat[i, h1_index] == "A":
-            cnt_a += 1
-        elif df_compartments.iat[i, h1_index] == "B":
-            cnt_b += 1
-        else:
-            cnt_na += 1
-
-    # print("Sum of A regions in compartments file:", cnt_a, "Mb")
-    # print("Sum of B regions in compartments file:", cnt_b, "Mb")
-    # print("Sum of NA regions in compartments file:", cnt_na, "Mb")
-    # print()
 
     return a_b_compartments
 
@@ -259,8 +245,17 @@ def get_graph_statistic(g):
         dfs(edges[0][1], edges[0])
 
         for connected_to_first in adjacency[edges[0][0]]:
-            if connected_to_first[1] != edges[0][1] or connected_to_first[2] != edges[0][2]:
-                ordered_edges.append((connected_to_first[1], connected_to_first[0], connected_to_first[2]))
+            if (
+                connected_to_first[1] != edges[0][1]
+                or connected_to_first[2] != edges[0][2]
+            ):
+                ordered_edges.append(
+                    (
+                        connected_to_first[1],
+                        connected_to_first[0],
+                        connected_to_first[2],
+                    )
+                )
                 break
 
         return ordered_edges
@@ -415,6 +410,8 @@ def estimate_distance_for_many_species(
             + ".csv",
         )
 
+        # print_graph_stats(g, 0.33, False)
+
 
 def main():
     # compartments_file, blocks_file = read_files_path()
@@ -427,10 +424,10 @@ def main():
     # species1, species2 = read_species(orthology_blocks)
     estimate_distance_for_many_species(
         [
-            # ("macaca_mulatta", "homo_sapiens"),
+            ("macaca_mulatta", "homo_sapiens"),
             ("mus_musculus", "homo_sapiens"),
-            # ("rattus_norvegicus", "homo_sapiens"),
-            # ("monodelphis_domestica", "homo_sapiens"),
+            ("rattus_norvegicus", "homo_sapiens"),
+            ("monodelphis_domestica", "homo_sapiens"),
         ],
         a_b_compartments,
         orthology_blocks,

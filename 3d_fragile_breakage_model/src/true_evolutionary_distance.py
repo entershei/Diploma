@@ -1,5 +1,8 @@
+import math
 import time
 from statistics import median
+
+from scipy import optimize
 
 import parameters
 from generate_directories_names import get_cycles_info_dir, get_experiments_dir
@@ -342,7 +345,9 @@ def find_true_evolution_dist_and_find_parameters0(graph, to_represent):
     }
 
 
-def find_true_evolution_dist_and_find_parameters1(graph, to_represent, use_b_d_in_log):
+def find_true_evolution_dist_and_find_parameters1(
+    graph, to_represent, use_b_d_in_log, p_ab_can_be_big=False
+):
     def compute_error_and_find_parameters(x):
         best_p_aa_x = 0.0
         best_p_ab_x = 0.0
@@ -356,7 +361,10 @@ def find_true_evolution_dist_and_find_parameters1(graph, to_represent, use_b_d_i
         bb_represent = to_represent["BB"]
 
         for p_aa in np.arange(p_step, 1, p_step):
-            for p_ab in np.arange(0, min(1 / 3, (1 - p_aa) / 2), p_step):
+            p_ab_max = (
+                1 - p_aa + p_step if p_ab_can_be_big else min(1 / 3, (1 - p_aa) / 2)
+            )
+            for p_ab in np.arange(0, p_ab_max, p_step):
                 p_bb = max(1 - p_aa - p_ab, 0.0)
                 alphas = estimate_alpha(
                     x,
@@ -426,8 +434,8 @@ def find_true_evolution_dist_and_find_parameters1(graph, to_represent, use_b_d_i
 
 def compute_true_evolutionary_distance(parameter_index, method):
     max_cycle_len_with_types = 5
-    # to_represent, _ = define_cycles_representative(max_cycle_len_with_types)
-    to_represent, _ = generate_cycle_types_representative(1, max_cycle_len_with_types)
+    to_represent, _ = define_cycles_representative(max_cycle_len_with_types)
+    # to_represent, _ = generate_cycle_types_representative(1, max_cycle_len_with_types)
 
     start_time = time.time()
     parameter = parameters.PROBABILITIES_WITH_ALPHA[parameter_index]
@@ -449,23 +457,29 @@ def compute_true_evolutionary_distance(parameter_index, method):
         max_cycle_len_with_types,
         parameters.MAX_POSSIBLE_CYCLES_LEN,
         is_int=False,
-        is_cycles_ordered=False,
+        is_cycles_ordered=True,
     )[0]
 
     dist_info = []
 
     # Go through each step.
     for k, graph in enumerate(graphs):
-        if k < 1 or (k % 100) != 0:
+        if k < 1 or (k % 50) != 0:
             continue
 
         # cur_dist_info = find_true_evolution_dist_fixed_parameters(
         #     graph, p_aa, p_bb, alpha, use_b_d_in_log=False
         # )
+        if parameter_index == 5:
+            p_ab_can_be_big = True
+        else:
+            p_ab_can_be_big = False
 
         cur_dist_info = find_true_evolution_dist_and_find_parameters1(
-            graph, to_represent, use_b_d_in_log=False
+            graph, to_represent, use_b_d_in_log=False, p_ab_can_be_big=p_ab_can_be_big
         )
+
+        # cur_dist_info = find_true_evolution_dist_fbm(graph, False)
 
         cur_dist_info["real_alpha"] = alpha
         cur_dist_info["real_p_aa"] = p_aa
@@ -480,14 +494,6 @@ def compute_true_evolutionary_distance(parameter_index, method):
                 k,
                 "best_x:",
                 cur_dist_info["best_x"],
-                "best_p_aa:",
-                cur_dist_info["best_p_aa"],
-                "best_p_ab:",
-                cur_dist_info["best_p_ab"],
-                "best_p_bb:",
-                cur_dist_info["best_p_bb"],
-                "best_alpha:",
-                cur_dist_info["best_alpha"],
                 "min_error:",
                 cur_dist_info["min_error"],
             )
@@ -546,6 +552,10 @@ def compute_true_evolutionary_distance_for_box_plot(
             cur_dist_info = find_true_evolution_dist_and_find_parameters1(
                 graph, to_represent, use_b_d_in_log=True
             )
+            # print(i, k)
+            # cur_dist_info = find_true_evolution_dist_fbm(graph, True)
+            # if k == 100:
+            #     print(i, k, cur_dist_info["estimated_true_dist"])
 
             cur_dist_info["experiment"] = i
             cur_dist_info["real_alpha"] = alpha
@@ -563,6 +573,51 @@ def compute_true_evolutionary_distance_for_box_plot(
     )
 
     print("time:", (time.time() - start_time) / 60, " m.")
+
+
+def find_true_evolution_dist_fbm(graph, use_b_d_in_log):
+    def compute_fbm_b_n(possible_gamma):
+        return 1 - math.exp(-1 * possible_gamma)
+
+    def b_divide_sum(possible_gamma):
+        denominator = 0
+        for m in range(2, max_m):
+            denominator += (
+                math.exp(-1 * possible_gamma * m)
+                * (possible_gamma * m) ** (m - 1)
+                / math.factorial(m)
+            )
+        return compute_fbm_b_n(possible_gamma) / denominator - empirical_b_sum
+
+    max_m = 7
+    if use_b_d_in_log:
+        empirical_d = graph.d
+        empirical_b = graph.b
+    else:
+        empirical_d = compute_empirical_d(graph)
+        empirical_b = compute_empirical_b(graph)
+
+    empirical_sum = 0
+    for cycle_len in graph.cycles_m.keys():
+        if 1 < int(cycle_len) < max_m:
+            empirical_sum += graph.cycles_m[cycle_len] * int(cycle_len)
+
+    empirical_b_sum = empirical_b / empirical_sum
+
+    start_gamma = 1e-8
+    finish_gamma = 4
+    best_gamma = optimize.bisect(b_divide_sum, start_gamma, finish_gamma, xtol=1e-4)
+    min_error = abs(empirical_b_sum - b_divide_sum(best_gamma))
+    analytical_b_n = compute_fbm_b_n(best_gamma)
+    analytical_n = empirical_b / analytical_b_n
+    estimated_true_dist = best_gamma * analytical_n / 2
+
+    return {
+        "estimated_true_dist": estimated_true_dist,
+        "best_x": best_gamma / 2,
+        "min_error": min_error,
+        "empirical_min_dist": empirical_d,
+    }
 
 
 def draw_dists(
@@ -753,9 +808,7 @@ def draw_true_dist_for_parameters(folder_name, parameter_index, draw_parameters)
         )
 
 
-def draw_true_dist_with_additional_plot(
-    index_of_parameters, additional_folder, additional_label, folder_to_save
-):
+def draw_two_true_dist(index_of_parameters, folder1, folder2, label2, folder_to_save):
     cur_parameters = parameters.PROBABILITIES_WITH_ALPHA[index_of_parameters]
     parameters_str, p_aa, p_bb, alpha = (
         cur_parameters["parameters_str"],
@@ -766,28 +819,19 @@ def draw_true_dist_with_additional_plot(
     plot_title = build_parameters_for_plot_title(p_aa, p_bb, alpha)
     print(plot_title)
 
-    all_dist_info_fixed = read_logs(
-        "3d_fragile_breakage_model/logs/true_evolution_distance_fixed/"
-        + parameters_str
-        + ".csv"
-    )
+    all_dist_info1 = read_logs(folder1 + parameters_str + ".csv")
 
-    dist_info_found = read_logs(
-        "3d_fragile_breakage_model/logs/"
-        + additional_folder
-        + parameters_str
-        + ".csv"
-    )
-    need_ks = set(map(lambda info: info["empirical_true_dist"], dist_info_found))
-    dist_info_fixed = []
-    for k in range(len(all_dist_info_fixed)):
-        if all_dist_info_fixed[k]["empirical_true_dist"] in need_ks:
-            dist_info_fixed.append(all_dist_info_fixed[k])
+    dist_info2 = read_logs(folder2 + parameters_str + ".csv")
+    need_ks = set(map(lambda info: info["empirical_true_dist"], dist_info2))
+    dist_info1 = []
+    for k in range(len(all_dist_info1)):
+        if all_dist_info1[k]["empirical_true_dist"] in need_ks:
+            dist_info1.append(all_dist_info1[k])
 
     draw_dists(
-        dist_info_fixed,
-        dist_info_found,
-        additional_label,
+        dist_info1,
+        dist_info2,
+        label2,
         plot_title,
         "3d_fragile_breakage_model/plots/" + folder_to_save + parameters_str,
     )
@@ -834,7 +878,9 @@ def get_median_errors_by_min_dist(parameter_index, number_of_experiments, k_step
     )
 
 
-def draw_box_plot(folder_name, number_of_experiments, parameter_index, from_percentile, to_percentile):
+def draw_box_plot(
+    folder_name, number_of_experiments, parameter_index, from_percentile, to_percentile
+):
     cur_parameters = parameters.PROBABILITIES_WITH_ALPHA[parameter_index]
     file, p_aa, p_bb, alpha = (
         cur_parameters["parameters_str"],
@@ -928,20 +974,21 @@ def draw_box_plot(folder_name, number_of_experiments, parameter_index, from_perc
 
 
 def main():
-    # method_to_run = "true_evolution_distance_found_parameters/1/log_"
     method_to_run = "true_evolution_distance_found_parameters/1/box_plot/log_"
     # method_to_run = "true_evolution_distance_fixed/box_plot/log_"
-    index_of_parameters = 14
+    # method_to_run = "true_evolution_distance_fbm/box_plot/log_"
+
+    index_of_parameters = -1
     number_of_experiments = 100
     k_step = 200
     # k_step = 100
-    # compute_true_evolutionary_distance_for_box_plot(
-    #     parameter_index=index_of_parameters,
-    #     number_of_experiments=number_of_experiments,
-    #     k_step=k_step,
-    #     method=method_to_run,
-    # )
-    # get_median_errors_by_min_dist(index_of_parameters, number_of_experiments)
+    compute_true_evolutionary_distance_for_box_plot(
+        parameter_index=index_of_parameters,
+        number_of_experiments=number_of_experiments,
+        k_step=k_step,
+        method=method_to_run,
+    )
+    get_median_errors_by_min_dist(index_of_parameters, number_of_experiments)
     from_percentile = 5
     to_percentile = 95
     draw_box_plot(
@@ -949,20 +996,32 @@ def main():
         number_of_experiments=number_of_experiments,
         parameter_index=index_of_parameters,
         from_percentile=from_percentile,
-        to_percentile=to_percentile
+        to_percentile=to_percentile,
     )
-    # index_of_parameters = 4
+
+    # method_to_run = "true_evolution_distance_fbm/"
+    # method_to_run = "true_evolution_distance_found_parameters/1/log_"
+    # method_to_run = "true_evolution_distance_fixed/log_"
+    # index_of_parameters = 5
     # compute_true_evolutionary_distance(index_of_parameters, method_to_run)
     # draw_true_dist_for_parameters(
     #     method_to_run,
     #     parameter_index=index_of_parameters,
-    #     draw_parameters=True,
+    #     draw_parameters=False,
     # )
-    # draw_true_dist_with_additional_plot(
+    # draw_two_true_dist(
     #     index_of_parameters,
-    #     "true_evolution_distance_found_parameters/1/log_",
-    #     "Estimated true distance with found parameters",
-    #     "true_evolution_distance_fixed_and_found_parameters/",
+    #     folder1="3d_fragile_breakage_model/logs/true_evolution_distance_fixed/",
+    #     folder2="3d_fragile_breakage_model/logs/true_evolution_distance_found_parameters/1/log_",
+    #     label2="Estimated true distance with found parameters",
+    #     folder_to_save="true_evolution_distance_fixed_and_found_parameters/",
+    # )
+    # draw_two_true_dist(
+    #     index_of_parameters,
+    #     folder1="3d_fragile_breakage_model/logs/true_evolution_distance_found_parameters/1/log_",
+    #     folder2="3d_fragile_breakage_model/logs/true_evolution_distance_fbm/",
+    #     label2="Estimated true distance under FBM",
+    #     folder_to_save="true_evolution_distance_found_parameters_and_fbm/",
     # )
 
 

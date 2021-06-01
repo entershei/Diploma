@@ -242,53 +242,55 @@ def main():
         max_cycle_len_with_types
     )
 
-    for parameter in parameters.PROBABILITIES_WITH_ALPHA[15:]:
-        file = parameter["parameters_str"] + ".csv"
-        experiments_in_one_bunch = parameter["experiments_in_one_bunch"]
-        experiments_log_path = create_new_directory_for_logging_experiments(
-            experiments_in_one_bunch
+    parameter_index = -1
+    parameter = parameters.PROBABILITIES_WITH_ALPHA[parameter_index]
+
+    file = parameter["parameters_str"] + ".csv"
+    experiments_in_one_bunch = parameter["experiments_in_one_bunch"]
+    experiments_log_path = create_new_directory_for_logging_experiments(
+        experiments_in_one_bunch
+    )
+
+    experiments = []
+    print("parameters:", parameter["parameters_str"])
+
+    first_log = True
+    for i in range(parameter["number_of_experiments"]):
+        a_type, b_type, edges = split_fragile_edges(n, parameter["alpha"])
+        experiments.append(
+            markov_process(
+                parameter["number_of_steps"],
+                parameter["p_aa"],
+                parameter["p_bb"],
+                1 - parameter["p_aa"] - parameter["p_bb"],
+                a_type,
+                b_type,
+                edges,
+                max_cycle_len_with_types,
+                to_represent,
+            )
         )
 
-        experiments = []
-        print("parameters:", parameter["parameters_str"])
+        if len(experiments) == experiments_in_one_bunch:
+            if first_log:
+                remove_previous_log(experiments_log_path + file)
+                first_log = False
 
-        first_log = True
-        for i in range(parameter["number_of_experiments"]):
-            a_type, b_type, edges = split_fragile_edges(n, parameter["alpha"])
-            experiments.append(
-                markov_process(
-                    parameter["number_of_steps"],
-                    parameter["p_aa"],
-                    parameter["p_bb"],
-                    1 - parameter["p_aa"] - parameter["p_bb"],
-                    a_type,
-                    b_type,
-                    edges,
-                    max_cycle_len_with_types,
-                    to_represent,
-                )
+            # Записываем сумму результатов экспериментов
+            if i % 100 == 0:
+                print("i:", i, ", time: ", (time.time() - start_time) / 60, " m.")
+            log_experiments(
+                sum_cycles_info(
+                    experiments,
+                    max_interesting_cycles_len,
+                    representatives,
+                ),
+                experiments_log_path + file,
+                open_mode="a",
+                max_interesting_cycles_len=max_interesting_cycles_len,
+                cycles_representatives=representatives,
             )
-
-            if len(experiments) == experiments_in_one_bunch:
-                if first_log:
-                    remove_previous_log(experiments_log_path + file)
-                    first_log = False
-
-                # Записываем сумму результатов экспериментов
-                if i % 100 == 0:
-                    print("i:", i, ", time: ", (time.time() - start_time) / 60, " m.")
-                log_experiments(
-                    sum_cycles_info(
-                        experiments,
-                        max_interesting_cycles_len,
-                        representatives,
-                    ),
-                    experiments_log_path + file,
-                    open_mode="a",
-                    max_interesting_cycles_len=max_interesting_cycles_len,
-                    cycles_representatives=representatives,
-                )
-                experiments = []
+            experiments = []
 
     print((time.time() - start_time) / 60 / 60, ".h")
 

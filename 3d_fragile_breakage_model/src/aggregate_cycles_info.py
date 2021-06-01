@@ -77,7 +77,11 @@ def aggregate_cycles_info(
 ):
     print("start read experiments")
     experiments = read_experiments_cycles_info(
-        f_in, max_cycle_len_with_types, max_interesting_cycles_len, is_int=True
+        f_in,
+        max_cycle_len_with_types,
+        max_interesting_cycles_len,
+        is_int=False,
+        is_cycles_ordered=True,
     )
     print("finish read")
 
@@ -124,24 +128,26 @@ def main():
     max_cycle_len_with_types = 6
     max_interesting_cycles_len = parameters.MAX_POSSIBLE_CYCLES_LEN
 
-    for parameter in parameters.PROBABILITIES_WITH_ALPHA[-1:]:
-        experiments_in_one_bunch = parameter["experiments_in_one_bunch"]
-        cycles_info_log_path = create_new_directory_in_cycles_info(
-            parameter["number_of_experiments"], experiments_in_one_bunch
-        )
+    parameter_index = 6
+    parameter = parameters.PROBABILITIES_WITH_ALPHA[parameter_index]
 
-        string_parameters = parameter["parameters_str"]
-        file = string_parameters + ".csv"
+    experiments_in_one_bunch = parameter["experiments_in_one_bunch"]
+    cycles_info_log_path = create_new_directory_in_cycles_info(
+        parameter["number_of_experiments"], experiments_in_one_bunch
+    )
 
-        print(string_parameters)
+    string_parameters = parameter["parameters_str"]
+    file = string_parameters + ".csv"
 
-        aggregate_cycles_info(
-            f_in=get_experiments_dir(experiments_in_one_bunch) + file,
-            f_out=cycles_info_log_path + string_parameters,
-            experiments_in_one_bunch=experiments_in_one_bunch,
-            max_cycle_len_with_types=max_cycle_len_with_types,
-            max_interesting_cycles_len=max_interesting_cycles_len,
-        )
+    print(string_parameters)
+
+    aggregate_cycles_info(
+        f_in=get_experiments_dir(experiments_in_one_bunch) + file,
+        f_out=cycles_info_log_path + string_parameters,
+        experiments_in_one_bunch=experiments_in_one_bunch,
+        max_cycle_len_with_types=max_cycle_len_with_types,
+        max_interesting_cycles_len=max_interesting_cycles_len,
+    )
 
 
 if __name__ == "__main__":
