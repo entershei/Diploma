@@ -974,35 +974,35 @@ def draw_box_plot(
 
 
 def main():
-    method_to_run = "true_evolution_distance_found_parameters/1/box_plot/log_"
+    # method_to_run = "true_evolution_distance_found_parameters/1/box_plot/log_"
     # method_to_run = "true_evolution_distance_fixed/box_plot/log_"
     # method_to_run = "true_evolution_distance_fbm/box_plot/log_"
 
-    index_of_parameters = -1
-    number_of_experiments = 100
-    k_step = 200
+    # index_of_parameters = -1
+    # number_of_experiments = 100
+    # k_step = 200
     # k_step = 100
-    compute_true_evolutionary_distance_for_box_plot(
-        parameter_index=index_of_parameters,
-        number_of_experiments=number_of_experiments,
-        k_step=k_step,
-        method=method_to_run,
-    )
-    get_median_errors_by_min_dist(index_of_parameters, number_of_experiments)
-    from_percentile = 5
-    to_percentile = 95
-    draw_box_plot(
-        folder_name=method_to_run,
-        number_of_experiments=number_of_experiments,
-        parameter_index=index_of_parameters,
-        from_percentile=from_percentile,
-        to_percentile=to_percentile,
-    )
+    # compute_true_evolutionary_distance_for_box_plot(
+    #     parameter_index=index_of_parameters,
+    #     number_of_experiments=number_of_experiments,
+    #     k_step=k_step,
+    #     method=method_to_run,
+    # )
+    # get_median_errors_by_min_dist(index_of_parameters, number_of_experiments)
+    # from_percentile = 5
+    # to_percentile = 95
+    # draw_box_plot(
+    #     folder_name=method_to_run,
+    #     number_of_experiments=number_of_experiments,
+    #     parameter_index=index_of_parameters,
+    #     from_percentile=from_percentile,
+    #     to_percentile=to_percentile,
+    # )
 
     # method_to_run = "true_evolution_distance_fbm/"
     # method_to_run = "true_evolution_distance_found_parameters/1/log_"
     # method_to_run = "true_evolution_distance_fixed/log_"
-    # index_of_parameters = 5
+    index_of_parameters = 6
     # compute_true_evolutionary_distance(index_of_parameters, method_to_run)
     # draw_true_dist_for_parameters(
     #     method_to_run,
@@ -1016,13 +1016,13 @@ def main():
     #     label2="Estimated true distance with found parameters",
     #     folder_to_save="true_evolution_distance_fixed_and_found_parameters/",
     # )
-    # draw_two_true_dist(
-    #     index_of_parameters,
-    #     folder1="3d_fragile_breakage_model/logs/true_evolution_distance_found_parameters/1/log_",
-    #     folder2="3d_fragile_breakage_model/logs/true_evolution_distance_fbm/",
-    #     label2="Estimated true distance under FBM",
-    #     folder_to_save="true_evolution_distance_found_parameters_and_fbm/",
-    # )
+    draw_two_true_dist(
+        index_of_parameters,
+        folder1="3d_fragile_breakage_model/logs/true_evolution_distance_found_parameters/1/log_",
+        folder2="3d_fragile_breakage_model/logs/true_evolution_distance_fbm/",
+        label2="Estimated true distance under FBM",
+        folder_to_save="true_evolution_distance_found_parameters_and_fbm/",
+    )
 
 
 if __name__ == "__main__":
